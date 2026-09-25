@@ -4,8 +4,8 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { User } from './entities/user.entity.js';
 import { CreateUserCommand } from './commands/create-user/create-user.command.js';
 import { FindAllUsersQuery } from './queries/find-all-users/find-all-users.query.js';
-import { CreateUserSchema } from './dto/create-user.dto.js';
-import type { CreateUserDto } from './dto/create-user.dto.js';
+import { CreateUserSchema } from './dto/user/create-user.dto.js';
+import type { CreateUserDto } from './dto/user/create-user.dto.js';
 
 @ApiTags('users')
 @Controller({ path: 'users', version: VERSION_NEUTRAL })

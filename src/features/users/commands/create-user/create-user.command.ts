@@ -1,9 +1,5 @@
+import type { CreateUserDto } from '../../dto/user/create-user.dto.js';
+
 export class CreateUserCommand {
-  constructor(
-    public readonly data: {
-      name: string;
-      email: string;
-      phone: string;
-    },
-  ) {}
+  constructor(public readonly data: CreateUserDto) {}
 }
