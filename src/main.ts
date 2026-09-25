@@ -4,6 +4,9 @@ import { Logger } from 'nestjs-pino';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 
+// Mantiene las operaciones de fecha locales de Node en la zona horaria de Lima.
+process.env.TZ ??= 'America/Lima';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));

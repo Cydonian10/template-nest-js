@@ -30,7 +30,7 @@ export class Person {
 
   @ApiProperty({ example: '1990-01-31', type: String, format: 'date' })
   @Column({ name: 'birth_date', type: 'date' })
-  birthDate: Date;
+  birthDate: string;
 
   @ApiProperty({ example: '+593999999999' })
   @Column({ length: 30 })
