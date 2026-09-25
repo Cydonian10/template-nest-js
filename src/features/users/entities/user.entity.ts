@@ -3,20 +3,28 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
+import { Sale } from '../../sales/entities/sale.entity.js';
+import { Person } from './person.entity.js';
+import { UserRole } from './user_roles.entity.js';
 
 @Entity('users')
 export class User {
   @ApiProperty()
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @ApiProperty({ example: 'Gabriel Pérez' })
   @Column({
     unique: true,
     length: 100,
+    name: 'nick_name',
   })
   nickName: string;
 
@@ -25,22 +33,35 @@ export class User {
   email: string;
 
   @ApiProperty({ example: '**************' })
-  @Column()
-  password_hash: string;
+  @Column({
+    name: 'password_hash',
+  })
+  passwordHash: string;
 
   @ApiProperty()
   @Column({
     type: 'timestamptz',
     nullable: true,
     default: null,
+    name: 'last_login_at',
   })
-  last_login_at: Date | null;
+  lastLoginAt: Date | null;
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
   @ApiProperty()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @OneToOne(() => Person, (person) => person.user, { nullable: true })
+  @JoinColumn({ name: 'person_id' })
+  person: Relation<Person>;
+
+  @OneToMany(() => UserRole, (userRole) => userRole.user)
+  userRoles: Relation<UserRole[]>;
+
+  @OneToMany(() => Sale, (sale) => sale.user)
+  sales: Relation<Sale[]>;
 }
