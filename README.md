@@ -53,6 +53,22 @@ API de aprendizaje construida con NestJS 12, CQRS, TypeORM, PostgreSQL y migraci
 
 La API queda disponible en `http://localhost:3000`. La documentación Swagger está en `http://localhost:3000/docs`.
 
+### Crear un super-admin
+
+Después de aplicar las migraciones, configura estas variables en `.env` o en el entorno de ejecución (no guardes credenciales reales en el repositorio):
+
+```dotenv
+SUPER_ADMIN_EMAIL=admin@example.com
+SUPER_ADMIN_NICK_NAME=Admin
+SUPER_ADMIN_PASSWORD=una-clave-segura
+SUPER_ADMIN_FIRST_NAME=Ada
+SUPER_ADMIN_LAST_NAME=Lovelace
+SUPER_ADMIN_IDENTITY_DOCUMENT=1234567890
+SUPER_ADMIN_DATE_OF_BIRTH=1990-01-31
+```
+
+Ejecuta `npm run migration:super-admin`. El comando crea el rol `SUPER_ADMIN` si falta, crea el usuario y le asigna el rol en una transacción. Si ya existe un usuario con ese correo, termina con error. La contraseña se guarda como hash Argon2. El comando **no** asigna permisos ni menús al rol automáticamente.
+
 ### Reiniciar la base local
 
 El volumen de PostgreSQL persiste los datos. Para eliminarlo y crear una base vacía, ejecuta este comando destructivo:

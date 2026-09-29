@@ -25,7 +25,8 @@
     "migration:run": "npm run build && typeorm migration:run -d dist/database/data-source.js",
     "migration:revert": "npm run build && typeorm migration:revert -d dist/database/data-source.js",
     "migration:show": "npm run build && typeorm migration:show -d dist/database/data-source.js",
-    "migration:remove": "npm run build && node scripts/migration-remove.mjs"
+    "migration:remove": "npm run build && node scripts/migration-remove.mjs",
+    "migration:super-admin": "npm run build && node scripts/create-super-admin.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
