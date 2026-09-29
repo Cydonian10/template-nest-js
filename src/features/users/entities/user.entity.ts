@@ -10,7 +10,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
-import { Sale } from '../../sales/entities/sale.entity.js';
 import { Person } from './person.entity.js';
 import { UserRole } from './user_roles.entity.js';
 
@@ -61,7 +60,4 @@ export class User {
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles: Relation<UserRole[]>;
-
-  @OneToMany(() => Sale, (sale) => sale.user)
-  sales: Relation<Sale[]>;
 }

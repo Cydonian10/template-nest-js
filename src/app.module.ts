@@ -8,8 +8,6 @@ import { AppService } from './app.service.js';
 import databaseConfig from './config/database.config.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
-import { ProductsModule } from './features/products/products.module.js';
-import { SalesModule } from './features/sales/sales.module.js';
 import { UsersModule } from './features/users/users.module.js';
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.js';
 
@@ -34,9 +32,7 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
       validate: (config) => envSchema.parse(config),
     }),
     DatabaseModule,
-    ProductsModule,
     UsersModule,
-    SalesModule,
   ],
   controllers: [AppController],
   providers: [
