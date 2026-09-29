@@ -4,6 +4,7 @@ import { Person } from '../dist/features/access-control/entities/person.entity.j
 import { Role } from '../dist/features/access-control/entities/roles.entity.js';
 import { User } from '../dist/features/access-control/entities/user.entity.js';
 import { UserRole } from '../dist/features/access-control/entities/user_roles.entity.js';
+import { ROLE_CODES } from '../dist/shared/authorization/role-codes.js';
 
 function required(name) {
   const value = process.env[name];
@@ -35,10 +36,10 @@ async function main() {
       }
       const roleRepository = manager.getRepository(Role);
       const role =
-        (await roleRepository.findOneBy({ code: 'SUPER_ADMIN' })) ??
+        (await roleRepository.findOneBy({ code: ROLE_CODES.SUPER_ADMIN })) ??
         (await roleRepository.save(
           roleRepository.create({
-            code: 'SUPER_ADMIN',
+            code: ROLE_CODES.SUPER_ADMIN,
             name: 'Super administrador',
             description: 'Rol de super administrador',
           }),

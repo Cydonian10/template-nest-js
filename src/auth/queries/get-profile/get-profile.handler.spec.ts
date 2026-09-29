@@ -1,6 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import { User } from '../../../features/access-control/entities/user.entity.js';
+import { ROLE_CODES } from '../../../shared/authorization/role-codes.js';
 import { GetProfileHandler } from './get-profile.handler.js';
 import { GetProfileQuery } from './get-profile.query.js';
 
@@ -22,7 +23,7 @@ describe('GetProfileHandler', () => {
     };
     const currentRole = {
       id: 'role-1',
-      code: 'SUPER_ADMIN',
+      code: ROLE_CODES.SUPER_ADMIN,
       name: 'Super administrador',
       description: 'Administrador',
       rolePermissions: [
@@ -94,7 +95,7 @@ describe('GetProfileHandler', () => {
       roles: [
         {
           id: 'role-1',
-          code: 'SUPER_ADMIN',
+          code: ROLE_CODES.SUPER_ADMIN,
           name: 'Super administrador',
           description: 'Administrador',
         },

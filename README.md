@@ -55,7 +55,7 @@ JWT_EXPIRES_IN_SECONDS=3600
 
 La API queda disponible en `http://localhost:3000`. La documentación Swagger está en `http://localhost:3000/docs`.
 
-Para iniciar sesión, envía `POST /api/auth/login` con `{ "email": "admin@example.com", "password": "tu-contraseña" }`. Devuelve `accessToken`, `tokenType` y `expiresIn` (segundos). El token se envía en `Authorization: Bearer <accessToken>`. `GET /api/auth/profile` devuelve el usuario, su persona, roles vigentes y permisos activos (sin contraseña). Las rutas nuevas requieren JWT por defecto; marca las rutas abiertas con `@Public()` y usa `@CurrentUser()` para obtener el usuario autenticado (o `@CurrentUser('id')` para su identificador). Las rutas existentes de inicio y usuarios permanecen públicas. Configura `JWT_SECRET` con un valor aleatorio propio antes de levantar la aplicación; el valor de `.env.example` es solo ilustrativo. El login comprueba que la cuenta esté activa, pero no exige que el correo esté verificado.
+Para iniciar sesión, envía `POST /api/auth/login` con `{ "email": "admin@example.com", "password": "tu-contraseña" }`. Devuelve `accessToken`, `tokenType` y `expiresIn` (segundos). El token se envía en `Authorization: Bearer <accessToken>`. `GET /api/auth/profile` devuelve el usuario, su persona, roles vigentes y permisos activos (sin contraseña). Las rutas nuevas requieren JWT por defecto; marca las rutas abiertas con `@Public()` y usa `@CurrentUser()` para obtener el usuario autenticado (o `@CurrentUser('id')` para su identificador). Para exigir permisos usa `@RequirePermissions('CODIGO')`; varios códigos exigen que se tengan todos. `GET /api/users` y `POST /api/users` requieren JWT y los permisos `USUARIOS_LEER` y `USUARIOS_CREAR`, respectivamente (401 sin token, 403 sin permiso). Configura `JWT_SECRET` con un valor aleatorio propio antes de levantar la aplicación; el valor de `.env.example` es solo ilustrativo. El login comprueba que la cuenta esté activa, pero no exige que el correo esté verificado.
 
 ### Crear un super-admin
 
@@ -72,6 +72,8 @@ SUPER_ADMIN_DATE_OF_BIRTH=1990-01-31
 ```
 
 Ejecuta `npm run migration:super-admin`. El comando crea el rol `SUPER_ADMIN` si falta, crea el usuario y le asigna el rol en una transacción. Si ya existe un usuario con ese correo, termina con error. La contraseña se guarda como hash Argon2. El comando **no** asigna permisos ni menús al rol automáticamente.
+
+Después de crear el super-admin, ejecuta `npm run migration:permissions` para crear `USUARIOS_LEER` y `USUARIOS_CREAR` y asignarlos al rol `SUPER_ADMIN`. El seed se puede repetir sin duplicar filas ni reactivar asignaciones deshabilitadas manualmente. Requiere la base de datos con las migraciones aplicadas y el rol `SUPER_ADMIN` existente.
 
 ### Reiniciar la base local
 
