@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Post, VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { User } from './entities/user.entity.js';
-import { FindAllUsersQuery } from './queries/users/find-all-users/find-all-users.query.js';
-import { CreateUserSchema } from './dto/user/create-user.dto.js';
-import type { CreateUserDto } from './dto/user/create-user.dto.js';
-import { CreateUserCommand } from './commands/users/create-user/create-user.command.js';
+import { User } from '../entities/user.entity.js';
+import { FindAllUsersQuery } from '../queries/users/find-all-users/find-all-users.query.js';
+import { CreateUserSchema } from '../dto/user/create-user.dto.js';
+import type { CreateUserDto } from '../dto/user/create-user.dto.js';
+import { CreateUserCommand } from '../commands/users/create-user/create-user.command.js';
 
 @ApiTags('users')
 @Controller({ path: 'users', version: VERSION_NEUTRAL })
