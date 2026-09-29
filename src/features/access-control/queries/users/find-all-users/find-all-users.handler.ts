@@ -1,8 +1,8 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../entities/user.entity.js';
 import { FindAllUsersQuery } from './find-all-users.query.js';
+import { User } from '../../../entities/user.entity.js';
 
 @QueryHandler(FindAllUsersQuery)
 export class FindAllUsersHandler implements IQueryHandler<FindAllUsersQuery> {

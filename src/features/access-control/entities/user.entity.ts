@@ -40,7 +40,7 @@ export class User {
   passwordHash: string;
 
   @ApiProperty({ required: false, nullable: true })
-  @Column({ name: 'email_verification_token', nullable: true })
+  @Column({ name: 'email_verification_token', type: 'varchar', nullable: true })
   emailVerificationToken: string | null;
 
   @ApiProperty({ default: false })
