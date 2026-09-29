@@ -22,6 +22,7 @@ async function bootstrap() {
     .setTitle('NestJS CQRS Learning API')
     .setDescription('API de aprendizaje progresivo con NestJS')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, swaggerDocument);

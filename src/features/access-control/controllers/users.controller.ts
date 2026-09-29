@@ -7,7 +7,9 @@ import type { CreateUserDto } from '../dto/user/create-user.dto.js';
 import { CreateUserCommand } from '../commands/users/create-user/create-user.command.js';
 import { UserResponseDto } from '../dto/user/user-response.dto.js';
 import type { User } from '../entities/user.entity.js';
+import { Public } from '../../../auth/decorators/public.decorator.js';
 
+@Public()
 @ApiTags('users')
 @Controller({ path: 'users', version: VERSION_NEUTRAL })
 export class UsersController {

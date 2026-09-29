@@ -9,6 +9,7 @@ import databaseConfig from './config/database.config.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AccessControlModule } from './features/access-control/access-control.module.js';
+import { AuthModule } from './auth/auth.module.js';
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.js';
 
 @Module({
@@ -33,6 +34,7 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
     }),
     DatabaseModule,
     AccessControlModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

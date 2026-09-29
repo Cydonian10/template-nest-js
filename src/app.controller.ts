@@ -1,7 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 import { AppService } from './app.service.js';
+import { Public } from './auth/decorators/public.decorator.js';
 
+@Public()
 @Controller()
 export class AppController {
   constructor(

@@ -29,7 +29,9 @@ API de aprendizaje construida con NestJS 12, CQRS, TypeORM, PostgreSQL y migraci
    DB_PORT=5432
    DB_USERNAME=postgres
    DB_PASSWORD=postgres
-   DB_DATABASE=nestjs_cqrs
+DB_DATABASE=nestjs_cqrs
+JWT_SECRET=reemplazar-por-un-secreto-aleatorio-de-al-menos-32-caracteres
+JWT_EXPIRES_IN_SECONDS=3600
    ```
 
 3. Inicia PostgreSQL:
@@ -52,6 +54,8 @@ API de aprendizaje construida con NestJS 12, CQRS, TypeORM, PostgreSQL y migraci
    ```
 
 La API queda disponible en `http://localhost:3000`. La documentación Swagger está en `http://localhost:3000/docs`.
+
+Para iniciar sesión, envía `POST /api/auth/login` con `{ "email": "admin@example.com", "password": "tu-contraseña" }`. Devuelve `accessToken`, `tokenType` y `expiresIn` (segundos). El token se envía en `Authorization: Bearer <accessToken>`. `GET /api/auth/profile` devuelve el usuario, su persona, roles vigentes y permisos activos (sin contraseña). Las rutas nuevas requieren JWT por defecto; marca las rutas abiertas con `@Public()` y usa `@CurrentUser()` para obtener el usuario autenticado (o `@CurrentUser('id')` para su identificador). Las rutas existentes de inicio y usuarios permanecen públicas. Configura `JWT_SECRET` con un valor aleatorio propio antes de levantar la aplicación; el valor de `.env.example` es solo ilustrativo. El login comprueba que la cuenta esté activa, pero no exige que el correo esté verificado.
 
 ### Crear un super-admin
 
@@ -120,6 +124,8 @@ Los controladores de features usan `VERSION_NEUTRAL`, por lo que las rutas no in
 | `PATCH` | `/api/products/:id` | Actualizar producto |
 | `GET` | `/api/users` | Listar usuarios |
 | `POST` | `/api/users` | Crear usuario |
+| `POST` | `/api/auth/login` | Iniciar sesión y obtener JWT |
+| `GET` | `/api/auth/profile` | Consultar perfil, roles y permisos |
 | `GET` | `/api/sales` | Listar ventas |
 | `POST` | `/api/sales` | Crear venta |
 
