@@ -1,78 +1,44 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
 
-export class ProfilePersonDto {
-  @ApiProperty({ format: 'uuid' })
-  id: string;
+export const ProfilePersonSchema = z.strictObject({
+  id: z.uuid(),
+  firstName: z.string(),
+  lastName: z.string(),
+  dateOfBirth: z.iso.date(),
+  identityDocument: z.string(),
+  active: z.boolean(),
+});
 
-  @ApiProperty()
-  firstName: string;
+export type ProfilePersonDto = z.infer<typeof ProfilePersonSchema>;
 
-  @ApiProperty()
-  lastName: string;
+export const ProfileRoleSchema = z.strictObject({
+  id: z.uuid(),
+  code: z.string(),
+  name: z.string(),
+  description: z.string(),
+});
 
-  @ApiProperty({ format: 'date' })
-  dateOfBirth: string;
+export type ProfileRoleDto = z.infer<typeof ProfileRoleSchema>;
 
-  @ApiProperty()
-  identityDocument: string;
+export const ProfilePermissionSchema = z.strictObject({
+  id: z.uuid(),
+  code: z.string(),
+  name: z.string(),
+  resourceCode: z.string(),
+  actionCode: z.string(),
+});
 
-  @ApiProperty()
-  active: boolean;
-}
+export type ProfilePermissionDto = z.infer<typeof ProfilePermissionSchema>;
 
-export class ProfileRoleDto {
-  @ApiProperty({ format: 'uuid' })
-  id: string;
+export const ProfileResponseSchema = z.strictObject({
+  id: z.uuid(),
+  email: z.email(),
+  nickName: z.string(),
+  emailVerified: z.boolean(),
+  active: z.boolean(),
+  person: ProfilePersonSchema,
+  roles: z.array(ProfileRoleSchema),
+  permissions: z.array(ProfilePermissionSchema),
+});
 
-  @ApiProperty()
-  code: string;
-
-  @ApiProperty()
-  name: string;
-
-  @ApiProperty()
-  description: string;
-}
-
-export class ProfilePermissionDto {
-  @ApiProperty({ format: 'uuid' })
-  id: string;
-
-  @ApiProperty()
-  code: string;
-
-  @ApiProperty()
-  name: string;
-
-  @ApiProperty()
-  resourceCode: string;
-
-  @ApiProperty()
-  actionCode: string;
-}
-
-export class ProfileResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  id: string;
-
-  @ApiProperty({ format: 'email' })
-  email: string;
-
-  @ApiProperty()
-  nickName: string;
-
-  @ApiProperty()
-  emailVerified: boolean;
-
-  @ApiProperty()
-  active: boolean;
-
-  @ApiProperty({ type: ProfilePersonDto })
-  person: ProfilePersonDto;
-
-  @ApiProperty({ type: [ProfileRoleDto] })
-  roles: ProfileRoleDto[];
-
-  @ApiProperty({ type: [ProfilePermissionDto] })
-  permissions: ProfilePermissionDto[];
-}
+export type ProfileResponseDto = z.infer<typeof ProfileResponseSchema>;

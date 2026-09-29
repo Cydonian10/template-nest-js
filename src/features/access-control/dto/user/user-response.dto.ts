@@ -17,12 +17,6 @@ export class UserResponseDto {
   @ApiProperty()
   active: boolean;
 
-  @ApiProperty()
-  createdAt: Date;
-
-  @ApiProperty()
-  updatedAt: Date;
-
   static from(user: User): UserResponseDto {
     return {
       id: user.id,
@@ -30,8 +24,6 @@ export class UserResponseDto {
       nickName: user.nickName,
       emailVerified: user.emailVerified,
       active: user.active,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     };
   }
 }

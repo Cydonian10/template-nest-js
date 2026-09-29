@@ -20,7 +20,7 @@ import { LocalStrategy } from './strategies/local.strategy.js';
   imports: [
     TypeOrmModule.forFeature([User]),
     CqrsModule,
-    PassportModule,
+    PassportModule.register({}),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

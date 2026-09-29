@@ -3,7 +3,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { User } from '../../../features/access-control/entities/user.entity.js';
-import {
+import type {
   ProfilePermissionDto,
   ProfileResponseDto,
   ProfileRoleDto,

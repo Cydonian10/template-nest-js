@@ -17,9 +17,12 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { LoginCommand } from './commands/login/login.command.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
 import { Public } from './decorators/public.decorator.js';
-import { ProfileResponseDto } from './dto/profile-response.dto.js';
-import { LoginDto } from './dto/login.dto.js';
+import { ProfileResponseSchema } from './dto/profile-response.dto.js';
+import type { ProfileResponseDto } from './dto/profile-response.dto.js';
+import { LoginSchema } from './dto/login.dto.js';
+
 import { LoginResponseDto } from './dto/login-response.dto.js';
+import { toOpenApiSchema } from './dto/openapi-schema.js';
 import { LocalAuthGuard } from './guards/local-auth.guard.js';
 import { GetProfileQuery } from './queries/get-profile/get-profile.query.js';
 
@@ -35,8 +38,11 @@ export class AuthController {
   @Post('login')
   @UseGuards(LocalAuthGuard)
   @ApiOperation({ summary: 'Iniciar sesión con correo y contraseña' })
-  @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ description: 'Token de acceso JWT', type: LoginResponseDto })
+  @ApiBody({ schema: toOpenApiSchema(LoginSchema) })
+  @ApiOkResponse({
+    description: 'Token de acceso JWT',
+    type: LoginResponseDto,
+  })
   @ApiUnauthorizedResponse({
     description: 'Credenciales inválidas o usuario inactivo',
   })
@@ -47,7 +53,7 @@ export class AuthController {
   @Get('profile')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener perfil con persona, roles y permisos' })
-  @ApiOkResponse({ type: ProfileResponseDto })
+  @ApiOkResponse({ schema: toOpenApiSchema(ProfileResponseSchema) })
   @ApiUnauthorizedResponse({
     description: 'Token ausente, inválido o usuario inactivo',
   })

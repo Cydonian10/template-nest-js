@@ -1,12 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginResponseDto {
-  @ApiProperty({ description: 'JWT para Authorization: Bearer <token>' })
+  @ApiProperty()
   accessToken: string;
 
-  @ApiProperty({ example: 'Bearer' })
+  @ApiProperty()
   tokenType: 'Bearer';
 
-  @ApiProperty({ example: 3600, description: 'Duración en segundos' })
+  @ApiProperty()
   expiresIn: number;
+
+  static from(obj: any): LoginResponseDto {
+    return {
+      accessToken: obj.accessToken,
+      tokenType: obj.tokenType,
+      expiresIn: obj.expiresIn,
+    };
+  }
 }
