@@ -4,7 +4,7 @@ import { CreatePersonSchema } from '../person/create-person.dto.js';
 export const CreateUserSchema = z.strictObject({
   nickName: z.string().trim().min(1).max(100),
   email: z.email(),
-  passwordHash: z.string().min(1),
+  password: z.string().min(8),
   person: CreatePersonSchema,
 });
 
