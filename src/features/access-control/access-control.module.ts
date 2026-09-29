@@ -11,4 +11,4 @@ import { UsersController } from './users.controller.js';
   controllers: [UsersController],
   providers: [CreateUserHandler, FindAllUsersHandler, UnitOfWork],
 })
-export class UsersModule {}
+export class AccessControlModule {}

@@ -16,27 +16,27 @@ export class Person {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ example: 'Pérez' })
-  @Column({ name: 'last_name', length: 100 })
-  lastName: string;
-
   @ApiProperty({ example: 'Gabriel' })
   @Column({ name: 'first_name', length: 100 })
   firstName: string;
 
-  @ApiProperty({ example: '1234567890' })
-  @Column({ name: 'document_number', length: 50, unique: true })
-  documentNumber: string;
+  @ApiProperty({ example: 'Pérez' })
+  @Column({ name: 'last_name', length: 100 })
+  lastName: string;
 
   @ApiProperty({ example: '1990-01-31', type: String, format: 'date' })
-  @Column({ name: 'birth_date', type: 'date' })
-  birthDate: string;
+  @Column({ name: 'date_of_birth', type: 'date' })
+  dateOfBirth: string;
 
-  @ApiProperty({ example: '+593999999999' })
-  @Column({ length: 30 })
-  phone: string;
+  @ApiProperty({ example: '1234567890' })
+  @Column({ name: 'identity_document' })
+  identityDocument: string;
 
-  @OneToOne(() => User, (user) => user.person)
+  @ApiProperty({ default: true })
+  @Column({ default: true })
+  active: boolean;
+
+  @OneToOne(() => User, (user) => user.persona)
   user: Relation<User>;
 
   @ApiProperty()

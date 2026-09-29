@@ -8,7 +8,7 @@ import { AppService } from './app.service.js';
 import databaseConfig from './config/database.config.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
-import { UsersModule } from './features/users/users.module.js';
+import { AccessControlModule } from './features/access-control/access-control.module.js';
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.js';
 
 @Module({
@@ -32,7 +32,7 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
       validate: (config) => envSchema.parse(config),
     }),
     DatabaseModule,
-    UsersModule,
+    AccessControlModule,
   ],
   controllers: [AppController],
   providers: [
