@@ -4,6 +4,7 @@ import type { UnitOfWork } from '../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../shared/exceptions/resource-not-found.exception.js';
 import type { User } from '../../entities/user.entity.js';
 import { Role } from '../../entities/roles.entity.js';
+import { SuperAdminProtectionService } from '../../services/super-admin-protection.service.js';
 import { BlockUserCommand } from './block-user/block-user.command.js';
 import { BlockUserHandler } from './block-user/block-user.handler.js';
 import { ActivateUserCommand } from './activate-user/activate-user.command.js';
@@ -36,6 +37,7 @@ describe('User and person status handlers', () => {
       work(manager),
     ),
   } as unknown as UnitOfWork;
+  const superAdminProtection = new SuperAdminProtectionService();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,7 +51,7 @@ describe('User and person status handlers', () => {
   });
 
   it('bloquea solo al usuario y permite repetir la operación', async () => {
-    const handler = new BlockUserHandler(unitOfWork);
+    const handler = new BlockUserHandler(unitOfWork, superAdminProtection);
     const result = await handler.execute(new BlockUserCommand('user-id'));
     expect(result.active).toBe(false);
     expect(result.persona.active).toBe(true);
@@ -66,7 +68,9 @@ describe('User and person status handlers', () => {
   it('impide bloquear al último SuperAdmin vigente', async () => {
     query.getRawOne.mockResolvedValue({ count: '1' });
     await expect(
-      new BlockUserHandler(unitOfWork).execute(new BlockUserCommand('user-id')),
+      new BlockUserHandler(unitOfWork, superAdminProtection).execute(
+        new BlockUserCommand('user-id'),
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(save).not.toHaveBeenCalled();
     expect(findOne).toHaveBeenCalledWith(Role, {
@@ -83,12 +87,14 @@ describe('User and person status handlers', () => {
     query.getCount.mockResolvedValue(0);
     query.getRawOne.mockResolvedValue({ count: '1' });
     await expect(
-      new BlockUserHandler(unitOfWork).execute(new BlockUserCommand('user-id')),
+      new BlockUserHandler(unitOfWork, superAdminProtection).execute(
+        new BlockUserCommand('user-id'),
+      ),
     ).resolves.toMatchObject({ active: false });
   });
 
   it('bloquea solo a la persona y protege al último SuperAdmin', async () => {
-    const handler = new BlockPersonHandler(unitOfWork);
+    const handler = new BlockPersonHandler(unitOfWork, superAdminProtection);
     const result = await handler.execute(new BlockPersonCommand('user-id'));
     expect(result.active).toBe(true);
     expect(result.persona.active).toBe(false);
@@ -120,7 +126,7 @@ describe('User and person status handlers', () => {
   it('devuelve 404 si no existe el usuario', async () => {
     findOne.mockResolvedValue(null);
     await expect(
-      new BlockPersonHandler(unitOfWork).execute(
+      new BlockPersonHandler(unitOfWork, superAdminProtection).execute(
         new BlockPersonCommand('missing'),
       ),
     ).rejects.toBeInstanceOf(ResourceNotFoundException);

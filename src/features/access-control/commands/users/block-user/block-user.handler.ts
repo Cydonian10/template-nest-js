@@ -2,12 +2,15 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
 import { User } from '../../../entities/user.entity.js';
-import { ensureSuperAdminRemains } from '../ensure-super-admin-remains.js';
+import { SuperAdminProtectionService } from '../../../services/super-admin-protection.service.js';
 import { BlockUserCommand } from './block-user.command.js';
 
 @CommandHandler(BlockUserCommand)
 export class BlockUserHandler implements ICommandHandler<BlockUserCommand> {
-  constructor(private readonly unitOfWork: UnitOfWork) {}
+  constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly superAdminProtection: SuperAdminProtectionService,
+  ) {}
 
   execute(command: BlockUserCommand): Promise<User> {
     return this.unitOfWork.execute(async (manager) => {
@@ -17,7 +20,7 @@ export class BlockUserHandler implements ICommandHandler<BlockUserCommand> {
       });
       if (!user) throw new ResourceNotFoundException('Usuario', command.id);
       if (!user.active) return user;
-      await ensureSuperAdminRemains(manager, user.id);
+      await this.superAdminProtection.ensureCanDeactivate(manager, user.id);
       user.active = false;
       return manager.save(user);
     });

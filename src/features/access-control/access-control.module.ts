@@ -15,6 +15,7 @@ import { PasswordHasher } from '../../shared/security/password/password-hasher.j
 import { Permission } from './entities/permission.entity.js';
 import { PermissionsController } from './controllers/permissions.controller.js';
 import { FindAllPermissionsHandler } from './queries/permissions/find-all-permissions/find-all-permissions.handler.js';
+import { SuperAdminProtectionService } from './services/super-admin-protection.service.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Permission])],
@@ -28,6 +29,7 @@ import { FindAllPermissionsHandler } from './queries/permissions/find-all-permis
     ActivatePersonHandler,
     FindAllUsersHandler,
     FindAllPermissionsHandler,
+    SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },
   ],
