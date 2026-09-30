@@ -10,7 +10,6 @@ export const PERMISSION_CODES = {
   USERS_STATUS: 'USUARIOS_ESTADO',
   PERSONS_STATUS: 'PERSONAS_ESTADO',
   PERMISSIONS_READ: 'PERMISOS_LEER',
-  kajsdkfja: 'kajsdf',
 } as const;
 
 /**
