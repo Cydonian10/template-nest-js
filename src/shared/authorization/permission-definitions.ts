@@ -18,6 +18,7 @@ export const ACTIONS_BY_RESOURCE = {
     'ASIGNAR_PERMISO',
     'ASIGNAR_MENU',
   ],
+  MENUS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR'],
 } as const;
 
 export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
@@ -140,5 +141,35 @@ export const PERMISSION_DEFINITIONS = definePermissions([
     name: 'Asignar y retirar menús a roles',
     resourceCode: 'ROLES',
     actionCode: 'ASIGNAR_MENU',
+  },
+  {
+    code: PERMISSION_CODES.MENUS_CREATE,
+    name: 'Crear menús',
+    resourceCode: 'MENUS',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.MENUS_READ,
+    name: 'Leer menús',
+    resourceCode: 'MENUS',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.MENUS_UPDATE,
+    name: 'Editar menús',
+    resourceCode: 'MENUS',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.MENUS_STATUS,
+    name: 'Activar y desactivar menús',
+    resourceCode: 'MENUS',
+    actionCode: 'ESTADO',
+  },
+  {
+    code: PERMISSION_CODES.MENUS_DELETE,
+    name: 'Eliminar menús',
+    resourceCode: 'MENUS',
+    actionCode: 'ELIMINAR',
   },
 ] as const);

@@ -54,7 +54,7 @@
 
 ### RF-MENU-010
 
-- El sistema permitirá listar menús.
+- El sistema permitirá listar menús, con filtros opcionales combinables por módulo y rol; el listado administrativo incluirá menús activos e inactivos.
 
 ### RF-MENU-011
 
@@ -62,7 +62,7 @@
 
 ### RF-MENU-012
 
-- El sistema permitirá desactivar menús.
+- El sistema permitirá activar y desactivar menús sin eliminar sus asociaciones.
 
 ## Módulos
 

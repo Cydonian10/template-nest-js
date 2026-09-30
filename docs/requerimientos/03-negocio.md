@@ -56,7 +56,7 @@
 
 ### RN-012
 
-- No se puede eliminar un menú mientras esté asociado a uno o más roles o módulos.
+- No se puede eliminar un menú mientras esté asociado a uno o más roles. Todo menú pertenece obligatoriamente a un módulo; eliminar el menú no elimina su módulo.
 
 ### RN-013
 

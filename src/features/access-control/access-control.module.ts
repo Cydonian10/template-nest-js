@@ -28,10 +28,25 @@ import { AssignRolePermissionHandler } from './commands/roles/assign-permission/
 import { RemoveRolePermissionHandler } from './commands/roles/remove-permission/remove-permission.handler.js';
 import { AssignRoleMenuHandler } from './commands/roles/assign-menu/assign-menu.handler.js';
 import { RemoveRoleMenuHandler } from './commands/roles/remove-menu/remove-menu.handler.js';
+import { Menu } from './entities/menu.entity.js';
+import { SystemModule } from './entities/module.entity.js';
+import { MenusController } from './controllers/menus.controller.js';
+import { CreateMenuHandler } from './commands/menus/create-menu/create-menu.handler.js';
+import { UpdateMenuHandler } from './commands/menus/update-menu/update-menu.handler.js';
+import { SetMenuActiveHandler } from './commands/menus/set-menu-active/set-menu-active.handler.js';
+import { DeleteMenuHandler } from './commands/menus/delete-menu/delete-menu.handler.js';
+import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-menus.handler.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Permission, Role])],
-  controllers: [UsersController, PermissionsController, RolesController],
+  imports: [
+    TypeOrmModule.forFeature([User, Permission, Role, Menu, SystemModule]),
+  ],
+  controllers: [
+    UsersController,
+    PermissionsController,
+    RolesController,
+    MenusController,
+  ],
   providers: [
     CreateUserHandler,
     UpdateUserHandler,
@@ -51,6 +66,11 @@ import { RemoveRoleMenuHandler } from './commands/roles/remove-menu/remove-menu.
     RemoveRolePermissionHandler,
     AssignRoleMenuHandler,
     RemoveRoleMenuHandler,
+    CreateMenuHandler,
+    UpdateMenuHandler,
+    SetMenuActiveHandler,
+    DeleteMenuHandler,
+    FindAllMenusHandler,
     SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },
