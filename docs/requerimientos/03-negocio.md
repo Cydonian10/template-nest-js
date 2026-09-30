@@ -32,6 +32,8 @@
 
 - Un rol puede tener varios permisos y estar asociado a varios menús. Un permiso o menú puede estar asociado a varios roles.
 
+- Asignar un permiso o menú ya asociado al mismo rol se rechaza; retirar la asignación elimina solo la relación, no el permiso ni el menú. Una asignación de permiso inactiva no concede acceso.
+
 ### RN-008
 
 - No se puede eliminar un rol mientras esté asignado a usuarios o tenga permisos o menús asociados.
@@ -64,7 +66,7 @@
 
 ### RN-014
 
-- No se puede eliminar un módulo mientras tenga menús asociados o esté asoWkciado a un sistema.
+- No se puede eliminar un módulo mientras tenga menús asociados o esté asociado a un sistema.
 
 ### RN-015
 

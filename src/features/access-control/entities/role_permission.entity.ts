@@ -19,7 +19,7 @@ export class RolePermission {
 
   @ManyToOne(() => Role, (role) => role.rolePermissions, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'role_id' })
   role: Relation<Role>;
@@ -30,7 +30,7 @@ export class RolePermission {
 
   @ManyToOne(() => Permission, (permission) => permission.rolePermissions, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'permission_id' })
   permission: Relation<Permission>;

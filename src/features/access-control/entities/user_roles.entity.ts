@@ -19,7 +19,7 @@ export class UserRole {
 
   @ManyToOne(() => Role, (role) => role.userRoles, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'role_id' })
   role: Relation<Role>;

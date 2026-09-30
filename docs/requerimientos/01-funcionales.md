@@ -116,7 +116,7 @@
 
 ### RF-ROLE-024
 
-- El sistema permitirá registrar roles.
+- El sistema permitirá registrar roles y generar un código único a partir del nombre según el modelo de roles.
 
 ### RF-ROLE-025
 
@@ -124,7 +124,7 @@
 
 ### RF-ROLE-026
 
-- El sistema permitirá editar roles.
+- El sistema permitirá editar el nombre y la descripción de roles sin modificar automáticamente su código.
 
 ### RF-ROLE-027
 
@@ -132,15 +132,27 @@
 
 ### RF-ROLE-028
 
-- El sistema permitirá asignar roles a usuarios.
+- El sistema permitirá asignar roles a usuarios y retirar asignaciones existentes, sin dejar al sistema sin un SuperAdmin vigente.
 
 ### RF-ROLE-029
 
-- El sistema permitirá definir fechas de vigencia al asignar un rol a un usuario.
+- El sistema permitirá definir fechas de vigencia al asignar un rol a un usuario; la fecha final no podrá preceder a la inicial.
 
 ### RF-ROLE-030
 
 - El sistema permitirá asignar roles sin fecha de vencimiento.
+
+### RF-ROLE-034
+
+- El sistema permitirá asignar permisos a roles y retirar esas asignaciones.
+
+### RF-ROLE-035
+
+- El sistema permitirá asignar menús a roles y retirar esas asignaciones.
+
+### RF-ROLE-036
+
+- Al listar roles, el sistema mostrará las asignaciones de usuarios, permisos y menús sin exponer datos sensibles de usuarios.
 
 ## Permisos
 
@@ -154,4 +166,4 @@
 
 ### RF-PERM-033
 
-- El sistema permitra lanzar seed para rellenar permisos
+- El sistema permitirá ejecutar un seed idempotente para crear o actualizar los permisos administrados por la aplicación sin borrar permisos adicionales.

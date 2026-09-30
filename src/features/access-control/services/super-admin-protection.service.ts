@@ -6,6 +6,50 @@ import { UserRole } from '../entities/user_roles.entity.js';
 
 @Injectable()
 export class SuperAdminProtectionService {
+  /** Al retirar una asignación, cuenta usuarios distintos que seguirán siendo SuperAdmin. */
+  async ensureCanRemoveAssignment(
+    manager: EntityManager,
+    userId: string,
+    assignmentId: string,
+  ): Promise<void> {
+    const role = await manager.findOne(Role, {
+      where: { code: ROLE_CODES.SUPER_ADMIN },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!role) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const remaining = await manager
+      .createQueryBuilder(UserRole, 'assignment')
+      .innerJoin('assignment.user', 'user')
+      .innerJoin('user.persona', 'person')
+      .select('COUNT(DISTINCT user.id)', 'count')
+      .where('assignment.role_id = :roleId', { roleId: role.id })
+      .andWhere('assignment.id != :assignmentId', { assignmentId })
+      .andWhere('user.active = :active', { active: true })
+      .andWhere('person.active = :active', { active: true })
+      .andWhere('assignment.valid_from <= :today', { today })
+      .andWhere(
+        '(assignment.valid_until IS NULL OR assignment.valid_until >= :today)',
+        { today },
+      )
+      .getRawOne<{ count: string }>();
+    const target = await manager.findOne(UserRole, {
+      where: { id: assignmentId, user: { id: userId } },
+      relations: { user: { persona: true } },
+    });
+    if (
+      target?.user.active &&
+      target.user.persona.active &&
+      target.validFrom <= today &&
+      (!target.validUntil || target.validUntil >= today) &&
+      Number(remaining?.count ?? 0) === 0
+    ) {
+      throw new ConflictException(
+        'No se puede quitar el rol al último SuperAdmin activo',
+      );
+    }
+  }
+
   /** Serializa las desactivaciones para no bloquear simultáneamente a los dos últimos administradores. */
   async ensureCanDeactivate(
     manager: EntityManager,

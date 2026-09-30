@@ -43,4 +43,46 @@ export const PERMISSION_DEFINITIONS = [
     resourceCode: 'PERMISOS',
     actionCode: 'LEER',
   },
+  {
+    code: PERMISSION_CODES.ROLES_CREATE,
+    name: 'Crear roles',
+    resourceCode: 'ROLES',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_READ,
+    name: 'Leer roles',
+    resourceCode: 'ROLES',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_UPDATE,
+    name: 'Editar roles',
+    resourceCode: 'ROLES',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_DELETE,
+    name: 'Eliminar roles',
+    resourceCode: 'ROLES',
+    actionCode: 'ELIMINAR',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_ASSIGN_USER,
+    name: 'Asignar y retirar roles a usuarios',
+    resourceCode: 'ROLES',
+    actionCode: 'ASIGNAR_USUARIO',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
+    name: 'Asignar y retirar permisos a roles',
+    resourceCode: 'ROLES',
+    actionCode: 'ASIGNAR_PERMISO',
+  },
+  {
+    code: PERMISSION_CODES.ROLES_ASSIGN_MENU,
+    name: 'Asignar y retirar menús a roles',
+    resourceCode: 'ROLES',
+    actionCode: 'ASIGNAR_MENU',
+  },
 ] as const;

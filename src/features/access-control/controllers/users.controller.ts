@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -32,6 +34,12 @@ import { UserResponseDto } from '../dto/user/user-response.dto.js';
 import type { User } from '../entities/user.entity.js';
 import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
+import { AssignRoleSchema } from '../dto/role/assign-role.dto.js';
+import type { AssignRoleDto } from '../dto/role/assign-role.dto.js';
+import { UserRoleResponseDto } from '../dto/role/role-response.dto.js';
+import { AssignUserRoleCommand } from '../commands/roles/assign-user/assign-user.command.js';
+import { RemoveUserRoleCommand } from '../commands/roles/remove-user/remove-user.command.js';
+import type { UserRole } from '../entities/user_roles.entity.js';
 
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
@@ -121,5 +129,30 @@ export class UsersController {
       new ActivatePersonCommand(id),
     );
     return UserResponseDto.from(user);
+  }
+
+  @Post(':id/roles')
+  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_USER)
+  @ApiCreatedResponse({ type: UserRoleResponseDto })
+  async assignRole(
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Body({ schema: AssignRoleSchema }) dto: AssignRoleDto,
+  ): Promise<UserRoleResponseDto> {
+    const assignment: UserRole = await this.commandBus.execute(
+      new AssignUserRoleCommand(userId, dto),
+    );
+    return UserRoleResponseDto.from(assignment);
+  }
+
+  @Delete(':id/roles/:assignmentId')
+  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_USER)
+  @HttpCode(204)
+  async removeRole(
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Param('assignmentId', new ParseUUIDPipe()) assignmentId: string,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new RemoveUserRoleCommand(userId, assignmentId),
+    );
   }
 }

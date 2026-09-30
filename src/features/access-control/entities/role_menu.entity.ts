@@ -20,7 +20,7 @@ export class RoleMenu {
 
   @ManyToOne(() => Role, (role) => role.roleMenus, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'role_id' })
   role: Relation<Role>;
@@ -31,7 +31,7 @@ export class RoleMenu {
 
   @ManyToOne(() => Menu, (menu) => menu.roleMenus, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'menu_id' })
   menu: Relation<Menu>;
