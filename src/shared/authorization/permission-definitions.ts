@@ -1,6 +1,40 @@
 import { PERMISSION_CODES } from './permission-codes.js';
 
 /**
+ * Acciones válidas para cada recurso del catálogo administrado por la aplicación.
+ * Para añadir una acción (p. ej. EXPORTAR), agrégala al recurso correspondiente
+ * y después declara su código en PERMISSION_CODES y su definición abajo.
+ * No limita los permisos adicionales que puedan existir en la base de datos.
+ */
+export const ACTIONS_BY_RESOURCE = {
+  USUARIOS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ASIGNAR_ROL'],
+  PERSONAS: ['ESTADO'],
+  PERMISOS: ['LEER'],
+  ROLES: [
+    'CREAR',
+    'LEER',
+    'EDITAR',
+    'ELIMINAR',
+    'ASIGNAR_PERMISO',
+    'ASIGNAR_MENU',
+  ],
+} as const;
+
+export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
+export type ActionCode<R extends ResourceCode = ResourceCode> =
+  (typeof ACTIONS_BY_RESOURCE)[R][number];
+
+/** Vincula recurso, acción y código para detectar combinaciones inválidas al compilar. */
+type PermissionDefinition = {
+  [R in ResourceCode]: {
+    code: `${R}_${ActionCode<R>}`;
+    name: string;
+    resourceCode: R;
+    actionCode: ActionCode<R>;
+  };
+}[ResourceCode];
+
+/**
  * Descripciones que `scripts/seed-permissions.mjs` inserta inicialmente en la
  * tabla `permissions`. `code` es el identificador estable; `name` es el texto
  * legible, y `resourceCode`/`actionCode` indican el recurso y la acción.
@@ -68,9 +102,9 @@ export const PERMISSION_DEFINITIONS = [
     actionCode: 'ELIMINAR',
   },
   {
-    code: PERMISSION_CODES.USER_ASSIGN_ROL,
+    code: PERMISSION_CODES.USERS_ASSIGN_ROL,
     name: 'Asignar y retirar roles a usuarios',
-    resourceCode: 'USUARIO',
+    resourceCode: 'USUARIOS',
     actionCode: 'ASIGNAR_ROL',
   },
   {
@@ -85,4 +119,4 @@ export const PERMISSION_DEFINITIONS = [
     resourceCode: 'ROLES',
     actionCode: 'ASIGNAR_MENU',
   },
-] as const;
+] as const satisfies readonly PermissionDefinition[];

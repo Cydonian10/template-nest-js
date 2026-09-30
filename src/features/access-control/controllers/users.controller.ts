@@ -132,7 +132,7 @@ export class UsersController {
   }
 
   @Post(':id/roles')
-  @RequirePermissions(PERMISSION_CODES.USER_ASSIGN_ROL)
+  @RequirePermissions(PERMISSION_CODES.USERS_ASSIGN_ROL)
   @ApiCreatedResponse({ type: UserRoleResponseDto })
   async assignRole(
     @Param('id', new ParseUUIDPipe()) userId: string,
@@ -145,7 +145,7 @@ export class UsersController {
   }
 
   @Delete(':id/roles/:assignmentId')
-  @RequirePermissions(PERMISSION_CODES.USER_ASSIGN_ROL)
+  @RequirePermissions(PERMISSION_CODES.USERS_ASSIGN_ROL)
   @HttpCode(204)
   async removeRole(
     @Param('id', new ParseUUIDPipe()) userId: string,
