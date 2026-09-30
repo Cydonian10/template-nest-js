@@ -24,7 +24,7 @@
 
 ### RN-006
 
-- No se puede desactivar al último usuario activo con el rol SuperAdmin ni quitarle dicho rol.
+- No se puede desactivar al último usuario activo con el rol SuperAdmin, desactivar a su persona asociada ni quitarle dicho rol si con ello deja de existir un SuperAdmin vigente con usuario y persona activos.
 
 ## Roles
 

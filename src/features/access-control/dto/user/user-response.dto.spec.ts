@@ -13,6 +13,14 @@ describe('UserResponseDto', () => {
       updatedAt: new Date(),
       passwordHash: 'hash-secreto',
       emailVerificationToken: 'token-secreto',
+      persona: {
+        id: 'person-id',
+        firstName: 'Gabriel',
+        lastName: 'Pérez',
+        identityDocument: '123',
+        dateOfBirth: '1990-01-31',
+        active: true,
+      },
     } as User;
 
     expect(UserResponseDto.from(user)).toEqual({
@@ -21,8 +29,14 @@ describe('UserResponseDto', () => {
       nickName: user.nickName,
       emailVerified: user.emailVerified,
       active: user.active,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      person: {
+        id: user.persona.id,
+        firstName: user.persona.firstName,
+        lastName: user.persona.lastName,
+        identityDocument: user.persona.identityDocument,
+        dateOfBirth: user.persona.dateOfBirth,
+        active: true,
+      },
     });
   });
 });

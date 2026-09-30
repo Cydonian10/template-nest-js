@@ -20,6 +20,24 @@ export const PERMISSION_DEFINITIONS = [
     actionCode: 'LEER',
   },
   {
+    code: PERMISSION_CODES.USERS_UPDATE,
+    name: 'Editar usuarios y personas',
+    resourceCode: 'USUARIOS',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.USERS_STATUS,
+    name: 'Activar y desactivar usuarios',
+    resourceCode: 'USUARIOS',
+    actionCode: 'ESTADO',
+  },
+  {
+    code: PERMISSION_CODES.PERSONS_STATUS,
+    name: 'Activar y desactivar personas',
+    resourceCode: 'PERSONAS',
+    actionCode: 'ESTADO',
+  },
+  {
     code: PERMISSION_CODES.PERMISSIONS_READ,
     name: 'Leer permisos',
     resourceCode: 'PERMISOS',

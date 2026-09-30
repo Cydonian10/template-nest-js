@@ -17,11 +17,13 @@ export class ValidateCredentialsHandler implements IQueryHandler<ValidateCredent
     if (typeof query.email !== 'string' || typeof query.password !== 'string') {
       throw new UnauthorizedException('Credenciales inválidas');
     }
-    const user = await this.users.findOneBy({
-      emailNormalized: query.email.toUpperCase(),
+    const user = await this.users.findOne({
+      where: { emailNormalized: query.email.toUpperCase() },
+      relations: { persona: true },
     });
     if (
       !user?.active ||
+      !user.persona?.active ||
       !(await this.passwordHasher.verify(query.password, user.passwordHash))
     ) {
       throw new UnauthorizedException('Credenciales inválidas');

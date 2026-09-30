@@ -3,8 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { APP_FILTER } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import databaseConfig from './config/database.config.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
@@ -36,9 +34,8 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
     AccessControlModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,

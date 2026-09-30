@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -12,6 +21,13 @@ import { FindAllUsersQuery } from '../queries/users/find-all-users/find-all-user
 import { CreateUserSchema } from '../dto/user/create-user.dto.js';
 import type { CreateUserDto } from '../dto/user/create-user.dto.js';
 import { CreateUserCommand } from '../commands/users/create-user/create-user.command.js';
+import { UpdateUserCommand } from '../commands/users/update-user/update-user.command.js';
+import { BlockUserCommand } from '../commands/users/block-user/block-user.command.js';
+import { ActivateUserCommand } from '../commands/users/activate-user/activate-user.command.js';
+import { BlockPersonCommand } from '../commands/users/block-person/block-person.command.js';
+import { ActivatePersonCommand } from '../commands/users/activate-person/activate-person.command.js';
+import { UpdateUserSchema } from '../dto/user/update-user.dto.js';
+import type { UpdateUserDto } from '../dto/user/update-user.dto.js';
 import { UserResponseDto } from '../dto/user/user-response.dto.js';
 import type { User } from '../entities/user.entity.js';
 import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
@@ -46,5 +62,64 @@ export class UsersController {
   async findAll(): Promise<UserResponseDto[]> {
     const users: User[] = await this.queryBus.execute(new FindAllUsersQuery());
     return users.map((user) => UserResponseDto.from(user));
+  }
+
+  @Patch(':id')
+  @RequirePermissions(PERMISSION_CODES.USERS_UPDATE)
+  @ApiOkResponse({ type: UserResponseDto })
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body({ schema: UpdateUserSchema }) dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const user: User = await this.commandBus.execute(
+      new UpdateUserCommand(id, dto),
+    );
+    return UserResponseDto.from(user);
+  }
+
+  @Patch(':id/block')
+  @RequirePermissions(PERMISSION_CODES.USERS_STATUS)
+  @ApiOkResponse({ type: UserResponseDto })
+  async block(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<UserResponseDto> {
+    const user: User = await this.commandBus.execute(new BlockUserCommand(id));
+    return UserResponseDto.from(user);
+  }
+
+  @Patch(':id/activate')
+  @RequirePermissions(PERMISSION_CODES.USERS_STATUS)
+  @ApiOkResponse({ type: UserResponseDto })
+  async activate(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<UserResponseDto> {
+    const user: User = await this.commandBus.execute(
+      new ActivateUserCommand(id),
+    );
+    return UserResponseDto.from(user);
+  }
+
+  @Patch(':id/person/block')
+  @RequirePermissions(PERMISSION_CODES.PERSONS_STATUS)
+  @ApiOkResponse({ type: UserResponseDto })
+  async blockPerson(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<UserResponseDto> {
+    const user: User = await this.commandBus.execute(
+      new BlockPersonCommand(id),
+    );
+    return UserResponseDto.from(user);
+  }
+
+  @Patch(':id/person/activate')
+  @RequirePermissions(PERMISSION_CODES.PERSONS_STATUS)
+  @ApiOkResponse({ type: UserResponseDto })
+  async activatePerson(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<UserResponseDto> {
+    const user: User = await this.commandBus.execute(
+      new ActivatePersonCommand(id),
+    );
+    return UserResponseDto.from(user);
   }
 }

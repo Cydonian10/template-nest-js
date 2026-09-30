@@ -24,7 +24,7 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
         userRoles: { role: { rolePermissions: { permission: true } } },
       },
     });
-    if (!user) throw new UnauthorizedException();
+    if (!user?.persona?.active) throw new UnauthorizedException();
 
     const today = new Date().toISOString().slice(0, 10);
     const roles = new Map<string, ProfileRoleDto>();

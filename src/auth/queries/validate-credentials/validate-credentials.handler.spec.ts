@@ -10,18 +10,19 @@ describe('ValidateCredentialsHandler', () => {
     id: 'user-id',
     passwordHash: 'hash-argon2',
     active: true,
+    persona: { active: true },
   } as User;
-  const findOneBy = vi.fn();
+  const findOne = vi.fn();
   const verify = vi.fn();
   const handler = new ValidateCredentialsHandler(
-    { findOneBy } as unknown as Repository<User>,
+    { findOne } as unknown as Repository<User>,
     { verify } as unknown as PasswordHasher,
   );
 
   beforeEach(() => vi.clearAllMocks());
 
   it('valida el correo normalizado y el hash', async () => {
-    findOneBy.mockResolvedValue(user);
+    findOne.mockResolvedValue(user);
     verify.mockResolvedValue(true);
 
     await expect(
@@ -29,8 +30,9 @@ describe('ValidateCredentialsHandler', () => {
         new ValidateCredentialsQuery('admin@example.com', 'clave'),
       ),
     ).resolves.toBe(user);
-    expect(findOneBy).toHaveBeenCalledWith({
-      emailNormalized: 'ADMIN@EXAMPLE.COM',
+    expect(findOne).toHaveBeenCalledWith({
+      where: { emailNormalized: 'ADMIN@EXAMPLE.COM' },
+      relations: { persona: true },
     });
     expect(verify).toHaveBeenCalledWith('clave', 'hash-argon2');
   });
@@ -38,9 +40,14 @@ describe('ValidateCredentialsHandler', () => {
   it.each([
     ['usuario inexistente', null, false],
     ['usuario inactivo', { id: user.id, active: false } as User, true],
+    [
+      'persona inactiva',
+      { id: user.id, active: true, persona: { active: false } } as User,
+      true,
+    ],
     ['contraseña incorrecta', user, false],
   ])('rechaza %s', async (_label, found, matches) => {
-    findOneBy.mockResolvedValue(found);
+    findOne.mockResolvedValue(found);
     verify.mockResolvedValue(matches);
     await expect(
       handler.execute(
@@ -55,6 +62,6 @@ describe('ValidateCredentialsHandler', () => {
         new ValidateCredentialsQuery(null as unknown as string, 'clave'),
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(findOneBy).not.toHaveBeenCalled();
+    expect(findOne).not.toHaveBeenCalled();
   });
 });

@@ -28,11 +28,11 @@
 
 ### RF-USER-004
 
-- El sistema permitirá editar la información de los usuarios y de sus personas asociadas.
+- El sistema permitirá editar la información de los usuarios y de sus personas asociadas, incluida la contraseña del usuario, que se almacenará únicamente como hash.
 
 ### RF-USER-005
 
-- El sistema permitirá activar o desactivar usuarios y sus personas asociadas.
+- El sistema permitirá activar o desactivar usuarios y sus personas asociadas de forma independiente.
 
 ### RF-USER-006
 
@@ -120,7 +120,7 @@
 
 ### RF-ROLE-025
 
-- El sistema permitirá eliminar un rol siempre que no esté asignado a ningún usuario ni tenga permisos asociados.
+- El sistema permitirá eliminar un rol siempre que no esté asignado a ningún usuario ni tenga permisos o menús asociados.
 
 ### RF-ROLE-026
 

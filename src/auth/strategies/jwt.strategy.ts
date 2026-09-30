@@ -24,8 +24,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (typeof payload?.sub !== 'string') {
       throw new UnauthorizedException();
     }
-    const user = await this.users.findOneBy({ id: payload.sub });
-    if (!user?.active) throw new UnauthorizedException();
+    const user = await this.users.findOne({
+      where: { id: payload.sub },
+      relations: { persona: true },
+    });
+    if (!user?.active || !user.persona?.active)
+      throw new UnauthorizedException();
     return { id: user.id, email: user.email };
   }
 }
