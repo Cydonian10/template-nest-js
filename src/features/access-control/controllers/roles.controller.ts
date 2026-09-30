@@ -27,6 +27,8 @@ import type { CreateRoleDto } from '../dto/role/create-role.dto.js';
 import { UpdateRoleSchema } from '../dto/role/update-role.dto.js';
 import type { UpdateRoleDto } from '../dto/role/update-role.dto.js';
 import { RoleResponseDto } from '../dto/role/role-response.dto.js';
+import { RolePermissionResponseDto } from '../dto/role/role-permission-response.dto.js';
+import { RoleMenuResponseDto } from '../dto/role/role-menu-response.dto.js';
 import type { Role } from '../entities/roles.entity.js';
 import type { RolePermission } from '../entities/role_permission.entity.js';
 import type { RoleMenu } from '../entities/role_menu.entity.js';

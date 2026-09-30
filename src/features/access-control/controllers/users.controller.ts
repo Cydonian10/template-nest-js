@@ -36,7 +36,7 @@ import { RequirePermissions } from '../../../auth/decorators/require-permissions
 import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
 import { AssignRoleSchema } from '../dto/role/assign-role.dto.js';
 import type { AssignRoleDto } from '../dto/role/assign-role.dto.js';
-import { UserRoleResponseDto } from '../dto/role/role-response.dto.js';
+import { UserRoleResponseDto } from '../dto/user/user-role-response.dto.js';
 import { AssignUserRoleCommand } from '../commands/roles/assign-user/assign-user.command.js';
 import { RemoveUserRoleCommand } from '../commands/roles/remove-user/remove-user.command.js';
 import type { UserRole } from '../entities/user_roles.entity.js';
@@ -132,7 +132,7 @@ export class UsersController {
   }
 
   @Post(':id/roles')
-  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_USER)
+  @RequirePermissions(PERMISSION_CODES.USER_ASSIGN_ROL)
   @ApiCreatedResponse({ type: UserRoleResponseDto })
   async assignRole(
     @Param('id', new ParseUUIDPipe()) userId: string,
@@ -145,7 +145,7 @@ export class UsersController {
   }
 
   @Delete(':id/roles/:assignmentId')
-  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_USER)
+  @RequirePermissions(PERMISSION_CODES.USER_ASSIGN_ROL)
   @HttpCode(204)
   async removeRole(
     @Param('id', new ParseUUIDPipe()) userId: string,
