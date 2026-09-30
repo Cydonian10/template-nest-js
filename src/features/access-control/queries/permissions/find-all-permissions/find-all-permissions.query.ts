@@ -1,1 +1,3 @@
-export class FindAllPermissionsQuery {}
+export class FindAllPermissionsQuery {
+  constructor(public readonly roleId?: string) {}
+}

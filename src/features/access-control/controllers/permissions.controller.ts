@@ -1,9 +1,16 @@
-import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  ParseUUIDPipe,
+  Query,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -23,10 +30,13 @@ export class PermissionsController {
 
   @Get()
   @RequirePermissions(PERMISSION_CODES.PERMISSIONS_READ)
+  @ApiQuery({ name: 'roleId', required: false, type: String, format: 'uuid' })
   @ApiOkResponse({ type: PermissionResponseDto, isArray: true })
-  async findAll(): Promise<PermissionResponseDto[]> {
+  async findAll(
+    @Query('roleId', new ParseUUIDPipe({ optional: true })) roleId?: string,
+  ): Promise<PermissionResponseDto[]> {
     const permissions: Permission[] = await this.queryBus.execute(
-      new FindAllPermissionsQuery(),
+      new FindAllPermissionsQuery(roleId),
     );
     return permissions.map((permission) =>
       PermissionResponseDto.from(permission),
