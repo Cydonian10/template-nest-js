@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import type { Repository } from 'typeorm';
 import { UserRole } from '../../features/access-control/entities/user_roles.entity.js';
 import { PERMISSION_CODES } from '../../shared/authorization/permission-codes.js';
+import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
 import { PermissionsGuard } from './permissions.guard.js';
 
 describe('PermissionsGuard', () => {
@@ -11,7 +12,9 @@ describe('PermissionsGuard', () => {
   const getRawMany = vi.fn();
   const queryBuilder = {
     innerJoin: vi.fn().mockReturnThis(),
+    leftJoin: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
+    addSelect: vi.fn().mockReturnThis(),
     distinct: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     andWhere: vi.fn().mockReturnThis(),
@@ -55,7 +58,9 @@ describe('PermissionsGuard', () => {
   });
 
   it('devuelve 403 si falta alguno de los permisos', async () => {
-    getRawMany.mockResolvedValue([{ code: PERMISSION_CODES.USERS_READ }]);
+    getRawMany.mockResolvedValue([
+      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_READ },
+    ]);
     await expect(
       guard.canActivate(context({ id: 'user-1' })),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -63,13 +68,15 @@ describe('PermissionsGuard', () => {
       'assignment.user_id = :userId',
       { userId: 'user-1' },
     );
-    expect(queryBuilder.innerJoin).toHaveBeenCalledWith(
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
       'role.rolePermissions',
       'grant',
       'grant.active = :active',
       { active: true },
     );
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+      'grant.permission',
+      'permission',
       'permission.code IN (:...required)',
       {
         required: [PERMISSION_CODES.USERS_READ, PERMISSION_CODES.USERS_CREATE],
@@ -85,9 +92,19 @@ describe('PermissionsGuard', () => {
 
   it('autoriza solo si están todos los permisos exigidos', async () => {
     getRawMany.mockResolvedValue([
-      { code: PERMISSION_CODES.USERS_READ },
-      { code: PERMISSION_CODES.USERS_CREATE },
+      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_READ },
+      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_CREATE },
     ]);
+    await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
+      true,
+    );
+  });
+
+  it('autoriza a SUPER_ADMIN sin asignaciones de permisos', async () => {
+    getRawMany.mockResolvedValue([
+      { roleCode: ROLE_CODES.SUPER_ADMIN, code: null },
+    ]);
+
     await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
       true,
     );
