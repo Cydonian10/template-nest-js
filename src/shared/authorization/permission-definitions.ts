@@ -19,4 +19,10 @@ export const PERMISSION_DEFINITIONS = [
     resourceCode: 'USUARIOS',
     actionCode: 'LEER',
   },
+  {
+    code: PERMISSION_CODES.PERMISSIONS_READ,
+    name: 'Leer permisos',
+    resourceCode: 'PERMISOS',
+    actionCode: 'LEER',
+  },
 ] as const;

@@ -6,6 +6,7 @@
 export const PERMISSION_CODES = {
   USERS_CREATE: 'USUARIOS_CREAR',
   USERS_READ: 'USUARIOS_LEER',
+  PERMISSIONS_READ: 'PERMISOS_LEER',
   kajsdkfja: 'kajsdf',
 } as const;
 
