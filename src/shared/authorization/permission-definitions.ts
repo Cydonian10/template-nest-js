@@ -1,4 +1,7 @@
-import { PERMISSION_CODES } from './permission-codes.js';
+import {
+  PERMISSION_CODES,
+  type PermissionCode,
+} from './permission-codes.js';
 
 /**
  * Acciones válidas para cada recurso del catálogo administrado por la aplicación.
@@ -24,15 +27,37 @@ export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
 export type ActionCode<R extends ResourceCode = ResourceCode> =
   (typeof ACTIONS_BY_RESOURCE)[R][number];
 
+type CatalogPermissionCode = {
+  [R in ResourceCode]: `${R}_${ActionCode<R>}`;
+}[ResourceCode];
+
 /** Vincula recurso, acción y código para detectar combinaciones inválidas al compilar. */
 type PermissionDefinition = {
   [R in ResourceCode]: {
-    code: `${R}_${ActionCode<R>}`;
+    code: Extract<PermissionCode, `${R}_${ActionCode<R>}`>;
     name: string;
     resourceCode: R;
     actionCode: ActionCode<R>;
   };
 }[ResourceCode];
+
+type MissingDefinition<Definitions extends readonly PermissionDefinition[]> =
+  Exclude<PermissionCode | CatalogPermissionCode, Definitions[number]['code']>;
+
+/**
+ * Conserva el tipo literal de las definiciones y exige que cubran tanto los
+ * códigos públicos como todas las combinaciones recurso/acción del catálogo.
+ */
+function definePermissions<
+  const Definitions extends readonly PermissionDefinition[],
+>(
+  definitions: Definitions &
+    (MissingDefinition<Definitions> extends never
+      ? unknown
+      : { readonly missingDefinitions: MissingDefinition<Definitions> }),
+): Definitions {
+  return definitions;
+}
 
 /**
  * Descripciones que `scripts/seed-permissions.mjs` inserta inicialmente en la
@@ -40,7 +65,7 @@ type PermissionDefinition = {
  * legible, y `resourceCode`/`actionCode` indican el recurso y la acción.
  * Agrega aquí cada permiso nuevo que también se declare en `PERMISSION_CODES`.
  */
-export const PERMISSION_DEFINITIONS = [
+export const PERMISSION_DEFINITIONS = definePermissions([
   {
     code: PERMISSION_CODES.USERS_CREATE,
     name: 'Crear usuarios',
@@ -119,4 +144,4 @@ export const PERMISSION_DEFINITIONS = [
     resourceCode: 'ROLES',
     actionCode: 'ASIGNAR_MENU',
   },
-] as const satisfies readonly PermissionDefinition[];
+] as const);
