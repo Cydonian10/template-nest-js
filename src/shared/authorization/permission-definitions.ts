@@ -1,7 +1,4 @@
-import {
-  PERMISSION_CODES,
-  type PermissionCode,
-} from './permission-codes.js';
+import { PERMISSION_CODES, type PermissionCode } from './permission-codes.js';
 
 /**
  * Acciones válidas para cada recurso del catálogo administrado por la aplicación.
