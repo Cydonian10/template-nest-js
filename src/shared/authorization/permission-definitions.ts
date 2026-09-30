@@ -70,7 +70,7 @@ export const PERMISSION_DEFINITIONS = [
   {
     code: PERMISSION_CODES.USER_ASSIGN_ROL,
     name: 'Asignar y retirar roles a usuarios',
-    resourceCode: 'ROLES',
+    resourceCode: 'USUARIO',
     actionCode: 'ASIGNAR_ROL',
   },
   {

@@ -3,8 +3,8 @@ import { Permission } from '../dist/features/access-control/entities/permission.
 import { PERMISSION_DEFINITIONS } from '../dist/shared/authorization/permission-definitions.js';
 
 /**
- * Inserta los permisos definidos en el código. Puede repetirse sin duplicar
- * datos porque no crea permisos que ya existan. SUPER_ADMIN no necesita
+ * Inserta o actualiza los permisos definidos en el código, sin borrar permisos
+ * creados por otras vías. SUPER_ADMIN no necesita
  * asignaciones: PermissionsGuard le concede acceso por su código de rol.
  */
 async function main() {
@@ -18,6 +18,15 @@ async function main() {
         });
         if (!permission) {
           await manager.save(manager.create(Permission, definition));
+        } else if (
+          permission.name !== definition.name ||
+          permission.resourceCode !== definition.resourceCode ||
+          permission.actionCode !== definition.actionCode
+        ) {
+          permission.name = definition.name;
+          permission.resourceCode = definition.resourceCode;
+          permission.actionCode = definition.actionCode;
+          await manager.save(permission);
         }
       }
     });
