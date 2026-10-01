@@ -8,3 +8,6 @@ export const CreateMenuSchema = z.strictObject({
 });
 
 export type CreateMenuDto = z.infer<typeof CreateMenuSchema>;
+
+export const CreateModuleMenuSchema = CreateMenuSchema.omit({ moduleId: true });
+export type CreateModuleMenuDto = z.infer<typeof CreateModuleMenuSchema>;

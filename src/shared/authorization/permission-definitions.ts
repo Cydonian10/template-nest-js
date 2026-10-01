@@ -19,6 +19,7 @@ export const ACTIONS_BY_RESOURCE = {
     'ASIGNAR_MENU',
   ],
   MENUS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR'],
+  MODULOS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'ASIGNAR_MENU'],
   SISTEMA: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'AGREGAR_MODULO'],
 } as const;
 
@@ -172,6 +173,42 @@ export const PERMISSION_DEFINITIONS = definePermissions([
     name: 'Eliminar menús',
     resourceCode: 'MENUS',
     actionCode: 'ELIMINAR',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_CREATE,
+    name: 'Crear módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_READ,
+    name: 'Leer módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_UPDATE,
+    name: 'Editar módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_STATUS,
+    name: 'Activar y desactivar módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'ESTADO',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_DELETE,
+    name: 'Eliminar módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'ELIMINAR',
+  },
+  {
+    code: PERMISSION_CODES.MODULE_ASSIGN_MENU,
+    name: 'Asignar menús a módulos',
+    resourceCode: 'MODULOS',
+    actionCode: 'ASIGNAR_MENU',
   },
   {
     code: PERMISSION_CODES.SYSTEM_CREATE,

@@ -67,6 +67,22 @@ describe('FindAllMenusHandler', () => {
     );
   });
 
+  it('valida el sistema dueño al listar los menús anidados', async () => {
+    await handler.execute(
+      new FindAllMenusQuery('module-id', undefined, 'system-id'),
+    );
+    expect(moduleExists).toHaveBeenCalledWith({
+      id: 'module-id',
+      system: { id: 'system-id' },
+    });
+    moduleExists.mockResolvedValue(false);
+    await expect(
+      handler.execute(
+        new FindAllMenusQuery('module-id', undefined, 'other-system'),
+      ),
+    ).rejects.toBeInstanceOf(ResourceNotFoundException);
+  });
+
   it('devuelve 404 para un módulo o rol inexistente', async () => {
     moduleExists.mockResolvedValue(false);
     await expect(

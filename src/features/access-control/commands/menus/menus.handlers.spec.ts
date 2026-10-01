@@ -66,6 +66,26 @@ describe('Comandos de menús', () => {
     expect(result).toMatchObject({ module, active: true });
   });
 
+  it('limita la creación anidada al sistema dueño del módulo', async () => {
+    const data = {
+      moduleId: module.id,
+      name: 'Inicio',
+      path: '/inicio',
+      description: 'Inicio',
+    };
+    findOneBy.mockResolvedValueOnce(null);
+    await expect(
+      new CreateMenuHandler(menuRepo, moduleRepo).execute(
+        new CreateMenuCommand(data, 'otro-sistema'),
+      ),
+    ).rejects.toBeInstanceOf(ResourceNotFoundException);
+    expect(findOneBy).toHaveBeenCalledWith({
+      id: module.id,
+      system: { id: 'otro-sistema' },
+    });
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('valida campos, existencia del módulo y cambios reales', async () => {
     expect(
       CreateMenuSchema.safeParse({

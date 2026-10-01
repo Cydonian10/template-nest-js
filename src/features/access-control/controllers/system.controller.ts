@@ -32,11 +32,11 @@ import type { UpdateSystemDto } from '../dto/system/update-system.dto.js';
 import { UpdateSystemCommand } from '../commands/system/update-system/update-system.command.js';
 import { SetSystemActiveCommand } from '../commands/system/set-system-active/set-system-active.command.js';
 import { DeleteSystemCommand } from '../commands/system/delete-system/delete-system.command.js';
+import { CreateModuleCommand } from '../commands/modules/create-module/create-module.command.js';
 import {
   createSystemModuleSchema,
   type CreateSystemModuleDto,
 } from '../dto/module/create-module.dto.js';
-import { CreateModuleCommand } from '../commands/modules/create-module/create-module.command.js';
 import { ModuleResponseDto } from '../dto/module/module-response.dto.js';
 import type { SystemModule } from '../entities/module.entity.js';
 import { FindAllSystemsQuery } from '../queries/system/find-all-systems.query.js';
@@ -125,7 +125,7 @@ export class SystemController {
   }
 
   @Post(':id/modules')
-  @RequirePermissions(PERMISSION_CODES.SYSTEM_ADD_MODULE)
+  @RequirePermissions(PERMISSION_CODES.MODULE_CREATE)
   @ApiCreatedResponse({ type: ModuleResponseDto })
   async addModule(
     @Param('id', new ParseUUIDPipe()) id: string,

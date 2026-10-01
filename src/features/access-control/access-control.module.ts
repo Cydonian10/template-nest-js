@@ -42,9 +42,15 @@ import { CreateSystemHandler } from './commands/system/create-system/create-syst
 import { UpdateSystemHandler } from './commands/system/update-system/update-system.handler.js';
 import { SetSystemActiveHandler } from './commands/system/set-system-active/set-system-active.handler.js';
 import { DeleteSystemHandler } from './commands/system/delete-system/delete-system.handler.js';
-import { CreateModuleHandler } from './commands/modules/create-module/create-module.handler.js';
 import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler.js';
 import { AssignSystemModulesHandler } from './commands/system/assign-system-modules/assign-system-modules.handler.js';
+import { ModulesController } from './controllers/modules.controller.js';
+import { UpdateModuleHandler } from './commands/modules/update-module/update-module.handler.js';
+import { SetModuleActiveHandler } from './commands/modules/set-module-active/set-module-active.handler.js';
+import { DeleteModuleHandler } from './commands/modules/delete-module/delete-module.handler.js';
+import { AssignModuleMenusHandler } from './commands/modules/assign-module-menus/assign-module-menus.handler.js';
+import { FindSystemModulesHandler } from './queries/modules/find-system-modules.handler.js';
+import { FindSystemModuleHandler } from './queries/modules/find-system-module.handler.js';
 
 @Module({
   imports: [
@@ -63,6 +69,7 @@ import { AssignSystemModulesHandler } from './commands/system/assign-system-modu
     RolesController,
     MenusController,
     SystemController,
+    ModulesController,
   ],
   providers: [
     CreateUserHandler,
@@ -92,9 +99,14 @@ import { AssignSystemModulesHandler } from './commands/system/assign-system-modu
     UpdateSystemHandler,
     SetSystemActiveHandler,
     DeleteSystemHandler,
-    CreateModuleHandler,
     FindAllSystemsHandler,
     AssignSystemModulesHandler,
+    UpdateModuleHandler,
+    SetModuleActiveHandler,
+    DeleteModuleHandler,
+    AssignModuleMenusHandler,
+    FindSystemModulesHandler,
+    FindSystemModuleHandler,
     SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },

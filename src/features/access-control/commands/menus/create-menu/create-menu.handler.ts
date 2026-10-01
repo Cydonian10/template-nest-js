@@ -14,8 +14,11 @@ export class CreateMenuHandler implements ICommandHandler<CreateMenuCommand> {
     private readonly modules: Repository<SystemModule>,
   ) {}
 
-  async execute({ data }: CreateMenuCommand): Promise<Menu> {
-    const module = await this.modules.findOneBy({ id: data.moduleId });
+  async execute({ data, systemId }: CreateMenuCommand): Promise<Menu> {
+    const module = await this.modules.findOneBy({
+      id: data.moduleId,
+      ...(systemId ? { system: { id: systemId } } : {}),
+    });
     if (!module) throw new ResourceNotFoundException('Módulo', data.moduleId);
     return this.menus.save(
       this.menus.create({

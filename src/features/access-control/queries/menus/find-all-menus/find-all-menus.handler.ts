@@ -16,8 +16,18 @@ export class FindAllMenusHandler implements IQueryHandler<FindAllMenusQuery> {
     @InjectRepository(Role) private readonly roles: Repository<Role>,
   ) {}
 
-  async execute({ moduleId, roleId }: FindAllMenusQuery): Promise<Menu[]> {
-    if (moduleId && !(await this.modules.existsBy({ id: moduleId }))) {
+  async execute({
+    moduleId,
+    roleId,
+    systemId,
+  }: FindAllMenusQuery): Promise<Menu[]> {
+    if (
+      moduleId &&
+      !(await this.modules.existsBy({
+        id: moduleId,
+        ...(systemId ? { system: { id: systemId } } : {}),
+      }))
+    ) {
       throw new ResourceNotFoundException('Módulo', moduleId);
     }
     if (roleId && !(await this.roles.existsBy({ id: roleId }))) {
