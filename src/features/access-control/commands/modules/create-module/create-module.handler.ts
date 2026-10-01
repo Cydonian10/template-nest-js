@@ -8,8 +8,8 @@ import { Repository } from 'typeorm';
 export class CreateModuleHandler implements ICommandHandler<CreateModuleCommand> {
   constructor(
     @InjectRepository(SystemModule)
-    private readonly moduleRepository: Repository<SystemModule>
-) {}
+    private readonly moduleRepository: Repository<SystemModule>,
+  ) {}
 
   async execute(command: CreateModuleCommand): Promise<SystemModule> {
     const module = this.moduleRepository.create({

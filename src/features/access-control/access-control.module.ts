@@ -36,6 +36,7 @@ import { UpdateMenuHandler } from './commands/menus/update-menu/update-menu.hand
 import { SetMenuActiveHandler } from './commands/menus/set-menu-active/set-menu-active.handler.js';
 import { DeleteMenuHandler } from './commands/menus/delete-menu/delete-menu.handler.js';
 import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-menus.handler.js';
+import { SystemController } from './controllers/system.controller.js';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-men
     PermissionsController,
     RolesController,
     MenusController,
+    SystemController,
   ],
   providers: [
     CreateUserHandler,
