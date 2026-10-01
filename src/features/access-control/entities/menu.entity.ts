@@ -45,6 +45,19 @@ export class Menu {
   @Column({ default: true })
   active: boolean;
 
+  @ApiProperty({ default: 0, type: Number })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => Number(value),
+    },
+  })
+  order: number;
+
   @OneToMany(() => RoleMenu, (roleMenu) => roleMenu.menu)
   roleMenus: Relation<RoleMenu[]>;
 }

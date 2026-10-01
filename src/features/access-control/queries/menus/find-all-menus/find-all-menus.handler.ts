@@ -34,7 +34,9 @@ export class FindAllMenusHandler implements IQueryHandler<FindAllMenusQuery> {
       throw new ResourceNotFoundException('Rol', roleId);
     }
     if (!moduleId && !roleId)
-      return this.menus.find({ order: { name: 'ASC', id: 'ASC' } });
+      return this.menus.find({
+        order: { order: 'ASC', name: 'ASC', id: 'ASC' },
+      });
 
     const query = this.menus.createQueryBuilder('menu');
     if (roleId) {
@@ -45,7 +47,8 @@ export class FindAllMenusHandler implements IQueryHandler<FindAllMenusQuery> {
     if (moduleId) query.andWhere('menu.module_id = :moduleId', { moduleId });
     return query
       .distinct(true)
-      .orderBy('menu.name', 'ASC')
+      .orderBy('menu.order', 'ASC')
+      .addOrderBy('menu.name', 'ASC')
       .addOrderBy('menu.id', 'ASC')
       .getMany();
   }

@@ -62,8 +62,30 @@ describe('Comandos de menús', () => {
       path: data.path,
       description: data.description,
       active: true,
+      order: 0,
     });
-    expect(result).toMatchObject({ module, active: true });
+    expect(result).toMatchObject({ module, active: true, order: 0 });
+  });
+
+  it('crea un menú con orden decimal y lo devuelve como número', async () => {
+    const data = {
+      moduleId: module.id,
+      name: 'Segundo',
+      path: '/segundo',
+      description: 'Segundo menú',
+      order: 1.25,
+    };
+    const result = await new CreateMenuHandler(menuRepo, moduleRepo).execute(
+      new CreateMenuCommand(data, 'system-id'),
+    );
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ order: 1.25 }),
+    );
+    expect(MenuResponseDto.from(result).order).toBe(1.25);
+    expect(
+      MenuResponseDto.from({ order: '2.50' } as unknown as Menu)
+        .order,
+    ).toBe(2.5);
   });
 
   it('limita la creación anidada al sistema dueño del módulo', async () => {
@@ -96,6 +118,18 @@ describe('Comandos de menús', () => {
       }).success,
     ).toBe(false);
     expect(UpdateMenuSchema.safeParse({}).success).toBe(false);
+    expect(
+      CreateMenuSchema.safeParse({
+        moduleId: '00000000-0000-4000-8000-000000000001',
+        name: 'Inicio',
+        path: '/',
+        description: 'Inicio',
+        order: 0.01,
+      }).success,
+    ).toBe(true);
+    for (const order of [-1, 0.001, '1.25']) {
+      expect(UpdateMenuSchema.safeParse({ order }).success).toBe(false);
+    }
     findOneBy.mockResolvedValue(null);
     await expect(
       new CreateMenuHandler(menuRepo, moduleRepo).execute(
@@ -120,6 +154,20 @@ describe('Comandos de menús', () => {
     );
     expect(result.module).toBe(updatedModule);
     expect(MenuResponseDto.from(result).moduleId).toBe(updatedModule.id);
+  });
+
+  it('permite reordenar un menú existente, incluso al valor cero', async () => {
+    findOne.mockResolvedValue({
+      id: 'menu-id',
+      module,
+      order: 2.5,
+      active: true,
+    });
+    const result = await new UpdateMenuHandler(menuRepo, moduleRepo).execute(
+      new UpdateMenuCommand('menu-id', { order: 0 }),
+    );
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ order: 0 }));
+    expect(MenuResponseDto.from(result).order).toBe(0);
   });
 
   it('activa y desactiva sin guardar de nuevo cuando ya tiene el estado solicitado', async () => {

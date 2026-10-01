@@ -27,6 +27,7 @@ export class CreateMenuHandler implements ICommandHandler<CreateMenuCommand> {
         path: data.path,
         description: data.description,
         active: true,
+        order: data.order ?? 0,
       }),
     );
   }

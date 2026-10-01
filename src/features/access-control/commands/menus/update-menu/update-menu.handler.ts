@@ -28,6 +28,7 @@ export class UpdateMenuHandler implements ICommandHandler<UpdateMenuCommand> {
     if (data.name !== undefined) menu.name = data.name;
     if (data.path !== undefined) menu.path = data.path;
     if (data.description !== undefined) menu.description = data.description;
+    if (data.order !== undefined) menu.order = data.order;
     return this.menus.save(menu);
   }
 }

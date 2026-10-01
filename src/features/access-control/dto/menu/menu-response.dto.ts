@@ -8,6 +8,7 @@ export class MenuResponseDto {
   @ApiProperty() path: string;
   @ApiProperty() description: string;
   @ApiProperty() active: boolean;
+  @ApiProperty({ type: Number }) order: number;
 
   static from(menu: Menu): MenuResponseDto {
     return {
@@ -17,6 +18,7 @@ export class MenuResponseDto {
       path: menu.path,
       description: menu.description,
       active: menu.active,
+      order: Number(menu.order),
     };
   }
 }

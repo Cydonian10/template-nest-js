@@ -35,7 +35,9 @@ describe('FindAllMenusHandler', () => {
 
   it('lista todos los menús incluidos los inactivos sin filtros', async () => {
     await expect(handler.execute(new FindAllMenusQuery())).resolves.toBe(menus);
-    expect(find).toHaveBeenCalledWith({ order: { name: 'ASC', id: 'ASC' } });
+    expect(find).toHaveBeenCalledWith({
+      order: { order: 'ASC', name: 'ASC', id: 'ASC' },
+    });
     expect(createQueryBuilder).not.toHaveBeenCalled();
   });
 
@@ -56,6 +58,9 @@ describe('FindAllMenusHandler', () => {
       { moduleId: 'module-id' },
     );
     expect(builder.distinct).toHaveBeenCalledWith(true);
+    expect(builder.orderBy).toHaveBeenCalledWith('menu.order', 'ASC');
+    expect(builder.addOrderBy).toHaveBeenCalledWith('menu.name', 'ASC');
+    expect(builder.addOrderBy).toHaveBeenCalledWith('menu.id', 'ASC');
   });
 
   it('filtra por módulo sin necesidad de rol', async () => {
