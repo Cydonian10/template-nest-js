@@ -38,12 +38,13 @@ import { DeleteMenuHandler } from './commands/menus/delete-menu/delete-menu.hand
 import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-menus.handler.js';
 import { SystemController } from './controllers/system.controller.js';
 import { System } from './entities/system.entity.js';
-import { CreateSystemHandler } from './commands/system/create-system.handler.js';
-import { UpdateSystemHandler } from './commands/system/update-system.handler.js';
-import { SetSystemActiveHandler } from './commands/system/set-system-active.handler.js';
-import { DeleteSystemHandler } from './commands/system/delete-system.handler.js';
+import { CreateSystemHandler } from './commands/system/create-system/create-system.handler.js';
+import { UpdateSystemHandler } from './commands/system/update-system/update-system.handler.js';
+import { SetSystemActiveHandler } from './commands/system/set-system-active/set-system-active.handler.js';
+import { DeleteSystemHandler } from './commands/system/delete-system/delete-system.handler.js';
 import { CreateModuleHandler } from './commands/modules/create-module/create-module.handler.js';
 import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler.js';
+import { AssignSystemModulesHandler } from './commands/system/assign-system-modules/assign-system-modules.handler.js';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler
     DeleteSystemHandler,
     CreateModuleHandler,
     FindAllSystemsHandler,
+    AssignSystemModulesHandler,
     SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },

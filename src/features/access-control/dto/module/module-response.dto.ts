@@ -6,6 +6,7 @@ export class ModuleResponseDto {
   name: string;
   description: string;
   active: boolean;
+  order: number;
 
   static from(module: SystemModule): ModuleResponseDto {
     return {
@@ -14,6 +15,7 @@ export class ModuleResponseDto {
       name: module.name,
       description: module.description,
       active: module.active,
+      order: Number(module.order),
     };
   }
 }

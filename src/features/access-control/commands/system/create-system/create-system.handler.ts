@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateSystemCommand } from './create-system.command.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { System } from '../../entities/system.entity.js';
+import { System } from '../../../entities/system.entity.js';
 import { Repository } from 'typeorm';
 
 @CommandHandler(CreateSystemCommand)

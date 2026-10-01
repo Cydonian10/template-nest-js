@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createModuleSchema = z.strictObject({
   name: z.string().min(1),
   description: z.string().default(''),
+  order: z.number().nonnegative().multipleOf(0.01).default(0).optional(),
   systemId: z.uuid(),
 });
 

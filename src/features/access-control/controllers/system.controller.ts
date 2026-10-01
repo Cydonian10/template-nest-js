@@ -20,7 +20,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CreateSystemCommand } from '../commands/system/create-system.command.js';
+import { CreateSystemCommand } from '../commands/system/create-system/create-system.command.js';
 import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
 import { createSystemSchema } from '../dto/system/create-system.dto.js';
@@ -29,9 +29,9 @@ import { SystemResponseDto } from '../dto/system/system-response.dto.js';
 import type { System } from '../entities/system.entity.js';
 import { updateSystemSchema } from '../dto/system/update-system.dto.js';
 import type { UpdateSystemDto } from '../dto/system/update-system.dto.js';
-import { UpdateSystemCommand } from '../commands/system/update-system.command.js';
-import { SetSystemActiveCommand } from '../commands/system/set-system-active.command.js';
-import { DeleteSystemCommand } from '../commands/system/delete-system.command.js';
+import { UpdateSystemCommand } from '../commands/system/update-system/update-system.command.js';
+import { SetSystemActiveCommand } from '../commands/system/set-system-active/set-system-active.command.js';
+import { DeleteSystemCommand } from '../commands/system/delete-system/delete-system.command.js';
 import {
   createSystemModuleSchema,
   type CreateSystemModuleDto,
@@ -40,6 +40,11 @@ import { CreateModuleCommand } from '../commands/modules/create-module/create-mo
 import { ModuleResponseDto } from '../dto/module/module-response.dto.js';
 import type { SystemModule } from '../entities/module.entity.js';
 import { FindAllSystemsQuery } from '../queries/system/find-all-systems.query.js';
+import {
+  assignSystemModulesSchema,
+  type AssignSystemModulesDto,
+} from '../dto/module/assign-system-modules.dto.js';
+import { AssignSystemModulesCommand } from '../commands/system/assign-system-modules/assign-system-modules.command.js';
 
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
@@ -127,8 +132,22 @@ export class SystemController {
     @Body({ schema: createSystemModuleSchema }) data: CreateSystemModuleDto,
   ): Promise<ModuleResponseDto> {
     const module: SystemModule = await this.commandBus.execute(
-      new CreateModuleCommand(data.name, data.description, id),
+      new CreateModuleCommand(data.name, data.description, id, data.order),
     );
     return ModuleResponseDto.from(module);
+  }
+
+  @Post(':id/modules/assign')
+  @HttpCode(200)
+  @RequirePermissions(PERMISSION_CODES.SYSTEM_ADD_MODULE)
+  @ApiOkResponse({ type: ModuleResponseDto, isArray: true })
+  async assignModules(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body({ schema: assignSystemModulesSchema }) data: AssignSystemModulesDto,
+  ): Promise<ModuleResponseDto[]> {
+    const modules: SystemModule[] = await this.commandBus.execute(
+      new AssignSystemModulesCommand(id, data.moduleIds),
+    );
+    return modules.map((module) => ModuleResponseDto.from(module));
   }
 }

@@ -28,6 +28,7 @@ export class CreateModuleHandler implements ICommandHandler<CreateModuleCommand>
       description: command.description,
       system,
       active: true,
+      order: command.order,
     });
     const savedModule = await this.moduleRepository.save(module);
     savedModule.systemId = system.id;

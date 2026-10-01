@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ResourceNotFoundException } from '../../../../shared/exceptions/resource-not-found.exception.js';
-import { System } from '../../entities/system.entity.js';
+import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
+import { System } from '../../../entities/system.entity.js';
 import { UpdateSystemCommand } from './update-system.command.js';
 
 @CommandHandler(UpdateSystemCommand)

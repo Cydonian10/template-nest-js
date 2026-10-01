@@ -1,10 +1,10 @@
 import { ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { QueryFailedError } from 'typeorm';
-import { UnitOfWork } from '../../../../shared/database/unit-of-work.js';
-import { ResourceNotFoundException } from '../../../../shared/exceptions/resource-not-found.exception.js';
-import { SystemModule } from '../../entities/module.entity.js';
-import { System } from '../../entities/system.entity.js';
+import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
+import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
+import { SystemModule } from '../../../entities/module.entity.js';
+import { System } from '../../../entities/system.entity.js';
 import { DeleteSystemCommand } from './delete-system.command.js';
 
 @CommandHandler(DeleteSystemCommand)
