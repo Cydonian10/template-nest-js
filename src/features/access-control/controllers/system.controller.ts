@@ -139,7 +139,7 @@ export class SystemController {
 
   @Post(':id/modules/assign')
   @HttpCode(200)
-  @RequirePermissions(PERMISSION_CODES.SYSTEM_ADD_MODULE)
+  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_MODULES)
   @ApiOkResponse({ type: ModuleResponseDto, isArray: true })
   async assignModules(
     @Param('id', new ParseUUIDPipe()) id: string,

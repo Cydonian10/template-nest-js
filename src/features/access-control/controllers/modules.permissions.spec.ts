@@ -6,7 +6,7 @@ import { SystemController } from './system.controller.js';
 describe('Permisos de módulos', () => {
   it.each([
     [SystemController, 'addModule', PERMISSION_CODES.MODULE_CREATE],
-    [SystemController, 'assignModules', PERMISSION_CODES.SYSTEM_ADD_MODULE],
+    [SystemController, 'assignModules', PERMISSION_CODES.SYSTEM_ASSIGN_MODULES],
     [ModulesController, 'findAll', PERMISSION_CODES.MODULE_READ],
     [ModulesController, 'findOne', PERMISSION_CODES.MODULE_READ],
     [ModulesController, 'update', PERMISSION_CODES.MODULE_UPDATE],

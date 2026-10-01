@@ -20,7 +20,7 @@ export const ACTIONS_BY_RESOURCE = {
   ],
   MENUS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR'],
   MODULOS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'ASIGNAR_MENU'],
-  SISTEMA: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'AGREGAR_MODULO'],
+  SISTEMA: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'ASIGNAR_MODULOS'],
 } as const;
 
 export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
@@ -241,9 +241,9 @@ export const PERMISSION_DEFINITIONS = definePermissions([
     actionCode: 'ELIMINAR',
   },
   {
-    code: PERMISSION_CODES.SYSTEM_ADD_MODULE,
-    name: 'Agregar módulos a sistemas',
+    code: PERMISSION_CODES.SYSTEM_ASSIGN_MODULES,
+    name: 'Asignar módulos a sistemas',
     resourceCode: 'SISTEMA',
-    actionCode: 'AGREGAR_MODULO',
+    actionCode: 'ASIGNAR_MODULOS',
   },
 ] as const);
