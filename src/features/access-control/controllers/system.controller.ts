@@ -8,6 +8,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CreateSystemCommand } from '../commands/system/create-system.command.js';
+import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
 import { createSystemSchema } from '../dto/system/create-system.dto.js';
 import type { CreateSystemDto } from '../dto/system/create-system.dto.js';
 import { SystemResponseDto } from '../dto/system/system-response.dto.js';
@@ -22,6 +24,7 @@ export class SystemController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post()
+  @RequirePermissions(PERMISSION_CODES.SYSTEM_CREATE)
   @ApiCreatedResponse({ type: SystemResponseDto })
   async create(
     @Body({ schema: createSystemSchema }) data: CreateSystemDto,

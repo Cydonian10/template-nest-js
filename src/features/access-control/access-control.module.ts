@@ -37,10 +37,19 @@ import { SetMenuActiveHandler } from './commands/menus/set-menu-active/set-menu-
 import { DeleteMenuHandler } from './commands/menus/delete-menu/delete-menu.handler.js';
 import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-menus.handler.js';
 import { SystemController } from './controllers/system.controller.js';
+import { System } from './entities/system.entity.js';
+import { CreateSystemHandler } from './commands/system/create-system.handler.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Permission, Role, Menu, SystemModule]),
+    TypeOrmModule.forFeature([
+      User,
+      Permission,
+      Role,
+      Menu,
+      SystemModule,
+      System,
+    ]),
   ],
   controllers: [
     UsersController,
@@ -73,6 +82,7 @@ import { SystemController } from './controllers/system.controller.js';
     SetMenuActiveHandler,
     DeleteMenuHandler,
     FindAllMenusHandler,
+    CreateSystemHandler,
     SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },

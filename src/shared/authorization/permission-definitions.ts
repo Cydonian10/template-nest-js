@@ -19,6 +19,7 @@ export const ACTIONS_BY_RESOURCE = {
     'ASIGNAR_MENU',
   ],
   MENUS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR'],
+  SISTEMA: ['CREAR'],
 } as const;
 
 export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
@@ -171,5 +172,11 @@ export const PERMISSION_DEFINITIONS = definePermissions([
     name: 'Eliminar menús',
     resourceCode: 'MENUS',
     actionCode: 'ELIMINAR',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_CREATE,
+    name: 'Crear sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'CREAR',
   },
 ] as const);
