@@ -39,6 +39,11 @@ import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-men
 import { SystemController } from './controllers/system.controller.js';
 import { System } from './entities/system.entity.js';
 import { CreateSystemHandler } from './commands/system/create-system.handler.js';
+import { UpdateSystemHandler } from './commands/system/update-system.handler.js';
+import { SetSystemActiveHandler } from './commands/system/set-system-active.handler.js';
+import { DeleteSystemHandler } from './commands/system/delete-system.handler.js';
+import { CreateModuleHandler } from './commands/modules/create-module/create-module.handler.js';
+import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler.js';
 
 @Module({
   imports: [
@@ -83,6 +88,11 @@ import { CreateSystemHandler } from './commands/system/create-system.handler.js'
     DeleteMenuHandler,
     FindAllMenusHandler,
     CreateSystemHandler,
+    UpdateSystemHandler,
+    SetSystemActiveHandler,
+    DeleteSystemHandler,
+    CreateModuleHandler,
+    FindAllSystemsHandler,
     SuperAdminProtectionService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },

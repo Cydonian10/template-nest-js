@@ -17,6 +17,7 @@ export class CreateSystemHandler implements ICommandHandler<CreateSystemCommand>
       path: command.data.path,
       description: command.data.description,
       active: command.data.active,
+      order: command.data.order,
     });
 
     return this.systemRepo.save(newSystem);

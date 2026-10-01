@@ -6,6 +6,7 @@ export class SystemResponseDto {
   path: string;
   description: string;
   active: boolean;
+  order: number;
 
   static from(object: System) {
     return {
@@ -14,6 +15,7 @@ export class SystemResponseDto {
       path: object.path,
       description: object.description,
       active: object.active,
+      order: Number(object.order),
     };
   }
 }

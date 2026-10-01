@@ -19,7 +19,7 @@ export const ACTIONS_BY_RESOURCE = {
     'ASIGNAR_MENU',
   ],
   MENUS: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR'],
-  SISTEMA: ['CREAR'],
+  SISTEMA: ['CREAR', 'LEER', 'EDITAR', 'ESTADO', 'ELIMINAR', 'AGREGAR_MODULO'],
 } as const;
 
 export type ResourceCode = keyof typeof ACTIONS_BY_RESOURCE;
@@ -178,5 +178,35 @@ export const PERMISSION_DEFINITIONS = definePermissions([
     name: 'Crear sistemas',
     resourceCode: 'SISTEMA',
     actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_READ,
+    name: 'Leer sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_UPDATE,
+    name: 'Editar sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_STATUS,
+    name: 'Activar y desactivar sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'ESTADO',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_DELETE,
+    name: 'Eliminar sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'ELIMINAR',
+  },
+  {
+    code: PERMISSION_CODES.SYSTEM_ADD_MODULE,
+    name: 'Agregar módulos a sistemas',
+    resourceCode: 'SISTEMA',
+    actionCode: 'AGREGAR_MODULO',
   },
 ] as const);
