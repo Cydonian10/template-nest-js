@@ -4,6 +4,5 @@ export class UpdateRoleCommand {
   constructor(
     public readonly id: string,
     public readonly data: UpdateRoleDto,
-    public readonly userId: string,
   ) {}
 }

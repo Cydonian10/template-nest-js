@@ -1,65 +1,72 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
 import type { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
-import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
-import type { SystemPermissionsService } from '../../../services/system-permissions.service.js';
 import { RoleSystem } from '../../../entities/role_system.entity.js';
+import { RolePermission } from '../../../entities/role_permission.entity.js';
 import { AssignRoleSystemCommand } from './assign-system.command.js';
 import { AssignRoleSystemHandler } from './assign-system.handler.js';
+import { RemoveRoleSystemCommand } from '../remove-system/remove-system.command.js';
+import { RemoveRoleSystemHandler } from '../remove-system/remove-system.handler.js';
 
 describe('AssignRoleSystemHandler', () => {
   const role = { id: 'role-id' };
   const system = { id: 'system-id', active: true };
-  const requireSystem = vi.fn();
   const exists = vi.fn();
   const save = vi.fn(async (entity: object) => entity);
+  const remove = vi.fn(async () => undefined);
+  const findOne = vi.fn();
   const create = vi.fn((_type: object, entity: object) => entity);
   const manager = {
-    findOne: vi.fn().mockResolvedValue(role),
+    findOne,
     findOneBy: vi.fn().mockResolvedValue(system),
     exists,
     create,
     save,
+    remove,
   } as unknown as EntityManager;
   const unitOfWork = {
     execute: (work: (manager: EntityManager) => Promise<unknown>) =>
       work(manager),
   } as UnitOfWork;
-  const scope = { requireSystem } as unknown as SystemPermissionsService;
-  const handler = new AssignRoleSystemHandler(unitOfWork, scope);
-  const command = new AssignRoleSystemCommand(
-    'role-id',
-    'system-id',
-    'actor-id',
-  );
+  const handler = new AssignRoleSystemHandler(unitOfWork);
+  const command = new AssignRoleSystemCommand('role-id', 'system-id');
 
   beforeEach(() => {
     vi.clearAllMocks();
     exists.mockResolvedValue(false);
-    requireSystem.mockResolvedValue(undefined);
+    findOne.mockResolvedValue(role);
   });
 
-  it('exige el permiso del sistema y crea solo la asociación', async () => {
+  it('crea el primer vínculo sin exigir permisos previos en el sistema', async () => {
     await handler.execute(command);
-    expect(requireSystem).toHaveBeenCalledWith(
-      'actor-id',
-      'system-id',
-      PERMISSION_CODES.SYSTEM_ASSIGN_ROLES,
-      manager,
-    );
     expect(create).toHaveBeenCalledWith(RoleSystem, { role, system });
   });
 
-  it('impide asignaciones no autorizadas o duplicadas', async () => {
-    requireSystem.mockRejectedValueOnce(new ForbiddenException());
-    await expect(handler.execute(command)).rejects.toBeInstanceOf(
-      ForbiddenException,
-    );
-    expect(save).not.toHaveBeenCalled();
+  it('impide asignaciones duplicadas', async () => {
     exists.mockResolvedValueOnce(true);
     await expect(handler.execute(command)).rejects.toBeInstanceOf(
       ConflictException,
     );
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it('permite retirar el vínculo sin permiso en el sistema, pero no mientras tenga permisos asignados', async () => {
+    const link = { id: 'link-id' };
+    findOne.mockResolvedValueOnce(role).mockResolvedValueOnce(link);
+    const unlink = new RemoveRoleSystemHandler(unitOfWork);
+    await unlink.execute(new RemoveRoleSystemCommand('role-id', 'system-id'));
+    expect(exists).toHaveBeenCalledWith(RolePermission, {
+      where: {
+        role: { id: 'role-id' },
+        permission: { system: { id: 'system-id' } },
+      },
+    });
+    expect(remove).toHaveBeenCalledWith(link);
+
+    findOne.mockResolvedValueOnce(role).mockResolvedValueOnce(link);
+    exists.mockResolvedValueOnce(true);
+    await expect(
+      unlink.execute(new RemoveRoleSystemCommand('role-id', 'system-id')),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 });

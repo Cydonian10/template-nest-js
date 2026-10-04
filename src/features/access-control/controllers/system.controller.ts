@@ -92,10 +92,9 @@ export class SystemController {
   async createRole(
     @Param('systemId', new ParseUUIDPipe()) systemId: string,
     @Body({ schema: CreateSystemRoleSchema }) dto: CreateSystemRoleDto,
-    @CurrentUser('id') userId: string,
   ): Promise<RoleResponseDto> {
     const role: Role = await this.commandBus.execute(
-      new CreateSystemRoleCommand(systemId, userId, dto),
+      new CreateSystemRoleCommand(systemId, dto),
     );
     return RoleResponseDto.from(role);
   }
@@ -106,10 +105,9 @@ export class SystemController {
   async assignRole(
     @Param('systemId', new ParseUUIDPipe()) systemId: string,
     @Param('roleId', new ParseUUIDPipe()) roleId: string,
-    @CurrentUser('id') userId: string,
   ): Promise<{ id: string; roleId: string; systemId: string }> {
     const assignment: RoleSystem = await this.commandBus.execute(
-      new AssignRoleSystemCommand(roleId, systemId, userId),
+      new AssignRoleSystemCommand(roleId, systemId),
     );
     return { id: assignment.id, roleId, systemId };
   }
@@ -121,10 +119,9 @@ export class SystemController {
   removeRole(
     @Param('systemId', new ParseUUIDPipe()) systemId: string,
     @Param('roleId', new ParseUUIDPipe()) roleId: string,
-    @CurrentUser('id') userId: string,
   ): Promise<void> {
     return this.commandBus.execute(
-      new RemoveRoleSystemCommand(roleId, systemId, userId),
+      new RemoveRoleSystemCommand(roleId, systemId),
     );
   }
 

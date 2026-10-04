@@ -6,21 +6,15 @@ import { Role } from '../../../entities/roles.entity.js';
 import { Permission } from '../../../entities/permission.entity.js';
 import { RolePermission } from '../../../entities/role_permission.entity.js';
 import { RoleSystem } from '../../../entities/role_system.entity.js';
-import { SystemPermissionsService } from '../../../services/system-permissions.service.js';
-import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
 import { AssignRolePermissionCommand } from './assign-permission.command.js';
 
 @CommandHandler(AssignRolePermissionCommand)
 export class AssignRolePermissionHandler implements ICommandHandler<AssignRolePermissionCommand> {
-  constructor(
-    private readonly unitOfWork: UnitOfWork,
-    private readonly scope: SystemPermissionsService,
-  ) {}
+  constructor(private readonly unitOfWork: UnitOfWork) {}
 
   execute({
     roleId,
     permissionId,
-    userId,
   }: AssignRolePermissionCommand): Promise<RolePermission> {
     return this.unitOfWork.execute(async (manager) => {
       const role = await manager.findOne(Role, {
@@ -44,12 +38,6 @@ export class AssignRolePermissionHandler implements ICommandHandler<AssignRolePe
           'El rol no tiene acceso al sistema del permiso',
         );
       }
-      await this.scope.requireSystem(
-        userId,
-        permission.system.id,
-        PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
-        manager,
-      );
       if (
         await manager.exists(RolePermission, {
           where: { role: { id: roleId }, permission: { id: permissionId } },

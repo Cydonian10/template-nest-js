@@ -1,4 +1,3 @@
-import { ForbiddenException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import { UserRole } from '../entities/user_roles.entity.js';
 import { System } from '../entities/system.entity.js';
@@ -47,11 +46,5 @@ describe('SystemPermissionsService', () => {
       'permission.system_id = system.id AND permission.code = :code',
       { code: 'ROLES_ASIGNAR_PERMISO' },
     );
-  });
-
-  it('no permite operar sobre otro sistema', async () => {
-    await expect(
-      service.requireSystem('user-id', 'almacen-id', 'ROLES_ASIGNAR_PERMISO'),
-    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

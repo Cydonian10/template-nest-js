@@ -64,6 +64,35 @@ describe('FindAllPermissionsHandler', () => {
     });
   });
 
+  it('filtra por recurso y sistema sin rol', async () => {
+    const find = vi.fn().mockResolvedValue([]);
+    const handler = new FindAllPermissionsHandler(
+      { find } as unknown as Repository<Permission>,
+      { existsBy: vi.fn() } as unknown as Repository<Role>,
+      scope,
+    );
+
+    await handler.execute(
+      new FindAllPermissionsQuery(
+        undefined,
+        SYSTEM_CODES.VENTAS,
+        'actor-id',
+        'PRODUCTOS',
+      ),
+    );
+    expect(find).toHaveBeenCalledWith({
+      where: {
+        resourceCode: 'PRODUCTOS',
+        system: expect.objectContaining({
+          active: true,
+          code: SYSTEM_CODES.VENTAS,
+        }),
+      },
+      relations: { system: true },
+      order: { name: 'ASC' },
+    });
+  });
+
   it('filtra por rol y devuelve permisos únicos ordenados sin relaciones', async () => {
     const permissions = [
       { id: 'permission-1', name: 'Leer permisos' },
@@ -111,6 +140,18 @@ describe('FindAllPermissionsHandler', () => {
     expect(builder.andWhere).toHaveBeenCalledWith('system.code = :systemCode', {
       systemCode: SYSTEM_CODES.RRHH,
     });
+    await handler.execute(
+      new FindAllPermissionsQuery(
+        'role-id',
+        SYSTEM_CODES.RRHH,
+        'actor-id',
+        'USUARIOS',
+      ),
+    );
+    expect(builder.andWhere).toHaveBeenCalledWith(
+      'permission.resourceCode = :resourceCode',
+      { resourceCode: 'USUARIOS' },
+    );
   });
 
   it('devuelve 404 para un rol inexistente', async () => {

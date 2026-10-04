@@ -3,29 +3,18 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { QueryFailedError } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
-import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
 import { Role } from '../../../entities/roles.entity.js';
 import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { System } from '../../../entities/system.entity.js';
-import { SystemPermissionsService } from '../../../services/system-permissions.service.js';
 import { roleCodeFromName } from '../role-code.js';
 import { CreateSystemRoleCommand } from './create-system-role.command.js';
 
 @CommandHandler(CreateSystemRoleCommand)
 export class CreateSystemRoleHandler implements ICommandHandler<CreateSystemRoleCommand> {
-  constructor(
-    private readonly unitOfWork: UnitOfWork,
-    private readonly scope: SystemPermissionsService,
-  ) {}
+  constructor(private readonly unitOfWork: UnitOfWork) {}
 
-  execute({ systemId, userId, data }: CreateSystemRoleCommand): Promise<Role> {
+  execute({ systemId, data }: CreateSystemRoleCommand): Promise<Role> {
     return this.unitOfWork.execute(async (manager) => {
-      await this.scope.requireSystem(
-        userId,
-        systemId,
-        PERMISSION_CODES.ROLES_CREATE,
-        manager,
-      );
       const system = await manager.findOneBy(System, {
         id: systemId,
         active: true,

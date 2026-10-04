@@ -1,6 +1,6 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserRole } from '../entities/user_roles.entity.js';
 import { System } from '../entities/system.entity.js';
 import { ROLE_CODES } from '../../../shared/authorization/role-codes.js';
@@ -51,10 +51,9 @@ export class SystemPermissionsService {
   async allowedSystemIds(
     userId: string,
     permissionCode: string,
-    manager?: EntityManager,
   ): Promise<string[]> {
     const today = new Date().toISOString().slice(0, 10);
-    const assignments = (manager?.getRepository(UserRole) ?? this.assignments)
+    const assignments = this.assignments
       .createQueryBuilder('assignment')
       .innerJoin('assignment.role', 'role')
       .where('assignment.user_id = :userId', { userId })
@@ -69,9 +68,7 @@ export class SystemPermissionsService {
         .andWhere('role.code = :admin', { admin: ROLE_CODES.SUPER_ADMIN })
         .getExists()
     ) {
-      const systems = await (
-        manager?.getRepository(System) ?? this.systems
-      ).find({
+      const systems = await this.systems.find({
         where: { active: true },
         select: { id: true },
       });
@@ -91,22 +88,5 @@ export class SystemPermissionsService {
       .distinct(true)
       .getRawMany<{ id: string }>();
     return rows.map(({ id }) => id);
-  }
-
-  async requireSystem(
-    userId: string,
-    systemId: string,
-    permissionCode: string,
-    manager?: EntityManager,
-  ): Promise<void> {
-    if (
-      !(await this.allowedSystemIds(userId, permissionCode, manager)).includes(
-        systemId,
-      )
-    ) {
-      throw new ForbiddenException(
-        'No puedes administrar permisos de este sistema',
-      );
-    }
   }
 }

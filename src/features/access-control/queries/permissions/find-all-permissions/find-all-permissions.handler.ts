@@ -23,6 +23,7 @@ export class FindAllPermissionsHandler implements IQueryHandler<FindAllPermissio
     roleId,
     systemCode,
     userId,
+    resourceCode,
   }: FindAllPermissionsQuery): Promise<Permission[]> {
     if (!userId) return [];
     const allowed = await this.scope.allowedSystemIds(
@@ -33,6 +34,7 @@ export class FindAllPermissionsHandler implements IQueryHandler<FindAllPermissio
     if (!roleId)
       return this.repository.find({
         where: {
+          ...(resourceCode ? { resourceCode } : {}),
           system: {
             id: In(allowed),
             active: true,
@@ -61,6 +63,11 @@ export class FindAllPermissionsHandler implements IQueryHandler<FindAllPermissio
       .orderBy('permission.name', 'ASC');
     if (systemCode) {
       builder.andWhere('system.code = :systemCode', { systemCode });
+    }
+    if (resourceCode) {
+      builder.andWhere('permission.resourceCode = :resourceCode', {
+        resourceCode,
+      });
     }
     return builder.getMany();
   }

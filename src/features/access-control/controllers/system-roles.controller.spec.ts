@@ -60,27 +60,33 @@ describe('creación y asignación de roles por sistema', () => {
     expect(UpdateRoleSchema.safeParse({ systemId }).success).toBe(false);
 
     execute.mockResolvedValue(role);
-    expect(await roles.create({ ...data, systemId }, 'actor-id')).toMatchObject(
-      {
-        systemIds: [systemId],
-      },
-    );
+    expect(await roles.create({ ...data, systemId })).toMatchObject({
+      systemIds: [systemId],
+    });
     expect(execute).toHaveBeenCalledWith(
-      new CreateSystemRoleCommand(systemId, 'actor-id', data),
+      new CreateSystemRoleCommand(systemId, data),
     );
     expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'create')).toEqual([
       PERMISSION_CODES.ROLES_CREATE,
     ]);
+    expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'update')).toEqual([
+      PERMISSION_CODES.ROLES_UPDATE,
+    ]);
+    for (const name of ['assignPermission', 'removePermission']) {
+      expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, name)).toEqual([
+        PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
+      ]);
+    }
   });
 
   it('crea roles dentro de systems con ROLES_CREATE y sin permisos automáticos', async () => {
     execute.mockResolvedValue(role);
-    expect(await systems.createRole(systemId, data, 'actor-id')).toMatchObject({
+    expect(await systems.createRole(systemId, data)).toMatchObject({
       systemIds: [systemId],
       permissions: [],
     });
     expect(execute).toHaveBeenCalledWith(
-      new CreateSystemRoleCommand(systemId, 'actor-id', data),
+      new CreateSystemRoleCommand(systemId, data),
     );
     expect(systemMethodMetadata(PATH_METADATA, 'createRole')).toBe(
       ':systemId/roles',
@@ -92,17 +98,17 @@ describe('creación y asignación de roles por sistema', () => {
 
   it('asigna y retira roles en SystemController con SISTEMA_ASIGNAR_ROLES', async () => {
     execute.mockResolvedValueOnce({ id: 'assignment-id' });
-    expect(await systems.assignRole(systemId, roleId, 'actor-id')).toEqual({
+    expect(await systems.assignRole(systemId, roleId)).toEqual({
       id: 'assignment-id',
       roleId,
       systemId,
     });
     expect(execute).toHaveBeenCalledWith(
-      new AssignRoleSystemCommand(roleId, systemId, 'actor-id'),
+      new AssignRoleSystemCommand(roleId, systemId),
     );
-    await systems.removeRole(systemId, roleId, 'actor-id');
+    await systems.removeRole(systemId, roleId);
     expect(execute).toHaveBeenCalledWith(
-      new RemoveRoleSystemCommand(roleId, systemId, 'actor-id'),
+      new RemoveRoleSystemCommand(roleId, systemId),
     );
     for (const name of ['assignRole', 'removeRole']) {
       expect(systemMethodMetadata(REQUIRED_PERMISSIONS_KEY, name)).toEqual([

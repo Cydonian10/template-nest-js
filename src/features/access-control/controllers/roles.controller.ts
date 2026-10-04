@@ -54,10 +54,9 @@ export class RolesController {
   @ApiCreatedResponse({ type: RoleResponseDto })
   async create(
     @Body({ schema: CreateRoleSchema }) dto: CreateRoleDto,
-    @CurrentUser('id') userId: string,
   ): Promise<RoleResponseDto> {
     const role: Role = await this.commandBus.execute(
-      new CreateSystemRoleCommand(dto.systemId, userId, {
+      new CreateSystemRoleCommand(dto.systemId, {
         name: dto.name,
         description: dto.description,
       }),
@@ -75,14 +74,14 @@ export class RolesController {
   }
 
   @Patch(':id')
+  @RequirePermissions(PERMISSION_CODES.ROLES_UPDATE)
   @ApiOkResponse({ type: RoleResponseDto })
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body({ schema: UpdateRoleSchema }) dto: UpdateRoleDto,
-    @CurrentUser('id') userId: string,
   ): Promise<RoleResponseDto> {
     const role: Role = await this.commandBus.execute(
-      new UpdateRoleCommand(id, dto, userId),
+      new UpdateRoleCommand(id, dto),
     );
     return RoleResponseDto.from(role);
   }
@@ -96,28 +95,28 @@ export class RolesController {
   }
 
   @Post(':id/permissions/:permissionId')
+  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_PERMISSION)
   @ApiCreatedResponse({ type: RolePermissionResponseDto })
   async assignPermission(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Param('permissionId', new ParseUUIDPipe()) permissionId: string,
-    @CurrentUser('id') userId: string,
   ): Promise<RolePermissionResponseDto> {
     const assignment: RolePermission = await this.commandBus.execute(
-      new AssignRolePermissionCommand(id, permissionId, userId),
+      new AssignRolePermissionCommand(id, permissionId),
     );
     return RolePermissionResponseDto.from(assignment);
   }
 
   @Delete(':id/permissions/:permissionId')
+  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_PERMISSION)
   @HttpCode(204)
   @ApiNoContentResponse()
   async removePermission(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Param('permissionId', new ParseUUIDPipe()) permissionId: string,
-    @CurrentUser('id') userId: string,
   ): Promise<void> {
     await this.commandBus.execute(
-      new RemoveRolePermissionCommand(id, permissionId, userId),
+      new RemoveRolePermissionCommand(id, permissionId),
     );
   }
 }

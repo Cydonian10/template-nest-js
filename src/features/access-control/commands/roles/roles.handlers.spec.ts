@@ -4,8 +4,8 @@ import type { UnitOfWork } from '../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../shared/exceptions/resource-not-found.exception.js';
 import { Role } from '../../entities/roles.entity.js';
 import { Permission } from '../../entities/permission.entity.js';
-import type { SystemPermissionsService } from '../../services/system-permissions.service.js';
 import { RolePermission } from '../../entities/role_permission.entity.js';
+import { RoleSystem } from '../../entities/role_system.entity.js';
 import { UserRole } from '../../entities/user_roles.entity.js';
 import { UpdateRoleCommand } from './update-role/update-role.command.js';
 import { UpdateRoleHandler } from './update-role/update-role.handler.js';
@@ -54,9 +54,6 @@ describe('Roles y asignaciones', () => {
   const protection = {
     ensureCanRemoveAssignment,
   } as unknown as SuperAdminProtectionService;
-  const scope = {
-    requireSystem: vi.fn().mockResolvedValue(undefined),
-  } as unknown as SystemPermissionsService;
   const roleRepo = {
     findOne,
     findOneBy,
@@ -71,13 +68,13 @@ describe('Roles y asignaciones', () => {
     exists.mockResolvedValue(false);
   });
 
-  it('al cambiar el nombre conserva el código del rol', async () => {
+  it('permite editar un rol sin permisos previos y conserva su código', async () => {
     findOne.mockResolvedValue({
       ...roleData,
-      roleSystems: [{ system: { id: 'system-id' } }],
+      roleSystems: [],
     });
-    const changed = await new UpdateRoleHandler(roleRepo, scope).execute(
-      new UpdateRoleCommand(role.id, { name: 'Nuevo' }, 'actor-id'),
+    const changed = await new UpdateRoleHandler(roleRepo).execute(
+      new UpdateRoleCommand(role.id, { name: 'Nuevo' }),
     );
     expect(changed).toMatchObject({ name: 'Nuevo', code: 'AUDITOR' });
   });
@@ -166,8 +163,8 @@ describe('Roles y asignaciones', () => {
       system: { id: 'system-id', active: true },
     });
     exists.mockResolvedValueOnce(true);
-    await new AssignRolePermissionHandler(unitOfWork, scope).execute(
-      new AssignRolePermissionCommand(role.id, 'permission-id', 'actor-id'),
+    await new AssignRolePermissionHandler(unitOfWork).execute(
+      new AssignRolePermissionCommand(role.id, 'permission-id'),
     );
     expect(create).toHaveBeenCalledWith(RolePermission, {
       role,
@@ -181,12 +178,18 @@ describe('Roles y asignaciones', () => {
       Permission,
       expect.objectContaining({ relations: { system: true } }),
     );
+    expect(exists).toHaveBeenCalledWith(RoleSystem, {
+      where: {
+        role: { id: role.id },
+        system: { id: 'system-id' },
+      },
+    });
     findOne.mockResolvedValueOnce(role).mockResolvedValueOnce({
       id: 'grant-id',
       permission: { system: { id: 'system-id' } },
     });
-    await new RemoveRolePermissionHandler(unitOfWork, scope).execute(
-      new RemoveRolePermissionCommand(role.id, 'permission-id', 'actor-id'),
+    await new RemoveRolePermissionHandler(unitOfWork).execute(
+      new RemoveRolePermissionCommand(role.id, 'permission-id'),
     );
     expect(remove).toHaveBeenCalledWith({
       id: 'grant-id',
@@ -200,8 +203,8 @@ describe('Roles y asignaciones', () => {
       system: { id: 'ventas-id', active: true },
     });
     await expect(
-      new AssignRolePermissionHandler(unitOfWork, scope).execute(
-        new AssignRolePermissionCommand(role.id, 'permission-id', 'actor-id'),
+      new AssignRolePermissionHandler(unitOfWork).execute(
+        new AssignRolePermissionCommand(role.id, 'permission-id'),
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(create).not.toHaveBeenCalledWith(RolePermission, expect.anything());
@@ -232,8 +235,8 @@ describe('Roles y asignaciones', () => {
   it('devuelve 404 si no encuentra la asociación', async () => {
     findOne.mockResolvedValueOnce(role).mockResolvedValueOnce(null);
     await expect(
-      new RemoveRolePermissionHandler(unitOfWork, scope).execute(
-        new RemoveRolePermissionCommand(role.id, 'missing', 'actor-id'),
+      new RemoveRolePermissionHandler(unitOfWork).execute(
+        new RemoveRolePermissionCommand(role.id, 'missing'),
       ),
     ).rejects.toBeInstanceOf(ResourceNotFoundException);
   });

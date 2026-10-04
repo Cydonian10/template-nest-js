@@ -30,14 +30,16 @@ export class PermissionsController {
   @Get()
   @ApiQuery({ name: 'roleId', required: false, type: String, format: 'uuid' })
   @ApiQuery({ name: 'systemCode', required: false, type: String })
+  @ApiQuery({ name: 'resourceCode', required: false, type: String })
   @ApiOkResponse({ type: PermissionResponseDto, isArray: true })
   async findAll(
     @Query('roleId', new ParseUUIDPipe({ optional: true })) roleId?: string,
     @Query('systemCode') systemCode?: string,
+    @Query('resourceCode') resourceCode?: string,
     @CurrentUser('id') userId?: string,
   ): Promise<PermissionResponseDto[]> {
     const permissions: Permission[] = await this.queryBus.execute(
-      new FindAllPermissionsQuery(roleId, systemCode, userId),
+      new FindAllPermissionsQuery(roleId, systemCode, userId, resourceCode),
     );
     return permissions.map((permission) =>
       PermissionResponseDto.from(permission),
