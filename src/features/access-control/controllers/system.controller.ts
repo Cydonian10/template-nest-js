@@ -22,6 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { CreateSystemCommand } from '../commands/system/create-system/create-system.command.js';
 import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator.js';
+import { SystemPermissionsService } from '../services/system-permissions.service.js';
 import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
 import { createSystemSchema } from '../dto/system/create-system.dto.js';
 import type { CreateSystemDto } from '../dto/system/create-system.dto.js';
@@ -32,19 +34,15 @@ import type { UpdateSystemDto } from '../dto/system/update-system.dto.js';
 import { UpdateSystemCommand } from '../commands/system/update-system/update-system.command.js';
 import { SetSystemActiveCommand } from '../commands/system/set-system-active/set-system-active.command.js';
 import { DeleteSystemCommand } from '../commands/system/delete-system/delete-system.command.js';
-import { CreateModuleCommand } from '../commands/modules/create-module/create-module.command.js';
-import {
-  createSystemModuleSchema,
-  type CreateSystemModuleDto,
-} from '../dto/module/create-module.dto.js';
-import { ModuleResponseDto } from '../dto/module/module-response.dto.js';
-import type { SystemModule } from '../entities/module.entity.js';
 import { FindAllSystemsQuery } from '../queries/system/find-all-systems.query.js';
-import {
-  assignSystemModulesSchema,
-  type AssignSystemModulesDto,
-} from '../dto/module/assign-system-modules.dto.js';
-import { AssignSystemModulesCommand } from '../commands/system/assign-system-modules/assign-system-modules.command.js';
+import { CreateSystemRoleSchema } from '../dto/role/create-role.dto.js';
+import type { CreateSystemRoleDto } from '../dto/role/create-role.dto.js';
+import { RoleResponseDto } from '../dto/role/role-response.dto.js';
+import type { Role } from '../entities/roles.entity.js';
+import type { RoleSystem } from '../entities/role_system.entity.js';
+import { CreateSystemRoleCommand } from '../commands/roles/create-system-role/create-system-role.command.js';
+import { AssignRoleSystemCommand } from '../commands/roles/assign-system/assign-system.command.js';
+import { RemoveRoleSystemCommand } from '../commands/roles/remove-system/remove-system.command.js';
 
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
@@ -55,6 +53,7 @@ export class SystemController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly scope: SystemPermissionsService,
   ) {}
 
   @Post()
@@ -69,6 +68,14 @@ export class SystemController {
     return SystemResponseDto.from(system);
   }
 
+  @Get('mine')
+  @ApiOkResponse({ type: SystemResponseDto, isArray: true })
+  async mine(@CurrentUser('id') userId: string): Promise<SystemResponseDto[]> {
+    return (await this.scope.systemsForUser(userId)).map((system) =>
+      SystemResponseDto.from(system),
+    );
+  }
+
   @Get()
   @RequirePermissions(PERMISSION_CODES.SYSTEM_READ)
   @ApiOkResponse({ type: SystemResponseDto, isArray: true })
@@ -77,6 +84,48 @@ export class SystemController {
       new FindAllSystemsQuery(),
     );
     return systems.map((system) => SystemResponseDto.from(system));
+  }
+
+  @Post(':systemId/roles')
+  @RequirePermissions(PERMISSION_CODES.ROLES_CREATE)
+  @ApiCreatedResponse({ type: RoleResponseDto })
+  async createRole(
+    @Param('systemId', new ParseUUIDPipe()) systemId: string,
+    @Body({ schema: CreateSystemRoleSchema }) dto: CreateSystemRoleDto,
+    @CurrentUser('id') userId: string,
+  ): Promise<RoleResponseDto> {
+    const role: Role = await this.commandBus.execute(
+      new CreateSystemRoleCommand(systemId, userId, dto),
+    );
+    return RoleResponseDto.from(role);
+  }
+
+  @Post(':systemId/roles/:roleId')
+  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_ROLES)
+  @ApiCreatedResponse({ description: 'Rol habilitado para el sistema' })
+  async assignRole(
+    @Param('systemId', new ParseUUIDPipe()) systemId: string,
+    @Param('roleId', new ParseUUIDPipe()) roleId: string,
+    @CurrentUser('id') userId: string,
+  ): Promise<{ id: string; roleId: string; systemId: string }> {
+    const assignment: RoleSystem = await this.commandBus.execute(
+      new AssignRoleSystemCommand(roleId, systemId, userId),
+    );
+    return { id: assignment.id, roleId, systemId };
+  }
+
+  @Delete(':systemId/roles/:roleId')
+  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_ROLES)
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  removeRole(
+    @Param('systemId', new ParseUUIDPipe()) systemId: string,
+    @Param('roleId', new ParseUUIDPipe()) roleId: string,
+    @CurrentUser('id') userId: string,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new RemoveRoleSystemCommand(roleId, systemId, userId),
+    );
   }
 
   @Patch(':id')
@@ -122,32 +171,5 @@ export class SystemController {
   @ApiNoContentResponse()
   async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
     await this.commandBus.execute(new DeleteSystemCommand(id));
-  }
-
-  @Post(':id/modules')
-  @RequirePermissions(PERMISSION_CODES.MODULE_CREATE)
-  @ApiCreatedResponse({ type: ModuleResponseDto })
-  async addModule(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body({ schema: createSystemModuleSchema }) data: CreateSystemModuleDto,
-  ): Promise<ModuleResponseDto> {
-    const module: SystemModule = await this.commandBus.execute(
-      new CreateModuleCommand(data.name, data.description, id, data.order),
-    );
-    return ModuleResponseDto.from(module);
-  }
-
-  @Post(':id/modules/assign')
-  @HttpCode(200)
-  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_MODULES)
-  @ApiOkResponse({ type: ModuleResponseDto, isArray: true })
-  async assignModules(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body({ schema: assignSystemModulesSchema }) data: AssignSystemModulesDto,
-  ): Promise<ModuleResponseDto[]> {
-    const modules: SystemModule[] = await this.commandBus.execute(
-      new AssignSystemModulesCommand(id, data.moduleIds),
-    );
-    return modules.map((module) => ModuleResponseDto.from(module));
   }
 }

@@ -8,6 +8,12 @@ export class PermissionResponseDto {
   @ApiProperty({ example: 'Leer permisos' })
   name: string;
 
+  @ApiProperty({ example: 'ACCESS_CONTROL' })
+  systemCode: string;
+
+  @ApiProperty({ format: 'uuid' })
+  systemId: string;
+
   @ApiProperty({ example: 'PERMISOS' })
   resourceCode: string;
 
@@ -21,6 +27,8 @@ export class PermissionResponseDto {
     return {
       id: permission.id,
       name: permission.name,
+      systemCode: permission.system.code,
+      systemId: permission.system.id,
       resourceCode: permission.resourceCode,
       actionCode: permission.actionCode,
       code: permission.code,

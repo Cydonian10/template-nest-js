@@ -1,1 +1,3 @@
-export class FindAllRolesQuery {}
+export class FindAllRolesQuery {
+  constructor(public readonly userId: string) {}
+}

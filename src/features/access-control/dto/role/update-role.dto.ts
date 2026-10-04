@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CreateRoleSchema } from './create-role.dto.js';
+import { CreateSystemRoleSchema } from './create-role.dto.js';
 
-export const UpdateRoleSchema = CreateRoleSchema.partial();
+export const UpdateRoleSchema = CreateSystemRoleSchema.partial();
 export type UpdateRoleDto = z.infer<typeof UpdateRoleSchema>;

@@ -21,7 +21,12 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
       where: { id: query.userId, active: true },
       relations: {
         persona: true,
-        userRoles: { role: { rolePermissions: { permission: true } } },
+        userRoles: {
+          role: {
+            roleSystems: { system: true },
+            rolePermissions: { permission: { system: true } },
+          },
+        },
       },
     });
     if (!user?.persona?.active) throw new UnauthorizedException();
@@ -38,6 +43,11 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
         continue;
       }
       const role = assignment.role;
+      const accessibleSystems = new Set(
+        (role.roleSystems ?? [])
+          .filter(({ system }) => system.active)
+          .map(({ system }) => system.id),
+      );
       roles.set(role.id, {
         id: role.id,
         code: role.code,
@@ -47,10 +57,17 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
       for (const grant of role.rolePermissions ?? []) {
         if (!grant.active) continue;
         const permission = grant.permission;
+        if (
+          !permission.system.active ||
+          !accessibleSystems.has(permission.system.id)
+        )
+          continue;
         permissions.set(permission.id, {
           id: permission.id,
           code: permission.code,
           name: permission.name,
+          systemCode: permission.system.code,
+          systemId: permission.system.id,
           resourceCode: permission.resourceCode,
           actionCode: permission.actionCode,
         });

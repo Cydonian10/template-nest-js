@@ -17,7 +17,6 @@ export class UpdateSystemHandler implements ICommandHandler<UpdateSystemCommand>
     if (!system) throw new ResourceNotFoundException('Sistema', id);
 
     if (data.name !== undefined) system.name = data.name;
-    if (data.path !== undefined) system.path = data.path;
     if (data.description !== undefined) system.description = data.description;
     if (data.order !== undefined) system.order = data.order;
 

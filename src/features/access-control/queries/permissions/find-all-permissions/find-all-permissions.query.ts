@@ -1,3 +1,7 @@
 export class FindAllPermissionsQuery {
-  constructor(public readonly roleId?: string) {}
+  constructor(
+    public readonly roleId?: string,
+    public readonly systemCode?: string,
+    public readonly userId?: string,
+  ) {}
 }

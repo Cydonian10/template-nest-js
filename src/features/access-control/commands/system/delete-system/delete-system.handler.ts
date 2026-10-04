@@ -3,8 +3,9 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { QueryFailedError } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
-import { SystemModule } from '../../../entities/module.entity.js';
 import { System } from '../../../entities/system.entity.js';
+import { Permission } from '../../../entities/permission.entity.js';
+import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { DeleteSystemCommand } from './delete-system.command.js';
 
 @CommandHandler(DeleteSystemCommand)
@@ -20,9 +21,12 @@ export class DeleteSystemHandler implements ICommandHandler<DeleteSystemCommand>
         });
         if (!system) throw new ResourceNotFoundException('Sistema', id);
 
-        if (await manager.exists(SystemModule, { where: { system: { id } } })) {
+        if (
+          (await manager.exists(Permission, { where: { system: { id } } })) ||
+          (await manager.exists(RoleSystem, { where: { system: { id } } }))
+        ) {
           throw new ConflictException(
-            'No se puede eliminar un sistema que contiene módulos',
+            'No se puede eliminar un sistema con permisos o roles',
           );
         }
         await manager.remove(system);
@@ -33,7 +37,7 @@ export class DeleteSystemHandler implements ICommandHandler<DeleteSystemCommand>
         (error.driverError as { code?: string }).code === '23503'
       ) {
         throw new ConflictException(
-          'No se puede eliminar un sistema que contiene módulos',
+          'No se puede eliminar un sistema con permisos o roles',
         );
       }
       throw error;

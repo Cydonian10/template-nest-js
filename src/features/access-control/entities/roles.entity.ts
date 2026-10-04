@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import type { Relation } from 'typeorm';
-import { RoleMenu } from './role_menu.entity.js';
 import { RolePermission } from './role_permission.entity.js';
 import { UserRole } from './user_roles.entity.js';
+import { RoleSystem } from './role_system.entity.js';
 
 @Entity('roles')
 export class Role {
@@ -26,9 +26,9 @@ export class Role {
   @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
   rolePermissions: Relation<RolePermission[]>;
 
-  @OneToMany(() => RoleMenu, (roleMenu) => roleMenu.role)
-  roleMenus: Relation<RoleMenu[]>;
-
   @OneToMany(() => UserRole, (userRole) => userRole.role)
   userRoles: Relation<UserRole[]>;
+
+  @OneToMany(() => RoleSystem, (assignment) => assignment.role)
+  roleSystems: Relation<RoleSystem[]>;
 }

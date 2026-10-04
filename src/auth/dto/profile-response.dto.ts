@@ -24,6 +24,8 @@ export const ProfilePermissionSchema = z.strictObject({
   id: z.uuid(),
   code: z.string(),
   name: z.string(),
+  systemCode: z.string(),
+  systemId: z.uuid(),
   resourceCode: z.string(),
   actionCode: z.string(),
 });

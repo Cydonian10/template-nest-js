@@ -82,6 +82,11 @@ describe('PermissionsGuard', () => {
         required: [PERMISSION_CODES.USERS_READ, PERMISSION_CODES.USERS_CREATE],
       },
     );
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+      'role.roleSystems',
+      'scope',
+      'scope.system_id = system.id',
+    );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       '(assignment.valid_until IS NULL OR assignment.valid_until >= :today)',
       {

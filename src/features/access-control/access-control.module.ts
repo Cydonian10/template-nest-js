@@ -16,9 +16,11 @@ import { Permission } from './entities/permission.entity.js';
 import { PermissionsController } from './controllers/permissions.controller.js';
 import { FindAllPermissionsHandler } from './queries/permissions/find-all-permissions/find-all-permissions.handler.js';
 import { SuperAdminProtectionService } from './services/super-admin-protection.service.js';
+import { SystemPermissionsService } from './services/system-permissions.service.js';
+import { UserRole } from './entities/user_roles.entity.js';
 import { Role } from './entities/roles.entity.js';
+import { RoleSystem } from './entities/role_system.entity.js';
 import { RolesController } from './controllers/roles.controller.js';
-import { CreateRoleHandler } from './commands/roles/create-role/create-role.handler.js';
 import { UpdateRoleHandler } from './commands/roles/update-role/update-role.handler.js';
 import { DeleteRoleHandler } from './commands/roles/delete-role/delete-role.handler.js';
 import { FindAllRolesHandler } from './queries/roles/find-all-roles/find-all-roles.handler.js';
@@ -26,16 +28,9 @@ import { AssignUserRoleHandler } from './commands/roles/assign-user/assign-user.
 import { RemoveUserRoleHandler } from './commands/roles/remove-user/remove-user.handler.js';
 import { AssignRolePermissionHandler } from './commands/roles/assign-permission/assign-permission.handler.js';
 import { RemoveRolePermissionHandler } from './commands/roles/remove-permission/remove-permission.handler.js';
-import { AssignRoleMenuHandler } from './commands/roles/assign-menu/assign-menu.handler.js';
-import { RemoveRoleMenuHandler } from './commands/roles/remove-menu/remove-menu.handler.js';
-import { Menu } from './entities/menu.entity.js';
-import { SystemModule } from './entities/module.entity.js';
-import { MenusController } from './controllers/menus.controller.js';
-import { CreateMenuHandler } from './commands/menus/create-menu/create-menu.handler.js';
-import { UpdateMenuHandler } from './commands/menus/update-menu/update-menu.handler.js';
-import { SetMenuActiveHandler } from './commands/menus/set-menu-active/set-menu-active.handler.js';
-import { DeleteMenuHandler } from './commands/menus/delete-menu/delete-menu.handler.js';
-import { FindAllMenusHandler } from './queries/menus/find-all-menus/find-all-menus.handler.js';
+import { AssignRoleSystemHandler } from './commands/roles/assign-system/assign-system.handler.js';
+import { CreateSystemRoleHandler } from './commands/roles/create-system-role/create-system-role.handler.js';
+import { RemoveRoleSystemHandler } from './commands/roles/remove-system/remove-system.handler.js';
 import { SystemController } from './controllers/system.controller.js';
 import { System } from './entities/system.entity.js';
 import { CreateSystemHandler } from './commands/system/create-system/create-system.handler.js';
@@ -43,14 +38,6 @@ import { UpdateSystemHandler } from './commands/system/update-system/update-syst
 import { SetSystemActiveHandler } from './commands/system/set-system-active/set-system-active.handler.js';
 import { DeleteSystemHandler } from './commands/system/delete-system/delete-system.handler.js';
 import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler.js';
-import { AssignSystemModulesHandler } from './commands/system/assign-system-modules/assign-system-modules.handler.js';
-import { ModulesController } from './controllers/modules.controller.js';
-import { UpdateModuleHandler } from './commands/modules/update-module/update-module.handler.js';
-import { SetModuleActiveHandler } from './commands/modules/set-module-active/set-module-active.handler.js';
-import { DeleteModuleHandler } from './commands/modules/delete-module/delete-module.handler.js';
-import { AssignModuleMenusHandler } from './commands/modules/assign-module-menus/assign-module-menus.handler.js';
-import { FindSystemModulesHandler } from './queries/modules/find-system-modules.handler.js';
-import { FindSystemModuleHandler } from './queries/modules/find-system-module.handler.js';
 
 @Module({
   imports: [
@@ -58,8 +45,8 @@ import { FindSystemModuleHandler } from './queries/modules/find-system-module.ha
       User,
       Permission,
       Role,
-      Menu,
-      SystemModule,
+      RoleSystem,
+      UserRole,
       System,
     ]),
   ],
@@ -67,9 +54,7 @@ import { FindSystemModuleHandler } from './queries/modules/find-system-module.ha
     UsersController,
     PermissionsController,
     RolesController,
-    MenusController,
     SystemController,
-    ModulesController,
   ],
   providers: [
     CreateUserHandler,
@@ -80,7 +65,6 @@ import { FindSystemModuleHandler } from './queries/modules/find-system-module.ha
     ActivatePersonHandler,
     FindAllUsersHandler,
     FindAllPermissionsHandler,
-    CreateRoleHandler,
     UpdateRoleHandler,
     DeleteRoleHandler,
     FindAllRolesHandler,
@@ -88,26 +72,16 @@ import { FindSystemModuleHandler } from './queries/modules/find-system-module.ha
     RemoveUserRoleHandler,
     AssignRolePermissionHandler,
     RemoveRolePermissionHandler,
-    AssignRoleMenuHandler,
-    RemoveRoleMenuHandler,
-    CreateMenuHandler,
-    UpdateMenuHandler,
-    SetMenuActiveHandler,
-    DeleteMenuHandler,
-    FindAllMenusHandler,
+    AssignRoleSystemHandler,
+    CreateSystemRoleHandler,
+    RemoveRoleSystemHandler,
     CreateSystemHandler,
     UpdateSystemHandler,
     SetSystemActiveHandler,
     DeleteSystemHandler,
     FindAllSystemsHandler,
-    AssignSystemModulesHandler,
-    UpdateModuleHandler,
-    SetModuleActiveHandler,
-    DeleteModuleHandler,
-    AssignModuleMenusHandler,
-    FindSystemModulesHandler,
-    FindSystemModuleHandler,
     SuperAdminProtectionService,
+    SystemPermissionsService,
     UnitOfWork,
     { provide: PasswordHasher, useClass: Argon2PasswordHasherAdapter },
   ],

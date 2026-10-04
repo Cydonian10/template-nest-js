@@ -11,6 +11,7 @@ import type { Request } from 'express';
 import type { Repository } from 'typeorm';
 import { UserRole } from '../../features/access-control/entities/user_roles.entity.js';
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
+import { SYSTEM_CODES } from '../../shared/authorization/system-codes.js';
 import { REQUIRED_PERMISSIONS_KEY } from '../decorators/require-permissions.decorator.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import type { AuthenticatedUser } from '../interfaces/authenticated-user.interface.js';
@@ -53,8 +54,20 @@ export class PermissionsGuard implements CanActivate {
         'permission.code IN (:...required)',
         { required },
       )
+      .leftJoin(
+        'permission.system',
+        'system',
+        'system.active = true AND system.code = :systemCode',
+        {
+          systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+        },
+      )
+      .leftJoin('role.roleSystems', 'scope', 'scope.system_id = system.id')
       .select('role.code', 'roleCode')
-      .addSelect('permission.code', 'code')
+      .addSelect(
+        'CASE WHEN scope.id IS NOT NULL THEN permission.code END',
+        'code',
+      )
       .distinct(true)
       .where('assignment.user_id = :userId', { userId: request.user.id })
       .andWhere('assignment.valid_from <= :today', { today })

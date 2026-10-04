@@ -14,8 +14,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../../auth/decorators/require-permissions.decorator.js';
-import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator.js';
 import { PermissionResponseDto } from '../dto/permission/permission-response.dto.js';
 import type { Permission } from '../entities/permission.entity.js';
 import { FindAllPermissionsQuery } from '../queries/permissions/find-all-permissions/find-all-permissions.query.js';
@@ -29,14 +28,16 @@ export class PermissionsController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get()
-  @RequirePermissions(PERMISSION_CODES.PERMISSIONS_READ)
   @ApiQuery({ name: 'roleId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({ name: 'systemCode', required: false, type: String })
   @ApiOkResponse({ type: PermissionResponseDto, isArray: true })
   async findAll(
     @Query('roleId', new ParseUUIDPipe({ optional: true })) roleId?: string,
+    @Query('systemCode') systemCode?: string,
+    @CurrentUser('id') userId?: string,
   ): Promise<PermissionResponseDto[]> {
     const permissions: Permission[] = await this.queryBus.execute(
-      new FindAllPermissionsQuery(roleId),
+      new FindAllPermissionsQuery(roleId, systemCode, userId),
     );
     return permissions.map((permission) =>
       PermissionResponseDto.from(permission),

@@ -6,7 +6,7 @@ import { ROLE_CODES } from '../../../../../shared/authorization/role-codes.js';
 import { Role } from '../../../entities/roles.entity.js';
 import { UserRole } from '../../../entities/user_roles.entity.js';
 import { RolePermission } from '../../../entities/role_permission.entity.js';
-import { RoleMenu } from '../../../entities/role_menu.entity.js';
+import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { DeleteRoleCommand } from './delete-role.command.js';
 
 @CommandHandler(DeleteRoleCommand)
@@ -24,7 +24,7 @@ export class DeleteRoleHandler implements ICommandHandler<DeleteRoleCommand> {
         role.code === ROLE_CODES.SUPER_ADMIN ||
         (await manager.exists(UserRole, { where: { role: { id } } })) ||
         (await manager.exists(RolePermission, { where: { role: { id } } })) ||
-        (await manager.exists(RoleMenu, { where: { role: { id } } }))
+        (await manager.exists(RoleSystem, { where: { role: { id } } }))
       ) {
         throw new ConflictException(
           'No se puede eliminar un rol protegido o con asociaciones',

@@ -1,21 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import type { Relation } from 'typeorm';
-import { SystemModule } from './module.entity.js';
+import { Permission } from './permission.entity.js';
+import { RoleSystem } from './role_system.entity.js';
 
 @Entity('systems')
+@Unique('UQ_systems_code', ['code'])
 export class System {
   @ApiProperty({ format: 'uuid' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ApiProperty()
-  @Column()
-  name: string;
+  @Column({ length: 50 })
+  code: string;
 
   @ApiProperty()
   @Column()
-  path: string;
+  name: string;
 
   @ApiProperty()
   @Column({ type: 'text' })
@@ -38,6 +46,9 @@ export class System {
   })
   order: number;
 
-  @OneToMany(() => SystemModule, (module) => module.system)
-  modules: Relation<SystemModule[]>;
+  @OneToMany(() => Permission, (permission) => permission.system)
+  permissions: Relation<Permission[]>;
+
+  @OneToMany(() => RoleSystem, (assignment) => assignment.system)
+  roleSystems: Relation<RoleSystem[]>;
 }

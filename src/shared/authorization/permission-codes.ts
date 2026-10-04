@@ -1,7 +1,7 @@
 /**
  * Catálogo central de códigos de permisos usados por la autorización actual.
- * Los valores deben coincidir exactamente con el campo `code` guardado en la
- * tabla `permissions`; también se usan al proteger rutas y al preparar el seed.
+ * Los valores coinciden con `permissions.code`; un mismo código puede existir
+ * en varios sistemas. La autorización debe comprobar código Y sistema.
  */
 export const PERMISSION_CODES = {
   USERS_CREATE: 'USUARIOS_CREAR',
@@ -16,24 +16,12 @@ export const PERMISSION_CODES = {
   ROLES_DELETE: 'ROLES_ELIMINAR',
   USERS_ASSIGN_ROL: 'USUARIOS_ASIGNAR_ROL',
   ROLES_ASSIGN_PERMISSION: 'ROLES_ASIGNAR_PERMISO',
-  ROLES_ASSIGN_MENU: 'ROLES_ASIGNAR_MENU',
-  MENUS_CREATE: 'MENUS_CREAR',
-  MENUS_READ: 'MENUS_LEER',
-  MENUS_UPDATE: 'MENUS_EDITAR',
-  MENUS_STATUS: 'MENUS_ESTADO',
-  MENUS_DELETE: 'MENUS_ELIMINAR',
   SYSTEM_CREATE: 'SISTEMA_CREAR',
   SYSTEM_READ: 'SISTEMA_LEER',
   SYSTEM_UPDATE: 'SISTEMA_EDITAR',
   SYSTEM_STATUS: 'SISTEMA_ESTADO',
   SYSTEM_DELETE: 'SISTEMA_ELIMINAR',
-  SYSTEM_ASSIGN_MODULES: 'SISTEMA_ASIGNAR_MODULOS',
-  MODULE_CREATE: 'MODULOS_CREAR',
-  MODULE_READ: 'MODULOS_LEER',
-  MODULE_UPDATE: 'MODULOS_EDITAR',
-  MODULE_STATUS: 'MODULOS_ESTADO',
-  MODULE_DELETE: 'MODULOS_ELIMINAR',
-  MODULE_ASSIGN_MENU: 'MODULOS_ASIGNAR_MENU',
+  SYSTEM_ASSIGN_ROLES: 'SISTEMA_ASIGNAR_ROLES',
 } as const;
 
 /**

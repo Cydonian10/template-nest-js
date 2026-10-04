@@ -18,6 +18,8 @@ describe('GetProfileHandler', () => {
       id: 'permission-1',
       code: 'USUARIOS_LISTAR',
       name: 'Listar usuarios',
+      systemCode: 'ACCESS_CONTROL',
+      system: { id: 'system-1', code: 'ACCESS_CONTROL', active: true },
       resourceCode: 'USUARIOS',
       actionCode: 'LISTAR',
     };
@@ -30,6 +32,7 @@ describe('GetProfileHandler', () => {
         { active: true, permission },
         { active: false, permission: { ...permission, id: 'inactive' } },
       ],
+      roleSystems: [{ system: { id: 'system-1', active: true } }],
     };
     const secondRole = {
       id: 'role-2',
@@ -37,6 +40,7 @@ describe('GetProfileHandler', () => {
       name: 'Personal',
       description: 'Equipo',
       rolePermissions: [{ active: true, permission }],
+      roleSystems: [{ system: { id: 'system-1', active: true } }],
     };
     findOne.mockResolvedValue({
       id: 'user-1',
@@ -75,7 +79,12 @@ describe('GetProfileHandler', () => {
       where: { id: 'user-1', active: true },
       relations: {
         persona: true,
-        userRoles: { role: { rolePermissions: { permission: true } } },
+        userRoles: {
+          role: {
+            roleSystems: { system: true },
+            rolePermissions: { permission: { system: true } },
+          },
+        },
       },
     });
     expect(profile).toEqual({
@@ -106,7 +115,17 @@ describe('GetProfileHandler', () => {
           description: 'Equipo',
         },
       ],
-      permissions: [permission],
+      permissions: [
+        {
+          id: permission.id,
+          code: permission.code,
+          name: permission.name,
+          systemCode: permission.systemCode,
+          systemId: permission.system.id,
+          resourceCode: permission.resourceCode,
+          actionCode: permission.actionCode,
+        },
+      ],
     });
     expect(JSON.stringify(profile)).not.toContain('no-debe-salir');
   });
