@@ -62,10 +62,10 @@ export class PermissionsGuard implements CanActivate {
           systemCode: SYSTEM_CODES.ACCESS_CONTROL,
         },
       )
-      .leftJoin('role.roleSystems', 'scope', 'scope.system_id = system.id')
+      .leftJoin('role.system', 'scope', 'scope.id = system.id')
       .select('role.code', 'roleCode')
       .addSelect(
-        'CASE WHEN scope.id IS NOT NULL THEN permission.code END',
+        'CASE WHEN scope.active = true THEN permission.code END',
         'code',
       )
       .distinct(true)

@@ -1,10 +1,9 @@
 import { PERMISSION_CODES } from '../permission-codes.js';
 import type { PermissionDefinition } from '../permission-definitions.js';
 
-/**
- * Permisos de control de acceso. Cada sistema nuevo tendrá su propio archivo.
- */
+/** Permisos del sistema ACCESS_CONTROL, agrupados por recurso. */
 export const ACCESS_CONTROL_PERMISSIONS = [
+  // Usuarios y asignaciones de roles
   {
     code: PERMISSION_CODES.USERS_CREATE,
     name: 'Crear usuarios',
@@ -19,7 +18,7 @@ export const ACCESS_CONTROL_PERMISSIONS = [
   },
   {
     code: PERMISSION_CODES.USERS_UPDATE,
-    name: 'Editar usuarios y personas',
+    name: 'Editar usuarios',
     resourceCode: 'USUARIOS',
     actionCode: 'EDITAR',
   },
@@ -30,17 +29,21 @@ export const ACCESS_CONTROL_PERMISSIONS = [
     actionCode: 'ESTADO',
   },
   {
+    code: PERMISSION_CODES.USERS_ASSIGN_ROL,
+    name: 'Asignar y retirar roles a usuarios',
+    resourceCode: 'USUARIOS',
+    actionCode: 'ASIGNAR_ROL',
+  },
+
+  // Personas
+  {
     code: PERMISSION_CODES.PERSONS_STATUS,
     name: 'Activar y desactivar personas',
     resourceCode: 'PERSONAS',
     actionCode: 'ESTADO',
   },
-  {
-    code: PERMISSION_CODES.PERMISSIONS_READ,
-    name: 'Leer permisos',
-    resourceCode: 'PERMISOS',
-    actionCode: 'LEER',
-  },
+
+  // Roles y sus permisos
   {
     code: PERMISSION_CODES.ROLES_CREATE,
     name: 'Crear roles',
@@ -66,17 +69,21 @@ export const ACCESS_CONTROL_PERMISSIONS = [
     actionCode: 'ELIMINAR',
   },
   {
-    code: PERMISSION_CODES.USERS_ASSIGN_ROL,
-    name: 'Asignar y retirar roles a usuarios',
-    resourceCode: 'USUARIOS',
-    actionCode: 'ASIGNAR_ROL',
-  },
-  {
     code: PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
     name: 'Asignar y retirar permisos a roles',
     resourceCode: 'ROLES',
     actionCode: 'ASIGNAR_PERMISO',
   },
+
+  // Catálogo de permisos
+  {
+    code: PERMISSION_CODES.PERMISSIONS_READ,
+    name: 'Leer permisos',
+    resourceCode: 'PERMISOS',
+    actionCode: 'LEER',
+  },
+
+  // Sistemas
   {
     code: PERMISSION_CODES.SYSTEM_CREATE,
     name: 'Crear sistemas',
@@ -106,11 +113,5 @@ export const ACCESS_CONTROL_PERMISSIONS = [
     name: 'Eliminar sistemas',
     resourceCode: 'SISTEMA',
     actionCode: 'ELIMINAR',
-  },
-  {
-    code: PERMISSION_CODES.SYSTEM_ASSIGN_ROLES,
-    name: 'Asignar y retirar roles a sistemas',
-    resourceCode: 'SISTEMA',
-    actionCode: 'ASIGNAR_ROLES',
   },
 ] as const satisfies readonly PermissionDefinition[];

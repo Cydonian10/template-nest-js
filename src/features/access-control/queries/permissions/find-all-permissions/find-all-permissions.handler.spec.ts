@@ -128,6 +128,7 @@ describe('FindAllPermissionsHandler', () => {
     expect(builder.innerJoin).toHaveBeenCalledWith(
       'permission.rolePermissions',
       'assignment',
+      'assignment.active = true',
     );
     expect(builder.where).toHaveBeenCalledWith('assignment.role_id = :roleId', {
       roleId: 'role-id',

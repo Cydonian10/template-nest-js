@@ -2,14 +2,14 @@ import { PATH_METADATA } from '@nestjs/common/constants';
 import type { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { REQUIRED_PERMISSIONS_KEY } from '../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../shared/authorization/permission-codes.js';
-import { AssignRoleSystemCommand } from '../commands/roles/assign-system/assign-system.command.js';
 import { CreateSystemRoleCommand } from '../commands/roles/create-system-role/create-system-role.command.js';
-import { RemoveRoleSystemCommand } from '../commands/roles/remove-system/remove-system.command.js';
+import { ReplaceRolePermissionsCommand } from '../commands/roles/replace-permissions/replace-permissions.command.js';
 import {
   CreateRoleSchema,
   CreateSystemRoleSchema,
 } from '../dto/role/create-role.dto.js';
 import { UpdateRoleSchema } from '../dto/role/update-role.dto.js';
+import { ReplaceRolePermissionsSchema } from '../dto/role/replace-role-permissions.dto.js';
 import type { SystemPermissionsService } from '../services/system-permissions.service.js';
 import { RolesController } from './roles.controller.js';
 import { SystemController } from './system.controller.js';
@@ -22,7 +22,7 @@ describe('creación y asignación de roles por sistema', () => {
     id: roleId,
     code: 'VENTAS_AUDITOR',
     ...data,
-    roleSystems: [{ system: { id: systemId } }],
+    system: { id: systemId },
   };
   const execute = vi.fn();
   const bus = { execute } as unknown as CommandBus;
@@ -61,7 +61,7 @@ describe('creación y asignación de roles por sistema', () => {
 
     execute.mockResolvedValue(role);
     expect(await roles.create({ ...data, systemId })).toMatchObject({
-      systemIds: [systemId],
+      systemId,
     });
     expect(execute).toHaveBeenCalledWith(
       new CreateSystemRoleCommand(systemId, data),
@@ -72,17 +72,30 @@ describe('creación y asignación de roles por sistema', () => {
     expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'update')).toEqual([
       PERMISSION_CODES.ROLES_UPDATE,
     ]);
-    for (const name of ['assignPermission', 'removePermission']) {
-      expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, name)).toEqual([
-        PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
-      ]);
-    }
+    expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'replacePermissions')).toEqual([
+      PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
+    ]);
+  });
+
+  it('reemplaza la lista completa de permisos con una sola operación protegida', async () => {
+    const permissionId = '00000000-0000-4000-8000-000000000003';
+    const data = { permissionIds: [permissionId] };
+    expect(ReplaceRolePermissionsSchema.safeParse(data).success).toBe(true);
+    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: [] }).success).toBe(true);
+    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: [permissionId, permissionId] }).success).toBe(false);
+    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: ['invalido'] }).success).toBe(false);
+    execute.mockResolvedValue(data);
+    await expect(roles.replacePermissions(roleId, data)).resolves.toEqual(data);
+    expect(execute).toHaveBeenCalledWith(new ReplaceRolePermissionsCommand(roleId, [permissionId]));
+    expect(roleMethodMetadata(PATH_METADATA, 'replacePermissions')).toBe(':id/permissions');
+    expect(Object.getOwnPropertyDescriptor(RolesController.prototype, 'assignPermission')).toBeUndefined();
+    expect(Object.getOwnPropertyDescriptor(RolesController.prototype, 'removePermission')).toBeUndefined();
   });
 
   it('crea roles dentro de systems con ROLES_CREATE y sin permisos automáticos', async () => {
     execute.mockResolvedValue(role);
     expect(await systems.createRole(systemId, data)).toMatchObject({
-      systemIds: [systemId],
+      systemId,
       permissions: [],
     });
     expect(execute).toHaveBeenCalledWith(
@@ -96,24 +109,12 @@ describe('creación y asignación de roles por sistema', () => {
     ).toEqual([PERMISSION_CODES.ROLES_CREATE]);
   });
 
-  it('asigna y retira roles en SystemController con SISTEMA_ASIGNAR_ROLES', async () => {
-    execute.mockResolvedValueOnce({ id: 'assignment-id' });
-    expect(await systems.assignRole(systemId, roleId)).toEqual({
-      id: 'assignment-id',
-      roleId,
-      systemId,
-    });
-    expect(execute).toHaveBeenCalledWith(
-      new AssignRoleSystemCommand(roleId, systemId),
-    );
-    await systems.removeRole(systemId, roleId);
-    expect(execute).toHaveBeenCalledWith(
-      new RemoveRoleSystemCommand(roleId, systemId),
-    );
-    for (const name of ['assignRole', 'removeRole']) {
-      expect(systemMethodMetadata(REQUIRED_PERMISSIONS_KEY, name)).toEqual([
-        PERMISSION_CODES.SYSTEM_ASSIGN_ROLES,
-      ]);
-    }
+  it('no expone rutas para cambiar el sistema de un rol', () => {
+    expect(
+      Object.getOwnPropertyDescriptor(SystemController.prototype, 'assignRole'),
+    ).toBeUndefined();
+    expect(
+      Object.getOwnPropertyDescriptor(SystemController.prototype, 'removeRole'),
+    ).toBeUndefined();
   });
 });

@@ -33,7 +33,10 @@ export class Permission {
     nullable: false,
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'system_id' })
+  @JoinColumn({
+    name: 'system_id',
+    foreignKeyConstraintName: 'FK_permissions_system',
+  })
   system: Relation<System>;
 
   @ApiProperty({ format: 'uuid' })

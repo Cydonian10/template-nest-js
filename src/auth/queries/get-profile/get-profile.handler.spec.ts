@@ -32,7 +32,7 @@ describe('GetProfileHandler', () => {
         { active: true, permission },
         { active: false, permission: { ...permission, id: 'inactive' } },
       ],
-      roleSystems: [{ system: { id: 'system-1', active: true } }],
+      system: { id: 'system-1', active: true },
     };
     const secondRole = {
       id: 'role-2',
@@ -40,7 +40,7 @@ describe('GetProfileHandler', () => {
       name: 'Personal',
       description: 'Equipo',
       rolePermissions: [{ active: true, permission }],
-      roleSystems: [{ system: { id: 'system-1', active: true } }],
+      system: { id: 'system-1', active: true },
     };
     findOne.mockResolvedValue({
       id: 'user-1',
@@ -81,7 +81,7 @@ describe('GetProfileHandler', () => {
         persona: true,
         userRoles: {
           role: {
-            roleSystems: { system: true },
+            system: true,
             rolePermissions: { permission: { system: true } },
           },
         },
@@ -126,6 +126,7 @@ describe('GetProfileHandler', () => {
           actionCode: permission.actionCode,
         },
       ],
+      isSuperAdmin: true,
     });
     expect(JSON.stringify(profile)).not.toContain('no-debe-salir');
   });
@@ -158,5 +159,6 @@ describe('GetProfileHandler', () => {
     const profile = await handler.execute(new GetProfileQuery('user-1'));
     expect(profile.roles).toEqual([]);
     expect(profile.permissions).toEqual([]);
+    expect(profile.isSuperAdmin).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ import type {
   ProfileRoleDto,
 } from '../../dto/profile-response.dto.js';
 import { GetProfileQuery } from './get-profile.query.js';
+import { ROLE_CODES } from '../../../shared/authorization/role-codes.js';
 
 @QueryHandler(GetProfileQuery)
 export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
@@ -23,7 +24,7 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
         persona: true,
         userRoles: {
           role: {
-            roleSystems: { system: true },
+            system: true,
             rolePermissions: { permission: { system: true } },
           },
         },
@@ -34,6 +35,7 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
     const today = new Date().toISOString().slice(0, 10);
     const roles = new Map<string, ProfileRoleDto>();
     const permissions = new Map<string, ProfilePermissionDto>();
+    let isSuperAdmin = false;
 
     for (const assignment of user.userRoles ?? []) {
       if (
@@ -43,11 +45,7 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
         continue;
       }
       const role = assignment.role;
-      const accessibleSystems = new Set(
-        (role.roleSystems ?? [])
-          .filter(({ system }) => system.active)
-          .map(({ system }) => system.id),
-      );
+      if (role.code === ROLE_CODES.SUPER_ADMIN) isSuperAdmin = true;
       roles.set(role.id, {
         id: role.id,
         code: role.code,
@@ -59,7 +57,8 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
         const permission = grant.permission;
         if (
           !permission.system.active ||
-          !accessibleSystems.has(permission.system.id)
+          !role.system.active ||
+          role.system.id !== permission.system.id
         )
           continue;
         permissions.set(permission.id, {
@@ -90,6 +89,7 @@ export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
       },
       roles: [...roles.values()],
       permissions: [...permissions.values()],
+      isSuperAdmin,
     };
   }
 }

@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
 import type { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
-import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { CreateSystemRoleCommand } from './create-system-role.command.js';
 import { CreateSystemRoleHandler } from './create-system-role.handler.js';
 import { Role } from '../../../entities/roles.entity.js';
@@ -36,14 +35,10 @@ describe('CreateSystemRoleHandler', () => {
       }),
     );
     expect(role.code).toBe('VENTAS_AUDITOR');
-    expect(create).toHaveBeenCalledWith(RoleSystem, {
-      role: expect.objectContaining({ code: 'VENTAS_AUDITOR' }),
-      system,
-    });
-    expect(role.roleSystems).toHaveLength(1);
+    expect(role.system).toBe(system);
     expect(create).toHaveBeenCalledWith(
       Role,
-      expect.objectContaining({ code: 'VENTAS_AUDITOR' }),
+      expect.objectContaining({ code: 'VENTAS_AUDITOR', system }),
     );
   });
 
@@ -54,8 +49,8 @@ describe('CreateSystemRoleHandler', () => {
         description: 'Lectura',
       }),
     );
-    expect(role.roleSystems).toHaveLength(1);
-    expect(save).toHaveBeenCalledTimes(2);
+    expect(role.system).toBe(system);
+    expect(save).toHaveBeenCalledTimes(1);
   });
 
   it('rechaza códigos duplicados o nombres inválidos sin crear asociaciones', async () => {

@@ -83,9 +83,9 @@ describe('PermissionsGuard', () => {
       },
     );
     expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
-      'role.roleSystems',
+      'role.system',
       'scope',
-      'scope.system_id = system.id',
+      'scope.id = system.id',
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       '(assignment.valid_until IS NULL OR assignment.valid_until >= :today)',

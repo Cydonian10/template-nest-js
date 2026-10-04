@@ -5,7 +5,6 @@ import { ResourceNotFoundException } from '../../../../shared/exceptions/resourc
 import { Role } from '../../entities/roles.entity.js';
 import { Permission } from '../../entities/permission.entity.js';
 import { RolePermission } from '../../entities/role_permission.entity.js';
-import { RoleSystem } from '../../entities/role_system.entity.js';
 import { UserRole } from '../../entities/user_roles.entity.js';
 import { UpdateRoleCommand } from './update-role/update-role.command.js';
 import { UpdateRoleHandler } from './update-role/update-role.handler.js';
@@ -71,7 +70,7 @@ describe('Roles y asignaciones', () => {
   it('permite editar un rol sin permisos previos y conserva su código', async () => {
     findOne.mockResolvedValue({
       ...roleData,
-      roleSystems: [],
+      system: { id: 'system-id' },
     });
     const changed = await new UpdateRoleHandler(roleRepo).execute(
       new UpdateRoleCommand(role.id, { name: 'Nuevo' }),
@@ -158,16 +157,20 @@ describe('Roles y asignaciones', () => {
   });
 
   it('asigna y retira permisos sin borrar los recursos', async () => {
-    findOne.mockResolvedValueOnce(role).mockResolvedValueOnce({
-      id: 'permission-id',
-      system: { id: 'system-id', active: true },
-    });
-    exists.mockResolvedValueOnce(true);
+    findOne
+      .mockResolvedValueOnce({
+        ...roleData,
+        system: { id: 'system-id', active: true },
+      })
+      .mockResolvedValueOnce({
+        id: 'permission-id',
+        system: { id: 'system-id', active: true },
+      });
     await new AssignRolePermissionHandler(unitOfWork).execute(
       new AssignRolePermissionCommand(role.id, 'permission-id'),
     );
     expect(create).toHaveBeenCalledWith(RolePermission, {
-      role,
+      role: expect.objectContaining({ id: role.id }),
       permission: {
         id: 'permission-id',
         system: { id: 'system-id', active: true },
@@ -178,16 +181,15 @@ describe('Roles y asignaciones', () => {
       Permission,
       expect.objectContaining({ relations: { system: true } }),
     );
-    expect(exists).toHaveBeenCalledWith(RoleSystem, {
-      where: {
-        role: { id: role.id },
-        system: { id: 'system-id' },
-      },
-    });
-    findOne.mockResolvedValueOnce(role).mockResolvedValueOnce({
-      id: 'grant-id',
-      permission: { system: { id: 'system-id' } },
-    });
+    findOne
+      .mockResolvedValueOnce({
+        ...roleData,
+        system: { id: 'system-id', active: true },
+      })
+      .mockResolvedValueOnce({
+        id: 'grant-id',
+        permission: { system: { id: 'system-id' } },
+      });
     await new RemoveRolePermissionHandler(unitOfWork).execute(
       new RemoveRolePermissionCommand(role.id, 'permission-id'),
     );
@@ -198,10 +200,15 @@ describe('Roles y asignaciones', () => {
   });
 
   it('rechaza un permiso si el rol no pertenece a su sistema', async () => {
-    findOne.mockResolvedValueOnce(role).mockResolvedValueOnce({
-      id: 'permission-id',
-      system: { id: 'ventas-id', active: true },
-    });
+    findOne
+      .mockResolvedValueOnce({
+        ...roleData,
+        system: { id: 'other-id', active: true },
+      })
+      .mockResolvedValueOnce({
+        id: 'permission-id',
+        system: { id: 'ventas-id', active: true },
+      });
     await expect(
       new AssignRolePermissionHandler(unitOfWork).execute(
         new AssignRolePermissionCommand(role.id, 'permission-id'),
@@ -213,6 +220,7 @@ describe('Roles y asignaciones', () => {
   it('lista asignaciones sin acceder a contraseñas ni depender de la relación inversa', () => {
     const response = RoleResponseDto.from({
       ...roleData,
+      system: { id: 'system-id' },
       userRoles: [
         {
           id: 'a',

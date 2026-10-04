@@ -41,6 +41,7 @@ export const ProfileResponseSchema = z.strictObject({
   person: ProfilePersonSchema,
   roles: z.array(ProfileRoleSchema),
   permissions: z.array(ProfilePermissionSchema),
+  isSuperAdmin: z.boolean(),
 });
 
 export type ProfileResponseDto = z.infer<typeof ProfileResponseSchema>;

@@ -1,10 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Role } from '../../../entities/roles.entity.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
 import { SystemPermissionsService } from '../../../services/system-permissions.service.js';
 import { FindAllRolesQuery } from './find-all-roles.query.js';
+import { ROLE_CODES } from '../../../../../shared/authorization/role-codes.js';
 
 @QueryHandler(FindAllRolesQuery)
 export class FindAllRolesHandler implements IQueryHandler<FindAllRolesQuery> {
@@ -20,8 +21,11 @@ export class FindAllRolesHandler implements IQueryHandler<FindAllRolesQuery> {
     );
     if (!allowed.length) return [];
     return this.roles.find({
-      where: { roleSystems: { system: { id: In(allowed), active: true } } },
-      relations: { roleSystems: { system: true } },
+      where: {
+        code: Not(ROLE_CODES.SUPER_ADMIN),
+        system: { id: In(allowed), active: true },
+      },
+      relations: { system: true },
       order: { name: 'ASC' },
     });
   }

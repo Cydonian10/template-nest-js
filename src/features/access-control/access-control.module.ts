@@ -19,18 +19,14 @@ import { SuperAdminProtectionService } from './services/super-admin-protection.s
 import { SystemPermissionsService } from './services/system-permissions.service.js';
 import { UserRole } from './entities/user_roles.entity.js';
 import { Role } from './entities/roles.entity.js';
-import { RoleSystem } from './entities/role_system.entity.js';
 import { RolesController } from './controllers/roles.controller.js';
 import { UpdateRoleHandler } from './commands/roles/update-role/update-role.handler.js';
 import { DeleteRoleHandler } from './commands/roles/delete-role/delete-role.handler.js';
 import { FindAllRolesHandler } from './queries/roles/find-all-roles/find-all-roles.handler.js';
 import { AssignUserRoleHandler } from './commands/roles/assign-user/assign-user.handler.js';
 import { RemoveUserRoleHandler } from './commands/roles/remove-user/remove-user.handler.js';
-import { AssignRolePermissionHandler } from './commands/roles/assign-permission/assign-permission.handler.js';
-import { RemoveRolePermissionHandler } from './commands/roles/remove-permission/remove-permission.handler.js';
-import { AssignRoleSystemHandler } from './commands/roles/assign-system/assign-system.handler.js';
+import { ReplaceRolePermissionsHandler } from './commands/roles/replace-permissions/replace-permissions.handler.js';
 import { CreateSystemRoleHandler } from './commands/roles/create-system-role/create-system-role.handler.js';
-import { RemoveRoleSystemHandler } from './commands/roles/remove-system/remove-system.handler.js';
 import { SystemController } from './controllers/system.controller.js';
 import { System } from './entities/system.entity.js';
 import { CreateSystemHandler } from './commands/system/create-system/create-system.handler.js';
@@ -41,14 +37,7 @@ import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Permission,
-      Role,
-      RoleSystem,
-      UserRole,
-      System,
-    ]),
+    TypeOrmModule.forFeature([User, Permission, Role, UserRole, System]),
   ],
   controllers: [
     UsersController,
@@ -70,11 +59,8 @@ import { FindAllSystemsHandler } from './queries/system/find-all-systems.handler
     FindAllRolesHandler,
     AssignUserRoleHandler,
     RemoveUserRoleHandler,
-    AssignRolePermissionHandler,
-    RemoveRolePermissionHandler,
-    AssignRoleSystemHandler,
+    ReplaceRolePermissionsHandler,
     CreateSystemRoleHandler,
-    RemoveRoleSystemHandler,
     CreateSystemHandler,
     UpdateSystemHandler,
     SetSystemActiveHandler,

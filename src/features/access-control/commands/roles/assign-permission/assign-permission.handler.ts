@@ -5,7 +5,6 @@ import { ResourceNotFoundException } from '../../../../../shared/exceptions/reso
 import { Role } from '../../../entities/roles.entity.js';
 import { Permission } from '../../../entities/permission.entity.js';
 import { RolePermission } from '../../../entities/role_permission.entity.js';
-import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { AssignRolePermissionCommand } from './assign-permission.command.js';
 
 @CommandHandler(AssignRolePermissionCommand)
@@ -19,6 +18,7 @@ export class AssignRolePermissionHandler implements ICommandHandler<AssignRolePe
     return this.unitOfWork.execute(async (manager) => {
       const role = await manager.findOne(Role, {
         where: { id: roleId },
+        relations: { system: true },
         lock: { mode: 'pessimistic_write' },
       });
       if (!role) throw new ResourceNotFoundException('Rol', roleId);
@@ -29,10 +29,9 @@ export class AssignRolePermissionHandler implements ICommandHandler<AssignRolePe
       if (!permission)
         throw new ResourceNotFoundException('Permiso', permissionId);
       if (
+        !role.system.active ||
         !permission.system.active ||
-        !(await manager.exists(RoleSystem, {
-          where: { role: { id: roleId }, system: { id: permission.system.id } },
-        }))
+        role.system.id !== permission.system.id
       ) {
         throw new ForbiddenException(
           'El rol no tiene acceso al sistema del permiso',

@@ -36,8 +36,7 @@ export class SystemPermissionsService {
       });
     }
     const rows = await assignments
-      .innerJoin('role.roleSystems', 'scope')
-      .innerJoin('scope.system', 'system', 'system.active = true')
+      .innerJoin('role.system', 'system', 'system.active = true')
       .select('system.id', 'id')
       .distinct(true)
       .getRawMany<{ id: string }>();
@@ -75,8 +74,7 @@ export class SystemPermissionsService {
       return systems.map(({ id }) => id);
     }
     const rows = await assignments
-      .innerJoin('role.roleSystems', 'scope')
-      .innerJoin('scope.system', 'system', 'system.active = true')
+      .innerJoin('role.system', 'system', 'system.active = true')
       .innerJoin('role.rolePermissions', 'grant', 'grant.active = true')
       .innerJoin(
         'grant.permission',

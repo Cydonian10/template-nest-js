@@ -21,7 +21,10 @@ export class RolePermission {
     nullable: false,
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'role_id' })
+  @JoinColumn({
+    name: 'role_id',
+    foreignKeyConstraintName: 'FK_role_permissions_role',
+  })
   role: Relation<Role>;
 
   @ApiProperty({ format: 'uuid' })
@@ -32,7 +35,10 @@ export class RolePermission {
     nullable: false,
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'permission_id' })
+  @JoinColumn({
+    name: 'permission_id',
+    foreignKeyConstraintName: 'FK_role_permissions_permission',
+  })
   permission: Relation<Permission>;
 
   @ApiProperty({ format: 'uuid' })

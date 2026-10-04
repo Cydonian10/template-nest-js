@@ -71,13 +71,26 @@ SUPER_ADMIN_IDENTITY_DOCUMENT=1234567890
 SUPER_ADMIN_DATE_OF_BIRTH=1990-01-31
 ```
 
-Ejecuta `npm run migration:super-admin`. El comando crea el rol `SUPER_ADMIN` si falta, crea el usuario y le asigna el rol en una transacción. Si ya existe un usuario con ese correo, termina con error. La contraseña se guarda como hash Argon2. El comando **no** asigna permisos ni menús al rol automáticamente.
+Ejecuta `npm run migration:super-admin`. El comando crea el sistema `ACCESS_CONTROL` si falta, crea el rol `SUPER_ADMIN` ligado a ese sistema, crea el usuario y le asigna el rol en una transacción. Si ya existe un usuario con ese correo, termina con error. La contraseña se guarda como hash Argon2. `SUPER_ADMIN` tiene acceso global por regla de autorización, sin asignaciones automáticas de permisos; el perfil indica `isSuperAdmin: true`. El listado de roles no devuelve este rol.
 
-Después de crear el super-admin, ejecuta `npm run migration:permissions` para crear `USUARIOS_LEER` y `USUARIOS_CREAR` y asignarlos al rol `SUPER_ADMIN`. El seed se puede repetir sin duplicar filas ni reactivar asignaciones deshabilitadas manualmente. Requiere la base de datos con las migraciones aplicadas y el rol `SUPER_ADMIN` existente.
+Ejecuta `npm run migration:permissions` para registrar el catálogo de permisos agrupado por recurso en `ACCESS_CONTROL`. El seed se puede repetir sin duplicar filas y no asigna permisos a `SUPER_ADMIN`. Para otros sistemas, añade sus definiciones al catálogo y asigna permisos solo a roles del mismo sistema.
 
 ### Reiniciar la base local
 
-El volumen de PostgreSQL persiste los datos. Para eliminarlo y crear una base vacía, ejecuta este comando destructivo:
+Para borrar **todas las tablas y vistas** de la base configurada en `.env` (incluida la tabla de migraciones), sin eliminar el volumen de PostgreSQL ni los archivos fuente, ejecuta:
+
+```bash
+npm run migration:drop -- --confirm=VALOR_DE_DB_DATABASE
+npm run migration:run
+npm run migration:super-admin
+npm run migration:permissions
+```
+
+`migration:drop` exige que el nombre en `--confirm` coincida exactamente con `DB_DATABASE` y está bloqueado si `NODE_ENV=production`. Comprueba el host y la base de `.env` antes de confirmarlo. Los comandos posteriores son independientes: ejecútalos solo cuando quieras volver a cargar sus datos.
+
+**Antes de ejecutar `migration:run` sobre una base vacía**, verifica que la primera migración cree todas las tablas. Una migración que empieza con `ALTER TABLE` presupone tablas existentes y fallará después de `migration:drop`.
+
+El volumen de PostgreSQL persiste los datos. Como alternativa para destruir **todo el volumen local** y crear una base vacía, ejecuta:
 
 ```bash
 docker compose down -v
@@ -85,7 +98,7 @@ docker compose up -d
 npm run migration:run
 ```
 
-Esto es necesario si la base fue creada anteriormente con `synchronize` y la migración inicial intenta crear tablas que ya existen.
+La migración inicial reemplaza todas las anteriores: cualquier base que tenga el historial antiguo debe recrearse antes de ejecutarla. **Esto elimina todos los datos del volumen local**, incluidos usuarios y permisos; no lo hagas sobre una base que quieras conservar.
 
 ## Arquitectura
 

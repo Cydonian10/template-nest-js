@@ -12,8 +12,8 @@ export class RoleResponseDto {
   users: UserRoleResponseDto[];
   @ApiProperty({ type: RolePermissionResponseDto, isArray: true })
   permissions: RolePermissionResponseDto[];
-  @ApiProperty({ type: String, isArray: true, format: 'uuid' })
-  systemIds: string[];
+  @ApiProperty({ format: 'uuid' })
+  systemId: string;
 
   static from(role: Role): RoleResponseDto {
     return {
@@ -27,9 +27,7 @@ export class RoleResponseDto {
       permissions: (role.rolePermissions ?? []).map((assignment) =>
         RolePermissionResponseDto.from(assignment, role.id),
       ),
-      systemIds: (role.roleSystems ?? []).map(
-        (assignment) => assignment.systemId ?? assignment.system.id,
-      ),
+      systemId: role.systemId ?? role.system.id,
     };
   }
 }

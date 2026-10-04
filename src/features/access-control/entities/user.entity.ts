@@ -60,7 +60,10 @@ export class User {
   updatedAt: Date;
 
   @OneToOne(() => Person, (person) => person.user, { nullable: false })
-  @JoinColumn({ name: 'persona_id' })
+  @JoinColumn({
+    name: 'persona_id',
+    foreignKeyConstraintName: 'FK_users_persona',
+  })
   persona: Relation<Person>;
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)

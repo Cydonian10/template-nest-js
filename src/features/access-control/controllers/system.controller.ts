@@ -39,10 +39,7 @@ import { CreateSystemRoleSchema } from '../dto/role/create-role.dto.js';
 import type { CreateSystemRoleDto } from '../dto/role/create-role.dto.js';
 import { RoleResponseDto } from '../dto/role/role-response.dto.js';
 import type { Role } from '../entities/roles.entity.js';
-import type { RoleSystem } from '../entities/role_system.entity.js';
 import { CreateSystemRoleCommand } from '../commands/roles/create-system-role/create-system-role.command.js';
-import { AssignRoleSystemCommand } from '../commands/roles/assign-system/assign-system.command.js';
-import { RemoveRoleSystemCommand } from '../commands/roles/remove-system/remove-system.command.js';
 
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
@@ -97,32 +94,6 @@ export class SystemController {
       new CreateSystemRoleCommand(systemId, dto),
     );
     return RoleResponseDto.from(role);
-  }
-
-  @Post(':systemId/roles/:roleId')
-  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_ROLES)
-  @ApiCreatedResponse({ description: 'Rol habilitado para el sistema' })
-  async assignRole(
-    @Param('systemId', new ParseUUIDPipe()) systemId: string,
-    @Param('roleId', new ParseUUIDPipe()) roleId: string,
-  ): Promise<{ id: string; roleId: string; systemId: string }> {
-    const assignment: RoleSystem = await this.commandBus.execute(
-      new AssignRoleSystemCommand(roleId, systemId),
-    );
-    return { id: assignment.id, roleId, systemId };
-  }
-
-  @Delete(':systemId/roles/:roleId')
-  @RequirePermissions(PERMISSION_CODES.SYSTEM_ASSIGN_ROLES)
-  @HttpCode(204)
-  @ApiNoContentResponse()
-  removeRole(
-    @Param('systemId', new ParseUUIDPipe()) systemId: string,
-    @Param('roleId', new ParseUUIDPipe()) roleId: string,
-  ): Promise<void> {
-    return this.commandBus.execute(
-      new RemoveRoleSystemCommand(roleId, systemId),
-    );
   }
 
   @Patch(':id')

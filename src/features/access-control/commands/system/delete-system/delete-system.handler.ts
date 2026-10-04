@@ -5,7 +5,7 @@ import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
 import { System } from '../../../entities/system.entity.js';
 import { Permission } from '../../../entities/permission.entity.js';
-import { RoleSystem } from '../../../entities/role_system.entity.js';
+import { Role } from '../../../entities/roles.entity.js';
 import { DeleteSystemCommand } from './delete-system.command.js';
 
 @CommandHandler(DeleteSystemCommand)
@@ -23,7 +23,7 @@ export class DeleteSystemHandler implements ICommandHandler<DeleteSystemCommand>
 
         if (
           (await manager.exists(Permission, { where: { system: { id } } })) ||
-          (await manager.exists(RoleSystem, { where: { system: { id } } }))
+          (await manager.exists(Role, { where: { system: { id } } }))
         ) {
           throw new ConflictException(
             'No se puede eliminar un sistema con permisos o roles',

@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  RelationId,
+} from 'typeorm';
 import type { Relation } from 'typeorm';
 import { RolePermission } from './role_permission.entity.js';
 import { UserRole } from './user_roles.entity.js';
-import { RoleSystem } from './role_system.entity.js';
+import { System } from './system.entity.js';
 
 @Entity('roles')
 export class Role {
@@ -29,6 +37,16 @@ export class Role {
   @OneToMany(() => UserRole, (userRole) => userRole.role)
   userRoles: Relation<UserRole[]>;
 
-  @OneToMany(() => RoleSystem, (assignment) => assignment.role)
-  roleSystems: Relation<RoleSystem[]>;
+  @ManyToOne(() => System, (system) => system.roles, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({
+    name: 'system_id',
+    foreignKeyConstraintName: 'FK_roles_system',
+  })
+  system: Relation<System>;
+
+  @RelationId((role: Role) => role.system)
+  systemId: string;
 }

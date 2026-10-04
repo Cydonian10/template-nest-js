@@ -51,7 +51,7 @@ export class FindAllPermissionsHandler implements IQueryHandler<FindAllPermissio
 
     const builder = this.repository
       .createQueryBuilder('permission')
-      .innerJoin('permission.rolePermissions', 'assignment')
+      .innerJoin('permission.rolePermissions', 'assignment', 'assignment.active = true')
       .where('assignment.role_id = :roleId', { roleId })
       .innerJoinAndSelect(
         'permission.system',

@@ -21,7 +21,10 @@ export class UserRole {
     nullable: false,
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'role_id' })
+  @JoinColumn({
+    name: 'role_id',
+    foreignKeyConstraintName: 'FK_user_roles_role',
+  })
   role: Relation<Role>;
 
   @ApiProperty({ format: 'uuid' })
@@ -32,7 +35,10 @@ export class UserRole {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn({
+    name: 'user_id',
+    foreignKeyConstraintName: 'FK_user_roles_user',
+  })
   user: Relation<User>;
 
   @ApiProperty({ format: 'uuid' })

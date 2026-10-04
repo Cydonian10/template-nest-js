@@ -4,7 +4,6 @@ import { QueryFailedError } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
 import { Role } from '../../../entities/roles.entity.js';
-import { RoleSystem } from '../../../entities/role_system.entity.js';
 import { System } from '../../../entities/system.entity.js';
 import { roleCodeFromName } from '../role-code.js';
 import { CreateSystemRoleCommand } from './create-system-role.command.js';
@@ -29,12 +28,8 @@ export class CreateSystemRoleHandler implements ICommandHandler<CreateSystemRole
         throw new ConflictException('Ya existe un rol con ese código');
       try {
         const role = await manager.save(
-          manager.create(Role, { ...data, code }),
+          manager.create(Role, { ...data, code, system }),
         );
-        const assignment = await manager.save(
-          manager.create(RoleSystem, { role, system }),
-        );
-        role.roleSystems = [assignment];
         return role;
       } catch (error) {
         if (

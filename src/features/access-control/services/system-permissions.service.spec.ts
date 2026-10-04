@@ -34,9 +34,8 @@ describe('SystemPermissionsService', () => {
     await expect(
       service.allowedSystemIds('user-id', 'ROLES_ASIGNAR_PERMISO'),
     ).resolves.toEqual(['ventas-id']);
-    expect(builder.innerJoin).toHaveBeenCalledWith('role.roleSystems', 'scope');
     expect(builder.innerJoin).toHaveBeenCalledWith(
-      'scope.system',
+      'role.system',
       'system',
       'system.active = true',
     );

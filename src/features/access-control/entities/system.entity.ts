@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { Permission } from './permission.entity.js';
-import { RoleSystem } from './role_system.entity.js';
+import { Role } from './roles.entity.js';
 
 @Entity('systems')
 @Unique('UQ_systems_code', ['code'])
@@ -49,6 +49,6 @@ export class System {
   @OneToMany(() => Permission, (permission) => permission.system)
   permissions: Relation<Permission[]>;
 
-  @OneToMany(() => RoleSystem, (assignment) => assignment.system)
-  roleSystems: Relation<RoleSystem[]>;
+  @OneToMany(() => Role, (role) => role.system)
+  roles: Relation<Role[]>;
 }

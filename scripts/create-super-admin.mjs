@@ -5,6 +5,8 @@ import { Role } from '../dist/features/access-control/entities/roles.entity.js';
 import { User } from '../dist/features/access-control/entities/user.entity.js';
 import { UserRole } from '../dist/features/access-control/entities/user_roles.entity.js';
 import { ROLE_CODES } from '../dist/shared/authorization/role-codes.js';
+import { SYSTEM_CODES } from '../dist/shared/authorization/system-codes.js';
+import { System } from '../dist/features/access-control/entities/system.entity.js';
 
 function required(name) {
   const value = process.env[name];
@@ -35,6 +37,16 @@ async function main() {
         throw new Error('Ya existe un usuario con ese correo.');
       }
       const roleRepository = manager.getRepository(Role);
+      let system = await manager.findOneBy(System, {
+        code: SYSTEM_CODES.ACCESS_CONTROL,
+      });
+      if (!system) {
+        system = await manager.save(manager.create(System, {
+          code: SYSTEM_CODES.ACCESS_CONTROL,
+          name: 'Control de acceso',
+          description: 'Administración de usuarios y permisos',
+        }));
+      }
       const role =
         (await roleRepository.findOneBy({ code: ROLE_CODES.SUPER_ADMIN })) ??
         (await roleRepository.save(
@@ -42,6 +54,7 @@ async function main() {
             code: ROLE_CODES.SUPER_ADMIN,
             name: 'Super administrador',
             description: 'Rol de super administrador',
+            system,
           }),
         ));
 

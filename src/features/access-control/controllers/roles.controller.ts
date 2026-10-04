@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -28,14 +29,13 @@ import type { CreateRoleDto } from '../dto/role/create-role.dto.js';
 import { UpdateRoleSchema } from '../dto/role/update-role.dto.js';
 import type { UpdateRoleDto } from '../dto/role/update-role.dto.js';
 import { RoleResponseDto } from '../dto/role/role-response.dto.js';
-import { RolePermissionResponseDto } from '../dto/role/role-permission-response.dto.js';
+import { ReplaceRolePermissionsSchema } from '../dto/role/replace-role-permissions.dto.js';
+import type { ReplaceRolePermissionsDto } from '../dto/role/replace-role-permissions.dto.js';
 import type { Role } from '../entities/roles.entity.js';
-import type { RolePermission } from '../entities/role_permission.entity.js';
 import { FindAllRolesQuery } from '../queries/roles/find-all-roles/find-all-roles.query.js';
 import { UpdateRoleCommand } from '../commands/roles/update-role/update-role.command.js';
 import { DeleteRoleCommand } from '../commands/roles/delete-role/delete-role.command.js';
-import { AssignRolePermissionCommand } from '../commands/roles/assign-permission/assign-permission.command.js';
-import { RemoveRolePermissionCommand } from '../commands/roles/remove-permission/remove-permission.command.js';
+import { ReplaceRolePermissionsCommand } from '../commands/roles/replace-permissions/replace-permissions.command.js';
 import { CreateSystemRoleCommand } from '../commands/roles/create-system-role/create-system-role.command.js';
 
 @ApiBearerAuth()
@@ -94,29 +94,15 @@ export class RolesController {
     await this.commandBus.execute(new DeleteRoleCommand(id));
   }
 
-  @Post(':id/permissions/:permissionId')
+  @Put(':id/permissions')
   @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_PERMISSION)
-  @ApiCreatedResponse({ type: RolePermissionResponseDto })
-  async assignPermission(
+  @ApiOkResponse({ description: 'Lista final de IDs de permisos asignados' })
+  replacePermissions(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Param('permissionId', new ParseUUIDPipe()) permissionId: string,
-  ): Promise<RolePermissionResponseDto> {
-    const assignment: RolePermission = await this.commandBus.execute(
-      new AssignRolePermissionCommand(id, permissionId),
-    );
-    return RolePermissionResponseDto.from(assignment);
-  }
-
-  @Delete(':id/permissions/:permissionId')
-  @RequirePermissions(PERMISSION_CODES.ROLES_ASSIGN_PERMISSION)
-  @HttpCode(204)
-  @ApiNoContentResponse()
-  async removePermission(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Param('permissionId', new ParseUUIDPipe()) permissionId: string,
-  ): Promise<void> {
-    await this.commandBus.execute(
-      new RemoveRolePermissionCommand(id, permissionId),
+    @Body({ schema: ReplaceRolePermissionsSchema }) dto: ReplaceRolePermissionsDto,
+  ): Promise<{ permissionIds: string[] }> {
+    return this.commandBus.execute(
+      new ReplaceRolePermissionsCommand(id, dto.permissionIds),
     );
   }
 }

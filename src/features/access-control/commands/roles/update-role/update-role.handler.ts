@@ -17,7 +17,7 @@ export class UpdateRoleHandler implements ICommandHandler<UpdateRoleCommand> {
       relations: {
         userRoles: { user: true },
         rolePermissions: { permission: true },
-        roleSystems: { system: true },
+        system: true,
       },
     });
     if (!role) throw new ResourceNotFoundException('Rol', id);
