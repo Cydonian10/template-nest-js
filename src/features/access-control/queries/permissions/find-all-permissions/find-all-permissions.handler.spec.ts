@@ -93,28 +93,34 @@ describe('FindAllPermissionsHandler', () => {
     });
   });
 
-  it('filtra por rol y devuelve permisos únicos ordenados sin relaciones', async () => {
+  it('devuelve todos los permisos del sistema del rol con su asignación activa', async () => {
     const permissions = [
-      { id: 'permission-1', name: 'Leer permisos' },
+      {
+        id: 'permission-1',
+        name: 'Leer permisos',
+        rolePermissions: [{ id: 'grant-1' }],
+      },
+      { id: 'permission-2', name: 'Crear permisos', rolePermissions: [] },
     ] as Permission[];
     const getMany = vi.fn().mockResolvedValue(permissions);
     const builder = {
-      innerJoin: vi.fn().mockReturnThis(),
+      leftJoinAndSelect: vi.fn().mockReturnThis(),
       innerJoinAndSelect: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       andWhere: vi.fn().mockReturnThis(),
-      distinct: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
       getMany,
     };
-    const existsBy = vi.fn().mockResolvedValue(true);
+    const findOne = vi
+      .fn()
+      .mockResolvedValue({ id: 'role-id', system: { id: 'system-id' } });
     const repository = {
       createQueryBuilder: vi.fn().mockReturnValue(builder),
     } as unknown as Repository<Permission>;
     const handler = new FindAllPermissionsHandler(
       repository,
       {
-        existsBy,
+        findOne,
       } as unknown as Repository<Role>,
       scope,
     );
@@ -124,16 +130,25 @@ describe('FindAllPermissionsHandler', () => {
         new FindAllPermissionsQuery('role-id', undefined, 'actor-id'),
       ),
     ).resolves.toBe(permissions);
-    expect(existsBy).toHaveBeenCalledWith({ id: 'role-id' });
-    expect(builder.innerJoin).toHaveBeenCalledWith(
+    expect(findOne).toHaveBeenCalledWith({
+      where: { id: 'role-id' },
+      relations: { system: true },
+    });
+    expect(builder.leftJoinAndSelect).toHaveBeenCalledWith(
       'permission.rolePermissions',
       'assignment',
-      'assignment.active = true',
+      'assignment.role_id = :roleId AND assignment.active = true',
+      { roleId: 'role-id' },
     );
-    expect(builder.where).toHaveBeenCalledWith('assignment.role_id = :roleId', {
-      roleId: 'role-id',
+    expect(builder.where).toHaveBeenCalledWith('system.id = :roleSystemId', {
+      roleSystemId: 'system-id',
     });
-    expect(builder.distinct).toHaveBeenCalledWith(true);
+    expect(builder.innerJoinAndSelect).toHaveBeenCalledWith(
+      'permission.system',
+      'system',
+      'system.active = true AND system.id IN (:...allowed)',
+      { allowed: ['system-id'] },
+    );
     expect(builder.orderBy).toHaveBeenCalledWith('permission.name', 'ASC');
     await handler.execute(
       new FindAllPermissionsQuery('role-id', SYSTEM_CODES.RRHH, 'actor-id'),
@@ -160,7 +175,7 @@ describe('FindAllPermissionsHandler', () => {
     const handler = new FindAllPermissionsHandler(
       { createQueryBuilder } as unknown as Repository<Permission>,
       {
-        existsBy: vi.fn().mockResolvedValue(false),
+        findOne: vi.fn().mockResolvedValue(null),
       } as unknown as Repository<Role>,
       scope,
     );

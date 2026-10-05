@@ -42,7 +42,7 @@ export class PermissionsController {
       new FindAllPermissionsQuery(roleId, systemCode, userId, resourceCode),
     );
     return permissions.map((permission) =>
-      PermissionResponseDto.from(permission),
+      PermissionResponseDto.from(permission, roleId),
     );
   }
 }

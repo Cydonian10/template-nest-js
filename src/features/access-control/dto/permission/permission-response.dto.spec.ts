@@ -14,12 +14,27 @@ describe('PermissionResponseDto', () => {
       resourceCode: 'PERMISOS',
       actionCode: 'LEER',
       code: 'PERMISOS_LEER',
-    } as Permission;
+    };
 
-    expect(PermissionResponseDto.from(permission)).toMatchObject({
+    expect(PermissionResponseDto.from(permission as Permission)).toMatchObject({
       systemId: 'system-id',
       systemCode: 'ACCESS_CONTROL',
       systemName: 'Control de acceso',
     });
+    expect(PermissionResponseDto.from(permission as Permission)).not.toHaveProperty(
+      'assigned',
+    );
+    expect(
+      PermissionResponseDto.from(
+        { ...permission, rolePermissions: [] } as unknown as Permission,
+        'role-id',
+      ).assigned,
+    ).toBe(false);
+    expect(
+      PermissionResponseDto.from(
+        { ...permission, rolePermissions: [{ id: 'grant-id' }] } as Permission,
+        'role-id',
+      ).assigned,
+    ).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { Permission } from '../../entities/permission.entity.js';
 
 export class PermissionResponseDto {
@@ -26,8 +26,14 @@ export class PermissionResponseDto {
   @ApiProperty({ example: 'PERMISOS_LEER' })
   code: string;
 
-  static from(permission: Permission): PermissionResponseDto {
-    return {
+  @ApiPropertyOptional({
+    description:
+      'Indica si el permiso está activo para el rol consultado; solo aparece cuando se indica roleId.',
+  })
+  assigned?: boolean;
+
+  static from(permission: Permission, roleId?: string): PermissionResponseDto {
+    const response: PermissionResponseDto = {
       id: permission.id,
       name: permission.name,
       systemCode: permission.system.code,
@@ -37,5 +43,8 @@ export class PermissionResponseDto {
       actionCode: permission.actionCode,
       code: permission.code,
     };
+    if (roleId)
+      response.assigned = (permission.rolePermissions?.length ?? 0) > 0;
+    return response;
   }
 }
