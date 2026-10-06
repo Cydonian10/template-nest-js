@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -18,6 +19,7 @@ import {
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -66,9 +68,14 @@ export class RolesController {
 
   @Get()
   @ApiOkResponse({ type: RoleResponseDto, isArray: true })
-  async findAll(@CurrentUser('id') userId: string): Promise<RoleResponseDto[]> {
+  @ApiQuery({ name: 'systemId', required: false, type: String })
+  async findAll(
+    @CurrentUser('id') userId: string,
+    @Query('systemId')
+    systemId?: string,
+  ): Promise<RoleResponseDto[]> {
     const roles: Role[] = await this.queryBus.execute(
-      new FindAllRolesQuery(userId),
+      new FindAllRolesQuery(userId, systemId),
     );
     return roles.map((role) => RoleResponseDto.from(role));
   }
@@ -99,7 +106,8 @@ export class RolesController {
   @ApiOkResponse({ description: 'Lista final de IDs de permisos asignados' })
   replacePermissions(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body({ schema: ReplaceRolePermissionsSchema }) dto: ReplaceRolePermissionsDto,
+    @Body({ schema: ReplaceRolePermissionsSchema })
+    dto: ReplaceRolePermissionsDto,
   ): Promise<{ permissionIds: string[] }> {
     return this.commandBus.execute(
       new ReplaceRolePermissionsCommand(id, dto.permissionIds),
