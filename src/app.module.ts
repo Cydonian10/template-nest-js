@@ -15,6 +15,13 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
     CqrsModule.forRoot(),
     LoggerModule.forRoot({
       pinoHttp: {
+        serializers: {
+          req: (req) => ({
+            method: req.method,
+            url: req.url?.split('?')[0],
+          }),
+          res: (res) => ({ statusCode: res.statusCode }),
+        },
         transport: {
           target: 'pino-pretty',
           options: {

@@ -39,6 +39,7 @@ import { UpdateRoleCommand } from '../commands/roles/update-role/update-role.com
 import { DeleteRoleCommand } from '../commands/roles/delete-role/delete-role.command.js';
 import { ReplaceRolePermissionsCommand } from '../commands/roles/replace-permissions/replace-permissions.command.js';
 import { CreateSystemRoleCommand } from '../commands/roles/create-system-role/create-system-role.command.js';
+import { PinoLogger } from 'nestjs-pino';
 
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
@@ -49,7 +50,10 @@ export class RolesController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-  ) {}
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(RolesController.name);
+  }
 
   @Post()
   @RequirePermissions(PERMISSION_CODES.ROLES_CREATE)

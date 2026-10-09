@@ -55,13 +55,17 @@ export class ReplaceRolePermissionsHandler implements ICommandHandler<ReplaceRol
       const desired = new Set(requested);
       const kept = new Set<string>();
       const changed: RolePermission[] = [];
+      const removed: RolePermission[] = [];
       for (const assignment of assignments) {
         const id = assignment.permission.id;
-        // Normalize old duplicates too: at most one active association per permission.
-        const active = desired.has(id) && !kept.has(id);
-        if (active) kept.add(id);
-        if (assignment.active !== active) {
-          assignment.active = active;
+        // Keep only one association per requested permission, deleting obsolete rows and duplicates.
+        if (!desired.has(id) || kept.has(id)) {
+          removed.push(assignment);
+          continue;
+        }
+        kept.add(id);
+        if (!assignment.active) {
+          assignment.active = true;
           changed.push(assignment);
         }
       }
@@ -70,6 +74,7 @@ export class ReplaceRolePermissionsHandler implements ICommandHandler<ReplaceRol
           changed.push(manager.create(RolePermission, { role, permission, active: true }));
         }
       }
+      if (removed.length) await manager.remove(RolePermission, removed);
       if (changed.length) await manager.save(RolePermission, changed);
 
       return { permissionIds: requested };
