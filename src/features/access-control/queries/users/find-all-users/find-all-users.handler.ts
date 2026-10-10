@@ -13,7 +13,7 @@ export class FindAllUsersHandler implements IQueryHandler<FindAllUsersQuery> {
 
   execute(): Promise<User[]> {
     return this.repository.find({
-      relations: { persona: true },
+      relations: { persona: true, userRoles: { role: true } },
       order: { id: 'ASC' },
     });
   }

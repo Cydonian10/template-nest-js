@@ -40,7 +40,15 @@ export class UserResponseDto {
   @ApiProperty({ type: PersonResponseDto })
   person: PersonResponseDto;
 
+  roles: {
+    id: string;
+    name: string;
+    inicio: string | null;
+    fin: string | null;
+  }[];
+
   static from(user: User): UserResponseDto {
+    console.log({ user, roles: user.userRoles });
     return {
       id: user.id,
       email: user.email,
@@ -55,6 +63,12 @@ export class UserResponseDto {
         dateOfBirth: user.persona.dateOfBirth,
         active: user.persona.active,
       },
+      roles: user.userRoles.map((ur) => ({
+        id: ur.role.id,
+        name: ur.role.name,
+        inicio: ur.validFrom,
+        fin: ur.validUntil,
+      })),
     };
   }
 }
