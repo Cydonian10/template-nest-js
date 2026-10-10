@@ -48,7 +48,6 @@ export class UserResponseDto {
   }[];
 
   static from(user: User): UserResponseDto {
-    console.log({ user, roles: user.userRoles });
     return {
       id: user.id,
       email: user.email,
@@ -63,7 +62,7 @@ export class UserResponseDto {
         dateOfBirth: user.persona.dateOfBirth,
         active: user.persona.active,
       },
-      roles: user.userRoles.map((ur) => ({
+      roles: (user.userRoles ?? []).map((ur) => ({
         id: ur.role.id,
         name: ur.role.name,
         inicio: ur.validFrom,

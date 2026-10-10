@@ -1,4 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { ConflictException } from '@nestjs/common';
+import { QueryFailedError } from 'typeorm';
 
 import { CreateUserCommand } from './create-user.command.js';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
@@ -17,21 +19,33 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const { person: personData, nickName, email, password } = command.data;
     const passwordHash = await this.passwordHasher.hash(password);
 
-    return this.unitOfWork.execute(async (manager) => {
-      const person = manager.create(Person, personData);
-      await manager.save(person);
+    try {
+      return await this.unitOfWork.execute(async (manager) => {
+        const person = manager.create(Person, personData);
+        await manager.save(person);
 
-      const user = manager.create(User, {
-        nickName,
-        nickNameNormalized: nickName.toUpperCase(),
-        email,
-        emailNormalized: email.toUpperCase(),
-        passwordHash,
-        emailVerificationToken: null,
-        persona: person,
+        const user = manager.create(User, {
+          nickName,
+          nickNameNormalized: nickName.toUpperCase(),
+          email,
+          emailNormalized: email.toUpperCase(),
+          passwordHash,
+          emailVerificationToken: null,
+          persona: person,
+        });
+
+        return manager.save(user);
       });
-
-      return manager.save(user);
-    });
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { code?: string }).code === '23505'
+      ) {
+        throw new ConflictException(
+          'Ya existe un usuario con ese correo o nombre de usuario',
+        );
+      }
+      throw error;
+    }
   }
 }

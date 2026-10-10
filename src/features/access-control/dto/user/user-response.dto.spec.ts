@@ -37,6 +37,7 @@ describe('UserResponseDto', () => {
         dateOfBirth: user.persona.dateOfBirth,
         active: true,
       },
+      roles: [],
     });
   });
 });

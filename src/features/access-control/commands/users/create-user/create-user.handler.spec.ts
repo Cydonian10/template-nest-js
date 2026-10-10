@@ -1,4 +1,6 @@
+import { ConflictException } from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
+import { QueryFailedError } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { Person } from '../../../entities/person.entity.js';
 import { User } from '../../../entities/user.entity.js';
@@ -59,5 +61,38 @@ describe('CreateUserHandler', () => {
       emailVerificationToken: null,
       persona: person,
     });
+  });
+
+  it('convierte un email o nickname duplicado en un conflicto', async () => {
+    const driverError = Object.assign(new Error('unique constraint'), {
+      code: '23505',
+    });
+    const duplicateError = new QueryFailedError(
+      'INSERT INTO users',
+      [],
+      driverError,
+    );
+    const unitOfWork = {
+      execute: vi.fn().mockRejectedValue(duplicateError),
+    } as unknown as UnitOfWork;
+    const hasher = {
+      hash: vi.fn().mockResolvedValue('hash-seguro'),
+    } as unknown as PasswordHasher;
+    const handler = new CreateUserHandler(unitOfWork, hasher);
+    const command = new CreateUserCommand({
+      nickName: 'Gabriel',
+      email: 'gabriel@example.com',
+      password: 'contraseña segura',
+      person: {
+        firstName: 'Gabriel',
+        lastName: 'Pérez',
+        identityDocument: '1234567890',
+        dateOfBirth: '1990-01-31',
+      },
+    });
+
+    await expect(handler.execute(command)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 });
