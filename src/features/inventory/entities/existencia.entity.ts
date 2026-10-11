@@ -12,6 +12,11 @@ import { Almacen } from './almacen.entity.js';
 
 @Entity('existencias')
 @Check('CHK_existencias_cantidad_no_negativa', '"cantidad" >= 0')
+@Check('CHK_existencias_valor_costo_no_negativo', '"valor_costo" >= 0')
+@Check(
+  'CHK_existencias_sin_valor_si_vacia',
+  '"cantidad" <> 0 OR "valor_costo" = 0',
+)
 export class Existencia {
   @PrimaryColumn({ name: 'variante_id', type: 'uuid' })
   varianteId: string;
@@ -36,4 +41,14 @@ export class Existencia {
   // Siempre en la unidad base del producto.
   @Column({ type: 'numeric', precision: 24, scale: 6, default: 0 })
   cantidad: string;
+
+  // Valor del saldo por variante y almacén; promedio = valorCosto / cantidad.
+  @Column({
+    name: 'valor_costo',
+    type: 'numeric',
+    precision: 38,
+    scale: 6,
+    default: 0,
+  })
+  valorCosto: string;
 }

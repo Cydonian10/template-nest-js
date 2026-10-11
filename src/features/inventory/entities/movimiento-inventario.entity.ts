@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { User } from '../../access-control/entities/user.entity.js';
+import { Compra } from './compra.entity.js';
 import { Almacen } from './almacen.entity.js';
 import { Proveedor } from './proveedor.entity.js';
 import { DetalleMovimiento } from './detalle-movimiento.entity.js';
@@ -39,6 +40,10 @@ export enum EstadoMovimientoInventario {
 @Check(
   'CHK_movimientos_inventario_proveedor',
   '"proveedor_id" IS NULL OR "tipo" = \'ingreso\'',
+)
+@Check(
+  'CHK_movimientos_inventario_compra',
+  '"compra_id" IS NULL OR "tipo" = \'ingreso\'',
 )
 export class MovimientoInventario {
   @PrimaryGeneratedColumn('uuid')
@@ -104,6 +109,16 @@ export class MovimientoInventario {
 
   @RelationId((movimiento: MovimientoInventario) => movimiento.proveedor)
   proveedorId: string | null;
+
+  @ManyToOne(() => Compra, (compra) => compra.movimientos, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'compra_id' })
+  compra: Relation<Compra> | null;
+
+  @RelationId((movimiento: MovimientoInventario) => movimiento.compra)
+  compraId: string | null;
 
   @OneToMany(() => DetalleMovimiento, (detalle) => detalle.movimiento)
   detalles: Relation<DetalleMovimiento[]>;

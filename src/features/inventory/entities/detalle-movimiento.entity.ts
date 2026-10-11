@@ -8,6 +8,7 @@ import {
   RelationId,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
+import { DetalleCompra } from './detalle-compra.entity.js';
 import { MovimientoInventario } from './movimiento-inventario.entity.js';
 import { VarianteProducto } from './variante-producto.entity.js';
 import { Unidad } from './unidad.entity.js';
@@ -19,6 +20,10 @@ import { Unidad } from './unidad.entity.js';
   '"cantidad" <> 0 AND "cantidad_base" <> 0',
 )
 @Check('CHK_detalle_movimiento_mismo_signo', '"cantidad" * "cantidad_base" > 0')
+@Check(
+  'CHK_detalle_movimiento_costo_total_no_negativo',
+  '"costo_total" IS NULL OR "costo_total" >= 0',
+)
 export class DetalleMovimiento {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -57,6 +62,16 @@ export class DetalleMovimiento {
   @RelationId((detalle: DetalleMovimiento) => detalle.unidad)
   unidadId: string;
 
+  @ManyToOne(() => DetalleCompra, (compra) => compra.detallesMovimiento, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'detalle_compra_id' })
+  detalleCompra: Relation<DetalleCompra> | null;
+
+  @RelationId((detalle: DetalleMovimiento) => detalle.detalleCompra)
+  detalleCompraId: string | null;
+
   @Column({ type: 'numeric', precision: 20, scale: 6 })
   cantidad: string;
 
@@ -65,4 +80,14 @@ export class DetalleMovimiento {
 
   @Column({ name: 'cantidad_base', type: 'numeric', precision: 24, scale: 6 })
   cantidadBase: string;
+
+  // Importe absoluto aplicado a este detalle; el tipo y la cantidad indican la dirección.
+  @Column({
+    name: 'costo_total',
+    type: 'numeric',
+    precision: 38,
+    scale: 6,
+    nullable: true,
+  })
+  costoTotal: string | null;
 }

@@ -88,24 +88,26 @@ La clave compuesta permite un solo valor por atributo y variante. La comprobaci�
 | `variante_id` | `uuid`          | PK compuesta, FK → `variantes_producto.id` | Variante almacenada.                            |
 | `almacen_id`  | `uuid`          | PK compuesta, FK → `almacenes.id`          | Almacén donde se encuentra.                     |
 | `cantidad`    | `numeric(24,6)` | No nulo, por defecto `0`, `>= 0`           | Stock expresado en la unidad base del producto. |
+| `valor_costo` | `numeric(38,6)` | No nulo, por defecto `0`, `>= 0`           | Valor del saldo de esa variante en ese almacén. |
 
-Existe como máximo un saldo por variante y almacén. Los cambios de saldo deben realizarse de forma transaccional al confirmar movimientos; las entidades por sí solas no actualizan el stock.
+Existe como máximo un saldo por variante y almacén. Si `cantidad = 0`, `valor_costo` debe ser `0`; si `cantidad > 0`, el costo promedio por unidad base es `valor_costo / cantidad`. Los cambios de cantidad y valor deben realizarse de forma transaccional al confirmar movimientos; las entidades por sí solas no actualizan el stock. Véase `docs/modelos/02-inventario-costos.md`.
 
 ## Movimientos
 
 ### `movimientos_inventario`
 
-| Columna              | Tipo                                | Reglas                                 | Uso                                            |
-| -------------------- | ----------------------------------- | -------------------------------------- | ---------------------------------------------- |
-| `id`                 | `uuid`                              | PK, autogenerado                       | Identificador de la cabecera.                  |
-| `tipo`               | enum `tipo_movimiento_inventario`   | No nulo                                | `ingreso`, `salida`, `traslado` o `ajuste`.    |
-| `almacen_origen_id`  | `uuid`                              | FK → `almacenes.id`, NULL según tipo   | Almacén del que sale el stock.                 |
-| `almacen_destino_id` | `uuid`                              | FK → `almacenes.id`, NULL según tipo   | Almacén que recibe el stock o donde se ajusta. |
-| `usuario_id`         | `uuid`                              | FK → `users.id`, no nulo               | Usuario que registra el movimiento.            |
-| `fecha`              | `timestamptz`                       | No nulo, por defecto fecha de creación | Fecha de registro.                             |
-| `estado`             | enum `estado_movimiento_inventario` | No nulo, por defecto `borrador`        | `borrador`, `confirmado` o `anulado`.          |
-| `motivo`             | `text`                              | NULL                                   | Justificación opcional.                        |
-| `proveedor_id`       | `uuid`                              | FK → `proveedores.id`, NULL            | Opcional y solo válido para ingresos.          |
+| Columna              | Tipo                                | Reglas                                 | Uso                                              |
+| -------------------- | ----------------------------------- | -------------------------------------- | ------------------------------------------------ |
+| `id`                 | `uuid`                              | PK, autogenerado                       | Identificador de la cabecera.                    |
+| `tipo`               | enum `tipo_movimiento_inventario`   | No nulo                                | `ingreso`, `salida`, `traslado` o `ajuste`.      |
+| `almacen_origen_id`  | `uuid`                              | FK → `almacenes.id`, NULL según tipo   | Almacén del que sale el stock.                   |
+| `almacen_destino_id` | `uuid`                              | FK → `almacenes.id`, NULL según tipo   | Almacén que recibe el stock o donde se ajusta.   |
+| `usuario_id`         | `uuid`                              | FK → `users.id`, no nulo               | Usuario que registra el movimiento.              |
+| `fecha`              | `timestamptz`                       | No nulo, por defecto fecha de creación | Fecha de registro.                               |
+| `estado`             | enum `estado_movimiento_inventario` | No nulo, por defecto `borrador`        | `borrador`, `confirmado` o `anulado`.            |
+| `motivo`             | `text`                              | NULL                                   | Justificación opcional.                          |
+| `proveedor_id`       | `uuid`                              | FK → `proveedores.id`, NULL            | Opcional y solo válido para ingresos.            |
+| `compra_id`          | `uuid`                              | FK → `compras.id`, NULL                | Compra vinculada; opcional y solo para ingresos. |
 
 Reglas de almacén definidas mediante `CHECK`:
 
@@ -118,17 +120,19 @@ Reglas de almacén definidas mediante `CHECK`:
 
 ### `detalle_movimiento`
 
-| Columna         | Tipo            | Reglas                                               | Uso                                               |
-| --------------- | --------------- | ---------------------------------------------------- | ------------------------------------------------- |
-| `id`            | `uuid`          | PK, autogenerado                                     | Identificador del renglón.                        |
-| `movimiento_id` | `uuid`          | FK → `movimientos_inventario.id`, no nulo            | Cabecera del movimiento.                          |
-| `variante_id`   | `uuid`          | FK → `variantes_producto.id`, no nulo                | Variante afectada.                                |
-| `unidad_id`     | `uuid`          | FK → `unidades.id`, no nulo                          | Unidad utilizada al registrar la operación.       |
-| `cantidad`      | `numeric(20,6)` | No nulo, distinta de `0`                             | Cantidad en la unidad indicada.                   |
-| `factor_a_base` | `numeric(20,8)` | No nulo, `> 0`                                       | Copia del factor vigente al registrar el detalle. |
-| `cantidad_base` | `numeric(24,6)` | No nulo, distinta de `0`, mismo signo que `cantidad` | Copia de la cantidad convertida a la unidad base. |
+| Columna             | Tipo            | Reglas                                               | Uso                                                                                  |
+| ------------------- | --------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `id`                | `uuid`          | PK, autogenerado                                     | Identificador del renglón.                                                           |
+| `movimiento_id`     | `uuid`          | FK → `movimientos_inventario.id`, no nulo            | Cabecera del movimiento.                                                             |
+| `variante_id`       | `uuid`          | FK → `variantes_producto.id`, no nulo                | Variante afectada.                                                                   |
+| `unidad_id`         | `uuid`          | FK → `unidades.id`, no nulo                          | Unidad utilizada al registrar la operación.                                          |
+| `cantidad`          | `numeric(20,6)` | No nulo, distinta de `0`                             | Cantidad en la unidad indicada.                                                      |
+| `factor_a_base`     | `numeric(20,8)` | No nulo, `> 0`                                       | Copia del factor vigente al registrar el detalle.                                    |
+| `cantidad_base`     | `numeric(24,6)` | No nulo, distinta de `0`, mismo signo que `cantidad` | Copia de la cantidad convertida a la unidad base.                                    |
+| `costo_total`       | `numeric(38,6)` | NULL, `>= 0` si tiene valor                          | Importe absoluto aplicado al renglón; tipo y signo de la cantidad indican dirección. |
+| `detalle_compra_id` | `uuid`          | FK → `detalles_compra.id`, NULL                      | Renglón comprado que se está recibiendo; opcional.                                   |
 
-Para un ajuste, una cantidad positiva aumenta y una negativa reduce stock. La base de datos aún **no** exige que ingreso, salida o traslado tengan cantidades positivas, ni verifica que `cantidad_base = cantidad × factor_a_base` o que la unidad sea válida para el producto: estas reglas deberán validarse al implementar los comandos. Los movimientos y detalles no se eliminan en cascada.
+`costo_total` es opcional mientras el movimiento sea borrador; la aplicación deberá exigirlo al confirmar, sin confundir costo desconocido con costo cero. El precio pagado por unidad se consulta en `detalles_compra.precio_unitario`; el costo aplicado por unidad base se calcula como `costo_total / abs(cantidad_base)`, sin almacenar copias adicionales. Para un ajuste, una cantidad positiva aumenta y una negativa reduce stock. La base de datos aún **no** exige que ingreso, salida o traslado tengan cantidades positivas, ni verifica que `cantidad_base = cantidad × factor_a_base`, que la unidad sea válida para el producto o que un detalle de compra pertenezca a la compra de la cabecera: estas reglas deberán validarse al implementar los comandos. Los movimientos y detalles no se eliminan en cascada. El modelo de compras se detalla en `docs/modelos/03-compras-inventario.md`.
 
 ## Proveedores
 
