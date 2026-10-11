@@ -63,7 +63,7 @@ export class UserResponseDto {
         active: user.persona.active,
       },
       roles: (user.userRoles ?? []).map((ur) => ({
-        id: ur.role.id,
+        id: ur.id,
         name: ur.role.name,
         inicio: ur.validFrom,
         fin: ur.validUntil,

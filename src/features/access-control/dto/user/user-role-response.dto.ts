@@ -18,11 +18,14 @@ export class UserRoleResponseDto {
   @ApiProperty({ format: 'date', nullable: true })
   validUntil: string | null;
 
+  rol: string;
+
   static from(assignment: UserRole, roleId?: string): UserRoleResponseDto {
     return {
       id: assignment.id,
       userId: assignment.user.id,
       roleId: roleId ?? assignment.role.id,
+      rol: assignment.role.name,
       validFrom: assignment.validFrom,
       validUntil: assignment.validUntil,
     };
