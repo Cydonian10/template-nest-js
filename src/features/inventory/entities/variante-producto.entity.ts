@@ -12,6 +12,7 @@ import { Producto } from './producto.entity.js';
 import { ValorVariante } from './valor-variante.entity.js';
 import { Existencia } from './existencia.entity.js';
 import { DetalleMovimiento } from './detalle-movimiento.entity.js';
+import { VarianteImagen } from '../../images/entities/variante-imagen.entity.js';
 
 @Entity('variantes_producto')
 export class VarianteProducto {
@@ -31,7 +32,13 @@ export class VarianteProducto {
   @Column({ length: 100, unique: true })
   sku: string;
 
-  @Column({ name: 'codigo_barras', type: 'varchar', length: 100, nullable: true, unique: true })
+  @Column({
+    name: 'codigo_barras',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    unique: true,
+  })
   codigoBarras: string | null;
 
   @Column({ type: 'numeric', precision: 18, scale: 2 })
@@ -48,4 +55,7 @@ export class VarianteProducto {
 
   @OneToMany(() => DetalleMovimiento, (detalle) => detalle.variante)
   detallesMovimiento: Relation<DetalleMovimiento[]>;
+
+  @OneToMany(() => VarianteImagen, (asociacion) => asociacion.variante)
+  imagenes: Relation<VarianteImagen[]>;
 }

@@ -12,6 +12,7 @@ import { Unidad } from './unidad.entity.js';
 import { UnidadProducto } from './unidad-producto.entity.js';
 import { AtributoProducto } from './atributo-producto.entity.js';
 import { VarianteProducto } from './variante-producto.entity.js';
+import { ProductoImagen } from '../../images/entities/producto-imagen.entity.js';
 
 @Entity('productos')
 export class Producto {
@@ -48,4 +49,7 @@ export class Producto {
 
   @OneToMany(() => VarianteProducto, (variante) => variante.producto)
   variantes: Relation<VarianteProducto[]>;
+
+  @OneToMany(() => ProductoImagen, (asociacion) => asociacion.producto)
+  imagenes: Relation<ProductoImagen[]>;
 }
