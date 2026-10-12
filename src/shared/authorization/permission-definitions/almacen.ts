@@ -51,4 +51,10 @@ export const ALMACEN_PERMISSIONS = [
     resourceCode: 'ATRIBUTOS',
     actionCode: 'ELIMINAR',
   },
+  {
+    code: PERMISSION_CODES.VARIANTES_CREATE,
+    name: 'Crear variantes',
+    resourceCode: 'VARIANTES',
+    actionCode: 'CREAR',
+  },
 ] as const satisfies readonly PermissionDefinition[];
