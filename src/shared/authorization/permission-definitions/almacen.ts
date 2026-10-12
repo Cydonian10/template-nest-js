@@ -9,4 +9,10 @@ export const ALMACEN_PERMISSIONS = [
     resourceCode: 'UNIDADES',
     actionCode: 'CREAR',
   },
+  {
+    code: PERMISSION_CODES.UNIDADES_READ,
+    name: 'Leer unidades',
+    resourceCode: 'UNIDADES',
+    actionCode: 'LEER',
+  },
 ] as const satisfies readonly PermissionDefinition[];

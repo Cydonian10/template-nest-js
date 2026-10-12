@@ -1,9 +1,17 @@
-import { Unidad } from '../../entities/unidad.entity.js';
+import { ApiProperty } from '@nestjs/swagger';
+import type { Unidad } from '../../entities/unidad.entity.js';
 
 export class UnidadResponseDto {
+  @ApiProperty({ format: 'uuid' })
   id: string;
+
+  @ApiProperty()
   nombre: string;
+
+  @ApiProperty()
   simbolo: string;
+
+  @ApiProperty()
   tipo: string;
 
   static from(unidad: Unidad): UnidadResponseDto {
