@@ -12,16 +12,28 @@ import { CreateUnidadHandle } from './unidades/commands/create-unidad/create-uni
 import { FindAllUnidadesHandler } from './unidades/queries/find-all-unidades/find-all-unidades.handler.js';
 import { UpdateUnidadHandler } from './unidades/commands/update-unidad/update-unidad.handler.js';
 import { DeleteUnidadHandler } from './unidades/commands/delete-unidad/delete-unidad.handler.js';
+import { Atributo } from './entities/atributo.entity.js';
+import { AtributosController } from './atributos/controllers/atributos.controller.js';
+import { CreateAtributoHandler } from './atributos/commands/create-atributo/create-atributo.handler.js';
+import { UpdateAtributoHandler } from './atributos/commands/update-atributo/update-atributo.handler.js';
+import { DeleteAtributoHandler } from './atributos/commands/delete-atributo/delete-atributo.handler.js';
+import { FindAllAtributosHandler } from './atributos/queries/find-all-atributos/find-all-atributos.handler.js';
+import { FindAtributoByIdHandler } from './atributos/queries/find-atributo-by-id/find-atributo-by-id.handler.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Producto, Unidad])],
-  controllers: [ProductsController, UnidadController],
+  imports: [TypeOrmModule.forFeature([Producto, Unidad, Atributo])],
+  controllers: [ProductsController, UnidadController, AtributosController],
   providers: [
     CreateProductHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
     DeleteUnidadHandler,
+    CreateAtributoHandler,
+    UpdateAtributoHandler,
+    DeleteAtributoHandler,
+    FindAllAtributosHandler,
+    FindAtributoByIdHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],
