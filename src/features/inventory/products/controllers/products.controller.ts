@@ -24,7 +24,7 @@ import { ProductResponseDto } from '../dto/product-response.dto.js';
 import type { Producto } from '../../entities/producto.entity.js';
 
 @ApiBearerAuth()
-@ApiTags('products')
+@ApiTags('productos')
 @Controller({ path: 'productos', version: VERSION_NEUTRAL })
 export class ProductsController {
   constructor(private readonly commandBus: CommandBus) {}

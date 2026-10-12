@@ -19,10 +19,20 @@ import { UpdateAtributoHandler } from './atributos/commands/update-atributo/upda
 import { DeleteAtributoHandler } from './atributos/commands/delete-atributo/delete-atributo.handler.js';
 import { FindAllAtributosHandler } from './atributos/queries/find-all-atributos/find-all-atributos.handler.js';
 import { FindAtributoByIdHandler } from './atributos/queries/find-atributo-by-id/find-atributo-by-id.handler.js';
+import { AtributoProducto } from './entities/atributo-producto.entity.js';
+import { AtributosPorProductoController } from './products/controllers/atributos-por-producto.controller.js';
+import { AtributosPorProductoHandler } from './products/queries/atributos-por-producto/atributos-por-producto.handler.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Producto, Unidad, Atributo])],
-  controllers: [ProductsController, UnidadController, AtributosController],
+  imports: [
+    TypeOrmModule.forFeature([Producto, Unidad, Atributo, AtributoProducto]),
+  ],
+  controllers: [
+    ProductsController,
+    UnidadController,
+    AtributosController,
+    AtributosPorProductoController,
+  ],
   providers: [
     CreateProductHandler,
     CreateUnidadHandle,
@@ -34,6 +44,7 @@ import { FindAtributoByIdHandler } from './atributos/queries/find-atributo-by-id
     DeleteAtributoHandler,
     FindAllAtributosHandler,
     FindAtributoByIdHandler,
+    AtributosPorProductoHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],
