@@ -22,6 +22,8 @@ import { FindAtributoByIdHandler } from './atributos/queries/find-atributo-by-id
 import { AtributoProducto } from './entities/atributo-producto.entity.js';
 import { AtributosPorProductoController } from './products/controllers/atributos-por-producto.controller.js';
 import { AtributosPorProductoHandler } from './products/queries/atributos-por-producto/atributos-por-producto.handler.js';
+import { AgregarAtributoProductoHandler } from './products/commands/agregar-atributo-producto/agregar-atributo-producto.handler.js';
+import { QuitarAtributoProductoHandler } from './products/commands/quitar-atributo-producto/quitar-atributo-producto.handler.js';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { AtributosPorProductoHandler } from './products/queries/atributos-por-pr
     FindAllAtributosHandler,
     FindAtributoByIdHandler,
     AtributosPorProductoHandler,
+    AgregarAtributoProductoHandler,
+    QuitarAtributoProductoHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],
