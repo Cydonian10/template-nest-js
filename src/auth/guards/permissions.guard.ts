@@ -11,7 +11,7 @@ import type { Request } from 'express';
 import type { Repository } from 'typeorm';
 import { UserRole } from '../../features/access-control/entities/user_roles.entity.js';
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
-import { SYSTEM_CODES } from '../../shared/authorization/system-codes.js';
+import { PERMISSION_DEFINITIONS } from '../../shared/authorization/permission-definitions.js';
 import { REQUIRED_PERMISSIONS_KEY } from '../decorators/require-permissions.decorator.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import type { AuthenticatedUser } from '../interfaces/authenticated-user.interface.js';
@@ -41,6 +41,12 @@ export class PermissionsGuard implements CanActivate {
       .getRequest<Request & { user?: AuthenticatedUser }>();
     if (!request.user?.id) throw new UnauthorizedException();
 
+    const expected = PERMISSION_DEFINITIONS.filter(({ code }) =>
+      required.includes(code),
+    );
+    const systemCodes = [
+      ...new Set(expected.map(({ systemCode }) => systemCode)),
+    ];
     const today = new Date().toISOString().slice(0, 10);
     const grants = await this.assignments
       .createQueryBuilder('assignment')
@@ -57,9 +63,9 @@ export class PermissionsGuard implements CanActivate {
       .leftJoin(
         'permission.system',
         'system',
-        'system.active = true AND system.code = :systemCode',
+        'system.active = true AND system.code IN (:...systemCodes)',
         {
-          systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+          systemCodes: systemCodes.length ? systemCodes : ['__UNKNOWN__'],
         },
       )
       .leftJoin('role.system', 'scope', 'scope.id = system.id')
@@ -68,6 +74,7 @@ export class PermissionsGuard implements CanActivate {
         'CASE WHEN scope.active = true THEN permission.code END',
         'code',
       )
+      .addSelect('system.code', 'systemCode')
       .distinct(true)
       .where('assignment.user_id = :userId', { userId: request.user.id })
       .andWhere('assignment.valid_from <= :today', { today })
@@ -77,14 +84,28 @@ export class PermissionsGuard implements CanActivate {
           today,
         },
       )
-      .getRawMany<{ roleCode: string; code: string | null }>();
+      .getRawMany<{
+        roleCode: string;
+        code: string | null;
+        systemCode: string | null;
+      }>();
 
     if (grants.some(({ roleCode }) => roleCode === ROLE_CODES.SUPER_ADMIN)) {
       return true;
     }
 
-    const codes = new Set(grants.map(({ code }) => code).filter(Boolean));
-    if (!required.every((code) => codes.has(code))) {
+    const granted = new Set(
+      grants.map(({ code, systemCode }) => `${systemCode}/${code}`),
+    );
+    if (
+      !required.every((code) =>
+        expected.some(
+          (definition) =>
+            definition.code === code &&
+            granted.has(`${definition.systemCode}/${code}`),
+        ),
+      )
+    ) {
       throw new ForbiddenException('No tienes los permisos requeridos');
     }
     return true;

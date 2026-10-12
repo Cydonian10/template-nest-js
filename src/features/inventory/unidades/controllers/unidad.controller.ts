@@ -11,6 +11,8 @@ import { CreateUnidadSchema } from '../dtos/create-unidad.dto.js';
 import type { CreateUnidadDto } from '../dtos/create-unidad.dto.js';
 import { UnidadResponseDto } from '../dtos/unidad-response.dto.js';
 import type { Unidad } from '../../entities/unidad.entity.js';
+import { RequirePermissions } from '../../../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../../../shared/authorization/permission-codes.js';
 
 @ApiBearerAuth()
 @ApiTags('unidades')
@@ -19,6 +21,7 @@ export class UnidadController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post()
+  @RequirePermissions(PERMISSION_CODES.UNIDADES_CREATE)
   @ApiResponse({ type: UnidadResponseDto })
   @ApiCreatedResponse({ type: UnidadResponseDto })
   async create(

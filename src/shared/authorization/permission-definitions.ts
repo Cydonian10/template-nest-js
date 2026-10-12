@@ -2,6 +2,7 @@ import { SYSTEM_CODES } from './system-codes.js';
 import type { PermissionCode } from './permission-codes.js';
 import type { SystemCode } from './system-codes.js';
 import { ACCESS_CONTROL_PERMISSIONS } from './permission-definitions/access-control.js';
+import { ALMACEN_PERMISSIONS } from './permission-definitions/almacen.js';
 
 export type PermissionDefinition = {
   code: PermissionCode;
@@ -15,8 +16,13 @@ export type SystemPermissionDefinition = PermissionDefinition & {
 };
 
 /** Catálogo único para el seed; agrega aquí los archivos de los sistemas nuevos. */
-export const PERMISSION_DEFINITIONS: readonly SystemPermissionDefinition[] =
-  ACCESS_CONTROL_PERMISSIONS.map((definition) => ({
+export const PERMISSION_DEFINITIONS: readonly SystemPermissionDefinition[] = [
+  ...ACCESS_CONTROL_PERMISSIONS.map((definition) => ({
     ...definition,
     systemCode: SYSTEM_CODES.ACCESS_CONTROL,
-  }));
+  })),
+  ...ALMACEN_PERMISSIONS.map((definition) => ({
+    ...definition,
+    systemCode: SYSTEM_CODES.ALMACEN,
+  })),
+];

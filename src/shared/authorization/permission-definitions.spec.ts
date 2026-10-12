@@ -35,5 +35,12 @@ describe('PERMISSION_DEFINITIONS', () => {
         ({ systemCode }) => systemCode === SYSTEM_CODES.ACCESS_CONTROL,
       ),
     ).toBe(true);
+    expect(PERMISSION_DEFINITIONS).toContainEqual({
+      systemCode: SYSTEM_CODES.ALMACEN,
+      code: PERMISSION_CODES.UNIDADES_CREATE,
+      name: 'Crear unidades',
+      resourceCode: 'UNIDADES',
+      actionCode: 'CREAR',
+    });
   });
 });

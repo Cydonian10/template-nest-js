@@ -5,6 +5,7 @@ import type { Repository } from 'typeorm';
 import { UserRole } from '../../features/access-control/entities/user_roles.entity.js';
 import { PERMISSION_CODES } from '../../shared/authorization/permission-codes.js';
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
+import { SYSTEM_CODES } from '../../shared/authorization/system-codes.js';
 import { PermissionsGuard } from './permissions.guard.js';
 
 describe('PermissionsGuard', () => {
@@ -59,7 +60,11 @@ describe('PermissionsGuard', () => {
 
   it('devuelve 403 si falta alguno de los permisos', async () => {
     getRawMany.mockResolvedValue([
-      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_READ },
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.USERS_READ,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
     ]);
     await expect(
       guard.canActivate(context({ id: 'user-1' })),
@@ -87,6 +92,12 @@ describe('PermissionsGuard', () => {
       'scope',
       'scope.id = system.id',
     );
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+      'permission.system',
+      'system',
+      'system.active = true AND system.code IN (:...systemCodes)',
+      { systemCodes: [SYSTEM_CODES.ACCESS_CONTROL] },
+    );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       '(assignment.valid_until IS NULL OR assignment.valid_until >= :today)',
       {
@@ -97,8 +108,51 @@ describe('PermissionsGuard', () => {
 
   it('autoriza solo si están todos los permisos exigidos', async () => {
     getRawMany.mockResolvedValue([
-      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_READ },
-      { roleCode: 'OPERADOR', code: PERMISSION_CODES.USERS_CREATE },
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.USERS_READ,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.USERS_CREATE,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
+    ]);
+    await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
+      true,
+    );
+  });
+
+  it('valida UNIDADES_CREAR en ALMACEN, no en otro sistema', async () => {
+    getAllAndOverride.mockImplementation((key: string) =>
+      key === 'requiredPermissions'
+        ? [PERMISSION_CODES.UNIDADES_CREATE]
+        : false,
+    );
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.UNIDADES_CREATE,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+      'permission.system',
+      'system',
+      'system.active = true AND system.code IN (:...systemCodes)',
+      { systemCodes: [SYSTEM_CODES.ALMACEN] },
+    );
+
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.UNIDADES_CREATE,
+        systemCode: SYSTEM_CODES.ALMACEN,
+      },
     ]);
     await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
       true,
