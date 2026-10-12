@@ -1,7 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   VERSION_NEUTRAL,
@@ -10,8 +15,8 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateUnidaCommand } from '../commands/create-unidad/create-unidad.command.js';
@@ -26,6 +31,10 @@ import { FilterUnidadSchema } from '../dtos/filter-unidad.dto.js';
 import type { FilterUnidadDto } from '../dtos/filter-unidad.dto.js';
 import { PaginatedUnidadesResponseDto } from '../dtos/paginated-unidades-response.dto.js';
 import { FindAllUnidadesQuery } from '../queries/find-all-unidades/find-all-unidades.query.js';
+import { UpdateUnidadSchema } from '../dtos/update-unidad.dto.js';
+import type { UpdateUnidadDto } from '../dtos/update-unidad.dto.js';
+import { UpdateUnidadCommand } from '../commands/update-unidad/update-unidad.command.js';
+import { DeleteUnidadCommand } from '../commands/delete-unidad/delete-unidad.command.js';
 
 @ApiBearerAuth()
 @ApiTags('unidades')
@@ -62,5 +71,26 @@ export class UnidadController {
       total,
       filter,
     );
+  }
+
+  @Patch(':id')
+  @RequirePermissions(PERMISSION_CODES.UNIDADES_UPDATE)
+  @ApiOkResponse({ type: UnidadResponseDto })
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body({ schema: UpdateUnidadSchema }) dto: UpdateUnidadDto,
+  ): Promise<UnidadResponseDto> {
+    const unidad: Unidad = await this.commandBus.execute(
+      new UpdateUnidadCommand(id, dto),
+    );
+    return UnidadResponseDto.from(unidad);
+  }
+
+  @Delete(':id')
+  @RequirePermissions(PERMISSION_CODES.UNIDADES_DELETE)
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
+    await this.commandBus.execute(new DeleteUnidadCommand(id));
   }
 }

@@ -10,6 +10,8 @@ import { Unidad } from './entities/unidad.entity.js';
 import { UnidadController } from './unidades/controllers/unidad.controller.js';
 import { CreateUnidadHandle } from './unidades/commands/create-unidad/create-unidad.handler.js';
 import { FindAllUnidadesHandler } from './unidades/queries/find-all-unidades/find-all-unidades.handler.js';
+import { UpdateUnidadHandler } from './unidades/commands/update-unidad/update-unidad.handler.js';
+import { DeleteUnidadHandler } from './unidades/commands/delete-unidad/delete-unidad.handler.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Producto, Unidad])],
@@ -18,6 +20,8 @@ import { FindAllUnidadesHandler } from './unidades/queries/find-all-unidades/fin
     CreateProductHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
+    UpdateUnidadHandler,
+    DeleteUnidadHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],

@@ -1,6 +1,8 @@
 import type { CommandBus, QueryBus } from '@nestjs/cqrs';
 import type { Unidad } from '../../entities/unidad.entity.js';
 import { FindAllUnidadesQuery } from '../queries/find-all-unidades/find-all-unidades.query.js';
+import { UpdateUnidadCommand } from '../commands/update-unidad/update-unidad.command.js';
+import { DeleteUnidadCommand } from '../commands/delete-unidad/delete-unidad.command.js';
 import { UnidadController } from './unidad.controller.js';
 
 describe('UnidadController', () => {
@@ -37,5 +39,42 @@ describe('UnidadController', () => {
       data: [],
       meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
     });
+  });
+
+  it('devuelve la unidad actualizada sin exponer la entidad directamente', async () => {
+    const execute = vi.fn().mockResolvedValue({
+      id: 'unidad-1',
+      nombre: 'Metro',
+      simbolo: 'mt',
+      tipo: 'LONGITUD',
+      productosBase: [],
+    });
+    const controller = new UnidadController(
+      { execute } as unknown as CommandBus,
+      {} as QueryBus,
+    );
+
+    await expect(
+      controller.update('unidad-1', { simbolo: 'mt' }),
+    ).resolves.toEqual({
+      id: 'unidad-1',
+      nombre: 'Metro',
+      simbolo: 'mt',
+      tipo: 'LONGITUD',
+    });
+    expect(execute).toHaveBeenCalledWith(
+      new UpdateUnidadCommand('unidad-1', { simbolo: 'mt' }),
+    );
+  });
+
+  it('envía el comando de eliminación', async () => {
+    const execute = vi.fn().mockResolvedValue(undefined);
+    const controller = new UnidadController(
+      { execute } as unknown as CommandBus,
+      {} as QueryBus,
+    );
+
+    await expect(controller.delete('unidad-1')).resolves.toBeUndefined();
+    expect(execute).toHaveBeenCalledWith(new DeleteUnidadCommand('unidad-1'));
   });
 });

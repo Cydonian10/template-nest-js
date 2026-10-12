@@ -15,4 +15,16 @@ export const ALMACEN_PERMISSIONS = [
     resourceCode: 'UNIDADES',
     actionCode: 'LEER',
   },
+  {
+    code: PERMISSION_CODES.UNIDADES_UPDATE,
+    name: 'Editar unidades',
+    resourceCode: 'UNIDADES',
+    actionCode: 'EDITAR',
+  },
+  {
+    code: PERMISSION_CODES.UNIDADES_DELETE,
+    name: 'Eliminar unidades',
+    resourceCode: 'UNIDADES',
+    actionCode: 'ELIMINAR',
+  },
 ] as const satisfies readonly PermissionDefinition[];
