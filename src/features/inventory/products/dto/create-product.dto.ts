@@ -11,6 +11,7 @@ export const CreateProductSchema = z.strictObject({
   descripcion: z.string().optional(),
   unidadBaseId: z.uuid(),
   activo: activoSchema.optional(),
+  imagenes: z.array(z.file()).max(10).optional(),
 });
 
 export type CreateProductDto = z.infer<typeof CreateProductSchema>;

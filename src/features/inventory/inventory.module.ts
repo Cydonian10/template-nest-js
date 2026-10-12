@@ -6,12 +6,16 @@ import { LocalImageStorage } from '../images/storage/local-image-storage.js';
 import { UnitOfWork } from '../../shared/database/unit-of-work.js';
 import { CreateProductHandler } from './products/commands/create-product/create-product.handler.js';
 import { ProductsController } from './products/controllers/products.controller.js';
+import { Unidad } from './entities/unidad.entity.js';
+import { UnidadController } from './unidades/controllers/unidad.controller.js';
+import { CreateUnidadHandle } from './unidades/commands/create-unidad/create-unidad.handler.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Producto])],
-  controllers: [ProductsController],
+  imports: [TypeOrmModule.forFeature([Producto, Unidad])],
+  controllers: [ProductsController, UnidadController],
   providers: [
     CreateProductHandler,
+    CreateUnidadHandle,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],

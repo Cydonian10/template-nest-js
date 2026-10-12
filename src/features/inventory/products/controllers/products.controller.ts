@@ -35,25 +35,6 @@ export class ProductsController {
   )
   @ApiOperation({ summary: 'Crear un producto con imágenes opcionales' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['nombre', 'unidadBaseId'],
-      properties: {
-        nombre: { type: 'string', maxLength: 200 },
-        descripcion: { type: 'string' },
-        unidadBaseId: { type: 'string', format: 'uuid' },
-        activo: { type: 'string', enum: ['true', 'false'], default: 'true' },
-        imagenes: {
-          type: 'array',
-          maxItems: 10,
-          items: { type: 'string', format: 'binary' },
-          description:
-            'Hasta 10 imágenes JPEG, PNG o WebP de máximo 5 MB cada una',
-        },
-      },
-    },
-  })
   @ApiCreatedResponse({ type: ProductResponseDto })
   async create(
     @Body({ schema: CreateProductSchema }) dto: CreateProductDto,
