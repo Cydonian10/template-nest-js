@@ -28,6 +28,12 @@ export const ALMACEN_PERMISSIONS = [
     actionCode: 'ELIMINAR',
   },
   {
+    code: PERMISSION_CODES.PRODUCTS_UPDATE,
+    name: 'Editar productos',
+    resourceCode: 'PRODUCTOS',
+    actionCode: 'EDITAR',
+  },
+  {
     code: PERMISSION_CODES.ATRIBUTOS_CREATE,
     name: 'Crear atributos',
     resourceCode: 'ATRIBUTOS',

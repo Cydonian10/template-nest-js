@@ -5,7 +5,7 @@ import { ImageStorage } from '../images/storage/image-storage.js';
 import { LocalImageStorage } from '../images/storage/local-image-storage.js';
 import { UnitOfWork } from '../../shared/database/unit-of-work.js';
 import { CreateProductHandler } from './products/commands/create-product/create-product.handler.js';
-import { ProductsController } from './products/controllers/products.controller.js';
+import { ProductsController } from './products/controllers/productos/products.controller.js';
 import { Unidad } from './entities/unidad.entity.js';
 import { UnidadController } from './unidades/controllers/unidad.controller.js';
 import { CreateUnidadHandle } from './unidades/commands/create-unidad/create-unidad.handler.js';
@@ -20,7 +20,10 @@ import { DeleteAtributoHandler } from './atributos/commands/delete-atributo/dele
 import { FindAllAtributosHandler } from './atributos/queries/find-all-atributos/find-all-atributos.handler.js';
 import { FindAtributoByIdHandler } from './atributos/queries/find-atributo-by-id/find-atributo-by-id.handler.js';
 import { AtributoProducto } from './entities/atributo-producto.entity.js';
-import { AtributosPorProductoController } from './products/controllers/atributos-por-producto.controller.js';
+import { AtributosPorProductoController } from './products/controllers/atributos-por-producto/atributos-por-producto.controller.js';
+import { UnidadesPorProductoController } from './products/controllers/unidades-por-producto/unidades-por-producto.controller.js';
+import { UnidadProducto } from './entities/unidad-producto.entity.js';
+import { AgregarUnidadProductoHandler } from './products/commands/agregar-unidad-producto/agregar-unidad-producto.handler.js';
 import { AtributosPorProductoHandler } from './products/queries/atributos-por-producto/atributos-por-producto.handler.js';
 import { AgregarAtributoProductoHandler } from './products/commands/agregar-atributo-producto/agregar-atributo-producto.handler.js';
 import { QuitarAtributoProductoHandler } from './products/commands/quitar-atributo-producto/quitar-atributo-producto.handler.js';
@@ -29,13 +32,20 @@ import { CrearVarianteProductoHandler } from './variante-producto/commands/crear
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Producto, Unidad, Atributo, AtributoProducto]),
+    TypeOrmModule.forFeature([
+      Producto,
+      Unidad,
+      UnidadProducto,
+      Atributo,
+      AtributoProducto,
+    ]),
   ],
   controllers: [
     ProductsController,
     UnidadController,
     AtributosController,
     AtributosPorProductoController,
+    UnidadesPorProductoController,
     VariantesController,
   ],
   providers: [
@@ -51,6 +61,7 @@ import { CrearVarianteProductoHandler } from './variante-producto/commands/crear
     FindAtributoByIdHandler,
     AtributosPorProductoHandler,
     AgregarAtributoProductoHandler,
+    AgregarUnidadProductoHandler,
     QuitarAtributoProductoHandler,
     CrearVarianteProductoHandler,
     UnitOfWork,

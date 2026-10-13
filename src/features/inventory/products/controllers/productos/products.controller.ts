@@ -16,12 +16,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import type { UploadedImage } from '../../../images/images.service.js';
-import { CreateProductCommand } from '../commands/create-product/create-product.command.js';
-import { CreateProductSchema } from '../dto/create-product.dto.js';
-import type { CreateProductDto } from '../dto/create-product.dto.js';
-import { ProductResponseDto } from '../dto/product-response.dto.js';
-import type { Producto } from '../../entities/producto.entity.js';
+import type { UploadedImage } from '../../../../images/images.service.js';
+import { CreateProductCommand } from '../../commands/create-product/create-product.command.js';
+import { CreateProductSchema } from '../../dto/create-product.dto.js';
+import type { CreateProductDto } from '../../dto/create-product.dto.js';
+import { ProductResponseDto } from '../../dto/product-response.dto.js';
+import type { Producto } from '../../../entities/producto.entity.js';
 
 @ApiBearerAuth()
 @ApiTags('productos')

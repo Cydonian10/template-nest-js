@@ -17,16 +17,18 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../../../auth/decorators/require-permissions.decorator.js';
-import { PERMISSION_CODES } from '../../../../shared/authorization/permission-codes.js';
-import { AtributoPorProductoResponseDto } from '../dto/atributo-por-producto-response.dto.js';
-import { AtributoPorProductoQuery } from '../queries/atributos-por-producto/atributos-por-producto.query.js';
-import { AgregarAtributoProductoCommand } from '../commands/agregar-atributo-producto/agregar-atributo-producto.command.js';
-import { AgregarAtributoProductoSchema } from '../dto/agregar-atributo-producto.dto.js';
-import type { AgregarAtributoProductoDto } from '../dto/agregar-atributo-producto.dto.js';
-import { AgregarAtributoProductoResponseDto } from '../dto/agregar-atributo-producto-response.dto.js';
-import type { AtributoProducto } from '../../entities/atributo-producto.entity.js';
-import { QuitarAtributoProductoCommand } from '../commands/quitar-atributo-producto/quitar-atributo-producto.command.js';
+import { RequirePermissions } from '../../../../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import { AtributoProducto } from '../../../entities/atributo-producto.entity.js';
+import { AgregarAtributoProductoCommand } from '../../commands/agregar-atributo-producto/agregar-atributo-producto.command.js';
+import { QuitarAtributoProductoCommand } from '../../commands/quitar-atributo-producto/quitar-atributo-producto.command.js';
+import { AgregarAtributoProductoResponseDto } from '../../dto/agregar-atributo-producto-response.dto.js';
+import {
+  AgregarAtributoProductoSchema,
+  type AgregarAtributoProductoDto,
+} from '../../dto/agregar-atributo-producto.dto.js';
+import { AtributoPorProductoResponseDto } from '../../dto/atributo-por-producto-response.dto.js';
+import { AtributoPorProductoQuery } from '../../queries/atributos-por-producto/atributos-por-producto.query.js';
 
 @ApiBearerAuth()
 @ApiTags('productos')
@@ -47,7 +49,7 @@ export class AtributosPorProductoController {
   }
 
   @Post(':productoId/atributos')
-  @RequirePermissions(PERMISSION_CODES.ATRIBUTOS_UPDATE)
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @ApiCreatedResponse({ type: AgregarAtributoProductoResponseDto })
   async add(
     @Param('productoId', new ParseUUIDPipe()) productoId: string,
@@ -64,7 +66,7 @@ export class AtributosPorProductoController {
   }
 
   @Delete(':productoId/atributos/:atributoId')
-  @RequirePermissions(PERMISSION_CODES.ATRIBUTOS_UPDATE)
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @HttpCode(204)
   @ApiNoContentResponse()
   async remove(
