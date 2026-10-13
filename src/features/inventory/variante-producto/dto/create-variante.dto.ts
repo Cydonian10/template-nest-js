@@ -20,6 +20,7 @@ export const CreateVarianteSchema = z.strictObject({
   codigoBarras: z.string().trim().min(1).max(100).nullable().optional(),
   precio: z.string().regex(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/),
   valores: ValoresSchema,
+  imagenes: z.array(z.file()).max(10).optional(),
 });
 
 export type CreateVarianteDto = z.infer<typeof CreateVarianteSchema>;
