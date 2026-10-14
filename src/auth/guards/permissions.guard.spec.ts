@@ -124,7 +124,7 @@ describe('PermissionsGuard', () => {
     );
   });
 
-  it('valida UNIDADES_CREAR en ALMACEN, no en otro sistema', async () => {
+  it('valida UNIDADES_CREAR en INVENTARIO, no en otro sistema', async () => {
     getAllAndOverride.mockImplementation((key: string) =>
       key === 'requiredPermissions'
         ? [PERMISSION_CODES.UNIDADES_CREATE]
@@ -144,14 +144,14 @@ describe('PermissionsGuard', () => {
       'permission.system',
       'system',
       'system.active = true AND system.code IN (:...systemCodes)',
-      { systemCodes: [SYSTEM_CODES.ALMACEN] },
+      { systemCodes: [SYSTEM_CODES.INVENTARIO] },
     );
 
     getRawMany.mockResolvedValue([
       {
         roleCode: 'OPERADOR',
         code: PERMISSION_CODES.UNIDADES_CREATE,
-        systemCode: SYSTEM_CODES.ALMACEN,
+        systemCode: SYSTEM_CODES.INVENTARIO,
       },
     ]);
     await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(

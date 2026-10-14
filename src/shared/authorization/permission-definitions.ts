@@ -2,7 +2,7 @@ import { SYSTEM_CODES } from './system-codes.js';
 import type { PermissionCode } from './permission-codes.js';
 import type { SystemCode } from './system-codes.js';
 import { ACCESS_CONTROL_PERMISSIONS } from './permission-definitions/access-control.js';
-import { ALMACEN_PERMISSIONS } from './permission-definitions/almacen.js';
+import { INVENTARIO_PERMISSIONS } from './permission-definitions/inventario.js';
 
 export type PermissionDefinition = {
   code: PermissionCode;
@@ -21,8 +21,8 @@ export const PERMISSION_DEFINITIONS: readonly SystemPermissionDefinition[] = [
     ...definition,
     systemCode: SYSTEM_CODES.ACCESS_CONTROL,
   })),
-  ...ALMACEN_PERMISSIONS.map((definition) => ({
+  ...INVENTARIO_PERMISSIONS.map((definition) => ({
     ...definition,
-    systemCode: SYSTEM_CODES.ALMACEN,
+    systemCode: SYSTEM_CODES.INVENTARIO,
   })),
 ];

@@ -36,7 +36,7 @@ describe('PERMISSION_DEFINITIONS', () => {
       ),
     ).toBe(true);
     expect(PERMISSION_DEFINITIONS).toContainEqual({
-      systemCode: SYSTEM_CODES.ALMACEN,
+      systemCode: SYSTEM_CODES.INVENTARIO,
       code: PERMISSION_CODES.UNIDADES_CREATE,
       name: 'Crear unidades',
       resourceCode: 'UNIDADES',
