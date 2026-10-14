@@ -114,4 +114,10 @@ export const ACCESS_CONTROL_PERMISSIONS = [
     resourceCode: 'SISTEMA',
     actionCode: 'ELIMINAR',
   },
+  {
+    code: PERMISSION_CODES.PRODUCTS_READ,
+    name: 'Leer productos',
+    resourceCode: 'PRODUCTOS',
+    actionCode: 'LEER',
+  },
 ] as const satisfies readonly PermissionDefinition[];
