@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -45,7 +46,7 @@ export class ProductsController {
 
   @Post()
   @UseInterceptors(
-    FilesInterceptor('imagenes', 10, { limits: { fileSize: 5 * 1024 * 1024 } }),
+    FilesInterceptor('imagenes', 8, { limits: { fileSize: 5 * 1024 * 1024 } }),
   )
   @ApiOperation({ summary: 'Crear un producto con imágenes opcionales' })
   @ApiConsumes('multipart/form-data')
@@ -75,13 +76,44 @@ export class ProductsController {
 
   @Patch(':id')
   @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
+  @UseInterceptors(
+    FilesInterceptor('imagenes', 8, { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  @ApiConsumes('application/json', 'multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        nombre: { type: 'string' },
+        descripcion: { type: 'string' },
+        unidadBaseId: { type: 'string', format: 'uuid' },
+        activo: { type: 'boolean' },
+        imagenesConservarIds: {
+          type: 'string',
+          description:
+            'Arreglo JSON de IDs de asociaciones a conservar; omitir para no modificar las existentes',
+          example: '[]',
+        },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
   @ApiOkResponse({ type: ProductResponseDto })
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body({ schema: UpdateProductSchema }) dto: UpdateProductDto,
+    @UploadedFiles() imagenes: UploadedImage[] = [],
   ): Promise<ProductResponseDto> {
+    if (!Object.keys(dto).length && !imagenes.length) {
+      throw new BadRequestException(
+        'Debe proporcionar al menos un campo para actualizar',
+      );
+    }
     const producto: Producto = await this.commandBus.execute(
-      new UpdateProductCommand(id, dto),
+      new UpdateProductCommand(id, dto, imagenes),
     );
     return ProductResponseDto.from(producto);
   }

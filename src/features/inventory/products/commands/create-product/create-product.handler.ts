@@ -1,4 +1,4 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateProductCommand } from './create-product.command.js';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
@@ -20,6 +20,11 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
 
   async execute(command: CreateProductCommand): Promise<Producto> {
     const { imagenes = [], ...productoData } = command.data;
+    if (imagenes.length > 8) {
+      throw new BadRequestException(
+        'Un producto puede tener como máximo 8 imágenes',
+      );
+    }
     const imagenesPreparadas = imagenes.map(prepareImage);
     const archivosGuardados: string[] = [];
 
