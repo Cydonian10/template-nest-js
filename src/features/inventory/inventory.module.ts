@@ -29,6 +29,8 @@ import { AgregarAtributoProductoHandler } from './products/commands/agregar-atri
 import { QuitarAtributoProductoHandler } from './products/commands/quitar-atributo-producto/quitar-atributo-producto.handler.js';
 import { VariantesController } from './variante-producto/controllers/variantes.controller.js';
 import { CrearVarianteProductoHandler } from './variante-producto/commands/crear-variante-producto/crear-variante-producto.handler.js';
+import { FindProductByIdHandler } from './products/queries/find-product-by-id/find-product-by-id.handler.js';
+import { UpdateProductHandler } from './products/commands/update-product/update-product.handler.js';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { CrearVarianteProductoHandler } from './variante-producto/commands/crear
   ],
   providers: [
     CreateProductHandler,
+    FindProductByIdHandler,
+    UpdateProductHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
