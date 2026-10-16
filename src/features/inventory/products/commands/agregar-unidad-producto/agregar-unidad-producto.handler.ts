@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
@@ -22,8 +22,18 @@ export class AgregarUnidadProductoHandler implements ICommandHandler<AgregarUnid
   async execute({
     data: { productoId, unidadId, factorABase },
   }: AgregarUnidadProductoCommand): Promise<UnidadProducto> {
-    if (!(await this.productos.existsBy({ id: productoId }))) {
+    const producto = await this.productos.findOne({
+      where: { id: productoId },
+      relations: { unidadBase: true },
+    });
+    if (!producto) {
       throw new ResourceNotFoundException('Producto', productoId);
+    }
+    // La unidad base siempre tiene factor 1 y no se registra como secundaria.
+    if (producto.unidadBase.id === unidadId) {
+      throw new BadRequestException(
+        'La unidad base no puede agregarse como secundaria',
+      );
     }
     if (!(await this.unidades.existsBy({ id: unidadId }))) {
       throw new ResourceNotFoundException('Unidad', unidadId);

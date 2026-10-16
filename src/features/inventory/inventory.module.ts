@@ -24,6 +24,9 @@ import { AtributosPorProductoController } from './products/controllers/atributos
 import { UnidadesPorProductoController } from './products/controllers/unidades-por-producto/unidades-por-producto.controller.js';
 import { UnidadProducto } from './entities/unidad-producto.entity.js';
 import { AgregarUnidadProductoHandler } from './products/commands/agregar-unidad-producto/agregar-unidad-producto.handler.js';
+import { EditarUnidadProductoHandler } from './products/commands/editar-unidad-producto/editar-unidad-producto.handler.js';
+import { EliminarUnidadProductoHandler } from './products/commands/eliminar-unidad-producto/eliminar-unidad-producto.handler.js';
+import { ListarUnidadesProductoHandler } from './products/queries/listar-unidades-producto/listar-unidades-producto.handler.js';
 import { AtributosPorProductoHandler } from './products/queries/atributos-por-producto/atributos-por-producto.handler.js';
 import { AgregarAtributoProductoHandler } from './products/commands/agregar-atributo-producto/agregar-atributo-producto.handler.js';
 import { QuitarAtributoProductoHandler } from './products/commands/quitar-atributo-producto/quitar-atributo-producto.handler.js';
@@ -69,6 +72,9 @@ import { UpdateProductHandler } from './products/commands/update-product/update-
     AtributosPorProductoHandler,
     AgregarAtributoProductoHandler,
     AgregarUnidadProductoHandler,
+    EditarUnidadProductoHandler,
+    EliminarUnidadProductoHandler,
+    ListarUnidadesProductoHandler,
     QuitarAtributoProductoHandler,
     CrearVarianteProductoHandler,
     ListarVariantesHandler,

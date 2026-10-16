@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import type { Repository } from 'typeorm';
 import type { Producto } from '../../../entities/producto.entity.js';
@@ -19,7 +23,13 @@ describe('AgregarUnidadProductoHandler', () => {
     unidadExiste = true,
     yaAsignada = false,
   ) => {
-    const productos = { existsBy: vi.fn().mockResolvedValue(productoExiste) };
+    const productos = {
+      findOne: vi
+        .fn()
+        .mockResolvedValue(
+          productoExiste ? { id: 'p1', unidadBase: { id: 'base' } } : null,
+        ),
+    };
     const unidades = { existsBy: vi.fn().mockResolvedValue(unidadExiste) };
     const asignacion = {
       id: 'as1',
@@ -44,7 +54,10 @@ describe('AgregarUnidadProductoHandler', () => {
     const { handler, productos, unidades, unidadesProducto, asignacion } =
       setup();
     await expect(handler.execute(command)).resolves.toBe(asignacion);
-    expect(productos.existsBy).toHaveBeenCalledWith({ id: 'p1' });
+    expect(productos.findOne).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      relations: { unidadBase: true },
+    });
     expect(unidades.existsBy).toHaveBeenCalledWith({ id: 'u1' });
     expect(unidadesProducto.existsBy).toHaveBeenCalledWith({
       producto: { id: 'p1' },
@@ -78,6 +91,20 @@ describe('AgregarUnidadProductoHandler', () => {
       ConflictException,
     );
     expect(unidadesProducto.save).not.toHaveBeenCalled();
+  });
+
+  it('impide asociar la unidad base como secundaria', async () => {
+    const { handler, unidades } = setup();
+    await expect(
+      handler.execute(
+        new AgregarUnidadProductoCommand({
+          productoId: 'p1',
+          unidadId: 'base',
+          factorABase: '1',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(unidades.existsBy).not.toHaveBeenCalled();
   });
 
   it.each(['23505', '23503'])(
