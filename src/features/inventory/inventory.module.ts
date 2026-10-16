@@ -29,6 +29,8 @@ import { AgregarAtributoProductoHandler } from './products/commands/agregar-atri
 import { QuitarAtributoProductoHandler } from './products/commands/quitar-atributo-producto/quitar-atributo-producto.handler.js';
 import { VariantesController } from './variante-producto/controllers/variantes.controller.js';
 import { CrearVarianteProductoHandler } from './variante-producto/commands/crear-variante-producto/crear-variante-producto.handler.js';
+import { ListarVariantesHandler } from './variante-producto/queries/listar-variantes/listar-variantes.handler.js';
+import { VarianteProducto } from './entities/variante-producto.entity.js';
 import { FindProductByIdHandler } from './products/queries/find-product-by-id/find-product-by-id.handler.js';
 import { UpdateProductHandler } from './products/commands/update-product/update-product.handler.js';
 
@@ -40,6 +42,7 @@ import { UpdateProductHandler } from './products/commands/update-product/update-
       UnidadProducto,
       Atributo,
       AtributoProducto,
+      VarianteProducto,
     ]),
   ],
   controllers: [
@@ -68,6 +71,7 @@ import { UpdateProductHandler } from './products/commands/update-product/update-
     AgregarUnidadProductoHandler,
     QuitarAtributoProductoHandler,
     CrearVarianteProductoHandler,
+    ListarVariantesHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
   ],

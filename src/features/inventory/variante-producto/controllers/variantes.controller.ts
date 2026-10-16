@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -8,13 +9,14 @@ import {
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import type { UploadedImage } from '../../../images/images.service.js';
@@ -25,6 +27,7 @@ import { CreateVarianteSchema } from '../dto/create-variante.dto.js';
 import type { CreateVarianteDto } from '../dto/create-variante.dto.js';
 import { VarianteResponseDto } from '../dto/variante-response.dto.js';
 import type { VarianteProducto } from '../../entities/variante-producto.entity.js';
+import { ListarVariantesQuery } from '../queries/listar-variantes/listar-variantes.query.js';
 
 @ApiBearerAuth()
 @ApiTags('variantes')
@@ -33,10 +36,22 @@ import type { VarianteProducto } from '../../entities/variante-producto.entity.j
   version: VERSION_NEUTRAL,
 })
 export class VariantesController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Get()
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_READ)
+  @ApiOkResponse({ type: VarianteResponseDto, isArray: true })
+  list(
+    @Param('productoId', new ParseUUIDPipe()) productoId: string,
+  ): Promise<VarianteResponseDto[]> {
+    return this.queryBus.execute(new ListarVariantesQuery(productoId));
+  }
 
   @Post()
-  @RequirePermissions(PERMISSION_CODES.VARIANTES_CREATE)
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @UseInterceptors(
     FilesInterceptor('imagenes', 10, { limits: { fileSize: 5 * 1024 * 1024 } }),
   )
