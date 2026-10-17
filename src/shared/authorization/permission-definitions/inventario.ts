@@ -81,4 +81,22 @@ export const INVENTARIO_PERMISSIONS = [
     resourceCode: 'ALMACENES',
     actionCode: 'EDITAR',
   },
+  {
+    code: PERMISSION_CODES.COMPRAS_READ,
+    name: 'Leer compras',
+    resourceCode: 'COMPRAS',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.COMPRAS_CREATE,
+    name: 'Crear compras',
+    resourceCode: 'COMPRAS',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.PROVEEDORES_READ,
+    name: 'Leer proveedores',
+    resourceCode: 'PROVEEDORES',
+    actionCode: 'LEER',
+  },
 ] as const satisfies readonly PermissionDefinition[];

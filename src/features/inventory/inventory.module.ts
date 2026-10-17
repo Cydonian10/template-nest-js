@@ -41,6 +41,12 @@ import { AlmacenesController } from './almacenes/almacenes.controller.js';
 import { FindAllAlmacenesHandler } from './almacenes/find-all-almacenes.handler.js';
 import { CreateAlmacenHandler } from './almacenes/create-almacen.handler.js';
 import { UpdateAlmacenHandler } from './almacenes/update-almacen.handler.js';
+import { Proveedor } from './entities/proveedor.entity.js';
+import { ProveedoresController } from './proveedores/controllers/proveedores/proveedores.controller.js';
+import { FindProveedoresHandler } from './proveedores/queries/find-proveedores/find-proveedores.handler.js';
+import { FindTodosProveedoresHandler } from './proveedores/queries/find-todos-proveedores/find-todos-proveedores.handler.js';
+import { VariantesCompraController } from './variante-producto/controllers/variantes-compra.controller.js';
+import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar-variantes-compra.handler.js';
 
 @Module({
   imports: [
@@ -52,6 +58,7 @@ import { UpdateAlmacenHandler } from './almacenes/update-almacen.handler.js';
       AtributoProducto,
       VarianteProducto,
       Almacen,
+      Proveedor,
     ]),
   ],
   controllers: [
@@ -62,6 +69,8 @@ import { UpdateAlmacenHandler } from './almacenes/update-almacen.handler.js';
     UnidadesPorProductoController,
     VariantesController,
     AlmacenesController,
+    ProveedoresController,
+    VariantesCompraController,
   ],
   providers: [
     CreateProductHandler,
@@ -70,6 +79,9 @@ import { UpdateAlmacenHandler } from './almacenes/update-almacen.handler.js';
     FindAllAlmacenesHandler,
     CreateAlmacenHandler,
     UpdateAlmacenHandler,
+    FindProveedoresHandler,
+    FindTodosProveedoresHandler,
+    BuscarVariantesCompraHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,

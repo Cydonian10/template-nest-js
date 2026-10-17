@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -20,6 +21,19 @@ import { ComprobanteCompra } from './comprobante-compra.entity.js';
 @Check(
   'CHK_compras_total_no_negativo',
   '"total_documento" IS NULL OR "total_documento" >= 0',
+)
+@Check(
+  'CHK_compras_tipo_documento',
+  '"tipo_documento" IS NULL OR "tipo_documento" IN (\'factura\', \'boleta\', \'otro\')',
+)
+@Index(
+  'UQ_compras_proveedor_tipo_serie_numero',
+  ['proveedor', 'tipoDocumento', 'serieDocumento', 'numeroDocumento'],
+  {
+    unique: true,
+    where:
+      '"tipo_documento" IS NOT NULL AND "serie_documento" IS NOT NULL AND "numero_documento" IS NOT NULL',
+  },
 )
 export class Compra {
   @PrimaryGeneratedColumn('uuid')
@@ -42,6 +56,13 @@ export class Compra {
   // Fecha del documento; la recepción de mercancía tiene su propia fecha.
   @Column({ type: 'date' })
   fecha: string;
+
+  // Los registros anteriores a este flujo pueden no tener tipo ni serie.
+  @Column({ name: 'tipo_documento', type: 'varchar', length: 20, nullable: true })
+  tipoDocumento: 'factura' | 'boleta' | 'otro' | null;
+
+  @Column({ name: 'serie_documento', type: 'varchar', length: 100, nullable: true })
+  serieDocumento: string | null;
 
   @Column({
     name: 'numero_documento',

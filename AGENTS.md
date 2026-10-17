@@ -27,6 +27,14 @@
 - `ProductsService` has a direct repository path but the product controller uses CQRS handlers; preserve that CQRS path unless deliberately refactoring it.
 - Authentication is not implemented; users are currently domain records associated with sales.
 
+## Feature Folder Structure and Code Style
+
+- Organize new inventory features like `src/features/inventory/products/`: keep `controllers/`, `dto/`, `commands/`, and `queries/` inside each feature. Add only the folders the feature actually needs.
+- Group each command or query by operation, for example `queries/find-proveedores/find-proveedores.query.ts`, `find-proveedores.handler.ts`, and `find-proveedores.handler.spec.ts`. Keep controller tests next to their controllers and shared DTOs in `dto/`.
+- Keep TypeORM entities in `src/features/inventory/entities/` and register controllers and handlers in `src/features/inventory/inventory.module.ts`.
+- Prefer simple, readable code over clever one-liners. Two clear lines are better than one hard-to-understand expression; use descriptive names and straightforward control flow.
+- Avoid unnecessary abstractions, helpers, and layers. Extract shared code only when it removes meaningful duplication or clarifies the intent; do not reorganize unrelated existing features just to match this structure.
+
 ## Migrations
 
 - TypeORM uses `synchronize: false`. Never enable schema synchronization as a substitute for migrations.
