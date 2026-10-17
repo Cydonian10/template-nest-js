@@ -56,6 +56,7 @@ import { Compra } from './entities/compra.entity.js';
 import { ComprasController } from './compras/controllers/compras/compras.controller.js';
 import { ListarComprasHandler } from './compras/queries/listar-compras/listar-compras.handler.js';
 import { ObtenerCompraHandler } from './compras/queries/obtener-compra/obtener-compra.handler.js';
+import { CrearCompraHandler } from './compras/commands/crear-compra/crear-compra.handler.js';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { ObtenerCompraHandler } from './compras/queries/obtener-compra/obtener-c
     DescargarComprobanteHandler,
     ListarComprasHandler,
     ObtenerCompraHandler,
+    CrearCompraHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
