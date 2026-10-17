@@ -36,6 +36,11 @@ import { ListarVariantesHandler } from './variante-producto/queries/listar-varia
 import { VarianteProducto } from './entities/variante-producto.entity.js';
 import { FindProductByIdHandler } from './products/queries/find-product-by-id/find-product-by-id.handler.js';
 import { UpdateProductHandler } from './products/commands/update-product/update-product.handler.js';
+import { Almacen } from './entities/almacen.entity.js';
+import { AlmacenesController } from './almacenes/almacenes.controller.js';
+import { FindAllAlmacenesHandler } from './almacenes/find-all-almacenes.handler.js';
+import { CreateAlmacenHandler } from './almacenes/create-almacen.handler.js';
+import { UpdateAlmacenHandler } from './almacenes/update-almacen.handler.js';
 
 @Module({
   imports: [
@@ -46,6 +51,7 @@ import { UpdateProductHandler } from './products/commands/update-product/update-
       Atributo,
       AtributoProducto,
       VarianteProducto,
+      Almacen,
     ]),
   ],
   controllers: [
@@ -55,11 +61,15 @@ import { UpdateProductHandler } from './products/commands/update-product/update-
     AtributosPorProductoController,
     UnidadesPorProductoController,
     VariantesController,
+    AlmacenesController,
   ],
   providers: [
     CreateProductHandler,
     FindProductByIdHandler,
     UpdateProductHandler,
+    FindAllAlmacenesHandler,
+    CreateAlmacenHandler,
+    UpdateAlmacenHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,

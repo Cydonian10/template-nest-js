@@ -30,15 +30,22 @@ describe('AtributosController', () => {
   });
 
   it('devuelve resultados paginados, filtrados y con metadatos', async () => {
-    const execute = vi.fn().mockResolvedValue([[entity], 25]);
+    const execute = vi.fn().mockResolvedValue({
+      atributos: [{ id: entity.id, nombre: entity.nombre, usoProductos: 2 }],
+      total: 25,
+      totalRegistrados: 32,
+      totalEnUso: 4,
+    });
     const controller = new AtributosController(
       {} as CommandBus,
       { execute } as unknown as QueryBus,
     );
     const filter = { page: 2, limit: 10, nombre: 'col' };
     await expect(controller.findAll(filter)).resolves.toEqual({
-      data: [response],
+      data: [{ ...response, usoProductos: 2 }],
       meta: { page: 2, limit: 10, total: 25, totalPages: 3 },
+      totalRegistrados: 32,
+      totalEnUso: 4,
     });
     expect(execute).toHaveBeenCalledWith(new FindAllAtributosQuery(filter));
   });

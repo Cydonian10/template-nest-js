@@ -68,13 +68,13 @@ export class AtributosController {
   async findAll(
     @Query({ schema: FilterAtributoSchema }) filter: FilterAtributoDto,
   ): Promise<PaginatedAtributosResponseDto> {
-    const [atributos, total]: [Atributo[], number] =
+    const { atributos, total, totalRegistrados, totalEnUso } =
       await this.queryBus.execute(new FindAllAtributosQuery(filter));
-    return PaginatedResponseDto.from(
-      atributos.map((atributo) => AtributoResponseDto.from(atributo)),
-      total,
-      filter,
-    );
+    return {
+      ...PaginatedResponseDto.from(atributos, total, filter),
+      totalRegistrados,
+      totalEnUso,
+    };
   }
 
   @Get(':id')

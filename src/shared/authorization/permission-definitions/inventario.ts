@@ -63,4 +63,22 @@ export const INVENTARIO_PERMISSIONS = [
     resourceCode: 'VARIANTES',
     actionCode: 'CREAR',
   },
+  {
+    code: PERMISSION_CODES.ALMACENES_CREATE,
+    name: 'Crear almacenes',
+    resourceCode: 'ALMACENES',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.ALMACENES_READ,
+    name: 'Leer almacenes',
+    resourceCode: 'ALMACENES',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.ALMACENES_UPDATE,
+    name: 'Editar almacenes',
+    resourceCode: 'ALMACENES',
+    actionCode: 'EDITAR',
+  },
 ] as const satisfies readonly PermissionDefinition[];
