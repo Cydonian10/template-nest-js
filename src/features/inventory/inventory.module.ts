@@ -52,6 +52,10 @@ import { ComprobantesController } from './compras/controllers/comprobantes/compr
 import { DescargarComprobanteHandler } from './compras/queries/descargar-comprobante/descargar-comprobante.handler.js';
 import { ComprobanteStorage } from './compras/storage/comprobante-storage.js';
 import { LocalComprobanteStorage } from './compras/storage/local-comprobante-storage.js';
+import { Compra } from './entities/compra.entity.js';
+import { ComprasController } from './compras/controllers/compras/compras.controller.js';
+import { ListarComprasHandler } from './compras/queries/listar-compras/listar-compras.handler.js';
+import { ObtenerCompraHandler } from './compras/queries/obtener-compra/obtener-compra.handler.js';
 
 @Module({
   imports: [
@@ -65,6 +69,7 @@ import { LocalComprobanteStorage } from './compras/storage/local-comprobante-sto
       Almacen,
       Proveedor,
       ComprobanteCompra,
+      Compra,
     ]),
   ],
   controllers: [
@@ -78,6 +83,7 @@ import { LocalComprobanteStorage } from './compras/storage/local-comprobante-sto
     ProveedoresController,
     VariantesCompraController,
     ComprobantesController,
+    ComprasController,
   ],
   providers: [
     CreateProductHandler,
@@ -90,6 +96,8 @@ import { LocalComprobanteStorage } from './compras/storage/local-comprobante-sto
     FindTodosProveedoresHandler,
     BuscarVariantesCompraHandler,
     DescargarComprobanteHandler,
+    ListarComprasHandler,
+    ObtenerCompraHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,

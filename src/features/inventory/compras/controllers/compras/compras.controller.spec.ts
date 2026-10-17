@@ -1,0 +1,136 @@
+import type { QueryBus } from '@nestjs/cqrs';
+import { describe, expect, it, vi } from 'vitest';
+import { REQUIRED_PERMISSIONS_KEY } from '../../../../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import { ListarComprasQuery } from '../../queries/listar-compras/listar-compras.query.js';
+import { ObtenerCompraQuery } from '../../queries/obtener-compra/obtener-compra.query.js';
+import { ComprasController } from './compras.controller.js';
+
+const compra = {
+  id: 'c1',
+  fecha: '2026-10-17',
+  fechaRegistro: new Date('2026-10-17T10:00:00Z'),
+  tipoDocumento: 'factura',
+  serieDocumento: 'F001',
+  numeroDocumento: '123',
+  totalDocumento: '120.000000',
+  observaciones: 'Entrega completa',
+  proveedor: { id: 'p1', nombre: 'Proveedor Uno' },
+  movimientos: [
+    {
+      id: 'm1',
+      tipo: 'ingreso',
+      estado: 'confirmado',
+      fecha: new Date('2026-10-17T10:00:01Z'),
+      almacenDestino: { id: 'a1', nombre: 'Principal' },
+    },
+  ],
+  detalles: [
+    {
+      id: 'd1',
+      variante: { id: 'v1', sku: 'CAM-NEG', producto: { nombre: 'Camiseta' } },
+      unidad: { id: 'u1', nombre: 'Caja', simbolo: 'cj' },
+      cantidad: '2.000000',
+      factorABase: '12.00000000',
+      precioUnitario: '60.000000',
+    },
+  ],
+  comprobantes: [
+    {
+      id: 'f1',
+      nombreOriginal: 'factura.pdf',
+      tipoMime: 'application/pdf',
+      tamanoBytes: 1024,
+      fechaSubida: new Date('2026-10-17T10:00:02Z'),
+      claveAlmacenamiento: 'clave-privada.pdf',
+    },
+  ],
+};
+
+describe('ComprasController', () => {
+  it('devuelve lista paginada sin exponer claves privadas', async () => {
+    const execute = vi.fn().mockResolvedValue([[compra], 1]);
+    const controller = new ComprasController({
+      execute,
+    } as unknown as QueryBus);
+    const filter = { page: 1, limit: 20, q: 'F001' };
+
+    const response = await controller.list(filter);
+
+    expect(execute).toHaveBeenCalledWith(new ListarComprasQuery(filter));
+    expect(response).toMatchObject({
+      meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      data: [
+        {
+          id: 'c1',
+          almacen: { id: 'a1', nombre: 'Principal' },
+          cantidadRenglones: 1,
+          totalDocumento: '120.000000',
+        },
+      ],
+    });
+    expect(JSON.stringify(response)).not.toContain('clave-privada');
+  });
+
+  it('devuelve detalle con ingreso y metadatos del archivo, sin clave de almacenamiento', async () => {
+    const execute = vi.fn().mockResolvedValue(compra);
+    const controller = new ComprasController({
+      execute,
+    } as unknown as QueryBus);
+
+    const response = await controller.getById('c1');
+
+    expect(execute).toHaveBeenCalledWith(new ObtenerCompraQuery('c1'));
+    expect(response).toMatchObject({
+      ingreso: { id: 'm1', estado: 'confirmado' },
+      renglones: [
+        {
+          varianteId: 'v1',
+          sku: 'CAM-NEG',
+          productoNombre: 'Camiseta',
+          unidadSimbolo: 'cj',
+          cantidad: '2.000000',
+        },
+      ],
+      comprobante: { id: 'f1', nombreOriginal: 'factura.pdf' },
+    });
+    expect(JSON.stringify(response)).not.toContain('clave-privada');
+  });
+
+  it('responde vacío y tolera compras antiguas sin recepción o comprobante', async () => {
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce([[], 0])
+      .mockResolvedValueOnce({
+        ...compra,
+        movimientos: [],
+        detalles: [],
+        comprobantes: [],
+      });
+    const controller = new ComprasController({
+      execute,
+    } as unknown as QueryBus);
+    expect(await controller.list({ page: 1, limit: 20 })).toEqual({
+      data: [],
+      meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    });
+    await expect(controller.getById('c1')).resolves.toMatchObject({
+      almacen: null,
+      ingreso: null,
+      renglones: [],
+      comprobante: null,
+    });
+  });
+
+  it('protege listado y detalle con COMPRAS_LEER', () => {
+    for (const name of ['list', 'getById'] as const) {
+      const method = Object.getOwnPropertyDescriptor(
+        ComprasController.prototype,
+        name,
+      )?.value;
+      expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+        PERMISSION_CODES.COMPRAS_READ,
+      ]);
+    }
+  });
+});
