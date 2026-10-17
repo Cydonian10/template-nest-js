@@ -47,6 +47,11 @@ import { FindProveedoresHandler } from './proveedores/queries/find-proveedores/f
 import { FindTodosProveedoresHandler } from './proveedores/queries/find-todos-proveedores/find-todos-proveedores.handler.js';
 import { VariantesCompraController } from './variante-producto/controllers/variantes-compra.controller.js';
 import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar-variantes-compra.handler.js';
+import { ComprobanteCompra } from './entities/comprobante-compra.entity.js';
+import { ComprobantesController } from './compras/controllers/comprobantes/comprobantes.controller.js';
+import { DescargarComprobanteHandler } from './compras/queries/descargar-comprobante/descargar-comprobante.handler.js';
+import { ComprobanteStorage } from './compras/storage/comprobante-storage.js';
+import { LocalComprobanteStorage } from './compras/storage/local-comprobante-storage.js';
 
 @Module({
   imports: [
@@ -59,6 +64,7 @@ import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar
       VarianteProducto,
       Almacen,
       Proveedor,
+      ComprobanteCompra,
     ]),
   ],
   controllers: [
@@ -71,6 +77,7 @@ import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar
     AlmacenesController,
     ProveedoresController,
     VariantesCompraController,
+    ComprobantesController,
   ],
   providers: [
     CreateProductHandler,
@@ -82,6 +89,7 @@ import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar
     FindProveedoresHandler,
     FindTodosProveedoresHandler,
     BuscarVariantesCompraHandler,
+    DescargarComprobanteHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
@@ -102,6 +110,7 @@ import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar
     ListarVariantesHandler,
     UnitOfWork,
     { provide: ImageStorage, useClass: LocalImageStorage },
+    { provide: ComprobanteStorage, useClass: LocalComprobanteStorage },
   ],
 })
 export class InventoryModule {}
