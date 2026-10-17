@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Logger } from '@nestjs/common';
+import { ConflictException, Logger } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
+import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
 import { ComprobanteCompra } from '../../../entities/comprobante-compra.entity.js';
 import { Compra } from '../../../entities/compra.entity.js';
 import { ComprobanteStorage } from '../../storage/comprobante-storage.js';
@@ -22,8 +23,20 @@ export class AdjuntarComprobanteHandler implements ICommandHandler<AdjuntarCompr
     const stored = await this.storage.save(file.buffer, file.extension);
     try {
       return await this.unitOfWork.execute(async (manager) => {
+        // Bloquear la compra serializa los intentos simultáneos de adjuntar.
+        const compra = await manager.findOne(Compra, {
+          where: { id: compraId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!compra) throw new ResourceNotFoundException('Compra', compraId);
+        const existing = await manager.findOne(ComprobanteCompra, {
+          where: { compra: { id: compraId } },
+        });
+        if (existing)
+          throw new ConflictException('Esta compra ya tiene un comprobante');
+
         const comprobante = manager.create(ComprobanteCompra, {
-          compra: { id: compraId } as Compra,
+          compra,
           claveAlmacenamiento: stored.key,
           nombreOriginal: file.nombreOriginal,
           tipoMime: file.tipoMime,

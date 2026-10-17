@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PaginationMetaDto } from '../../../../shared/pagination/paginated-response.dto.js';
 import type { Compra } from '../../entities/compra.entity.js';
+import type { ComprobanteCompra } from '../../entities/comprobante-compra.entity.js';
 import {
   EstadoMovimientoInventario,
   TipoMovimientoInventario,
@@ -28,6 +29,16 @@ export class ComprobanteCompraResponseDto {
   @ApiProperty() tipoMime: string;
   @ApiProperty() tamanoBytes: number;
   @ApiProperty() fechaSubida: Date;
+
+  static from(comprobante: ComprobanteCompra): ComprobanteCompraResponseDto {
+    return {
+      id: comprobante.id,
+      nombreOriginal: comprobante.nombreOriginal,
+      tipoMime: comprobante.tipoMime,
+      tamanoBytes: comprobante.tamanoBytes,
+      fechaSubida: comprobante.fechaSubida,
+    };
+  }
 }
 
 export class RenglonCompraResponseDto {
@@ -113,13 +124,7 @@ export class CompraDetalleResponseDto extends CompraListadoResponseDto {
         precioUnitario: detalle.precioUnitario,
       })),
       comprobante: comprobante
-        ? {
-            id: comprobante.id,
-            nombreOriginal: comprobante.nombreOriginal,
-            tipoMime: comprobante.tipoMime,
-            tamanoBytes: comprobante.tamanoBytes,
-            fechaSubida: comprobante.fechaSubida,
-          }
+        ? ComprobanteCompraResponseDto.from(comprobante)
         : null,
     });
   }
