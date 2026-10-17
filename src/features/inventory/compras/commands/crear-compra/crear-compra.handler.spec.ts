@@ -3,9 +3,9 @@ import {
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { QueryFailedError } from 'typeorm';
+import { QueryFailedError, type DataSource } from 'typeorm';
 import { describe, expect, it, vi } from 'vitest';
-import type { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
+import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { User } from '../../../../access-control/entities/user.entity.js';
 import { Almacen } from '../../../entities/almacen.entity.js';
 import { Compra } from '../../../entities/compra.entity.js';
@@ -223,5 +223,121 @@ describe('CrearCompraHandler', () => {
     await expect(
       handler.execute(new CrearCompraCommand('user-1', data)),
     ).rejects.toThrow(ConflictException);
+  });
+
+  it('revierte compra, ingreso, detalles y existencias cuando falla la actualización de stock', async () => {
+    const { manager } = setup();
+    const error = new Error('falló la existencia');
+    manager.query.mockRejectedValueOnce(error);
+    const runner = {
+      manager,
+      connect: vi.fn().mockResolvedValue(undefined),
+      startTransaction: vi.fn().mockResolvedValue(undefined),
+      commitTransaction: vi.fn().mockResolvedValue(undefined),
+      rollbackTransaction: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn().mockResolvedValue(undefined),
+    };
+    const source = { createQueryRunner: vi.fn().mockReturnValue(runner) };
+    const handler = new CrearCompraHandler(
+      new UnitOfWork(source as unknown as DataSource),
+    );
+
+    await expect(
+      handler.execute(new CrearCompraCommand('user-1', data)),
+    ).rejects.toBe(error);
+    expect(manager.save.mock.calls.some(([entity]) => entity === Compra)).toBe(
+      true,
+    );
+    expect(
+      manager.save.mock.calls.some(
+        ([entity]) => entity === MovimientoInventario,
+      ),
+    ).toBe(true);
+    expect(
+      manager.save.mock.calls.some(([entity]) => entity === DetalleMovimiento),
+    ).toBe(true);
+    expect(runner.startTransaction).toHaveBeenCalledOnce();
+    expect(runner.rollbackTransaction).toHaveBeenCalledOnce();
+    expect(runner.commitTransaction).not.toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalledOnce();
+  });
+
+  it('convierte el duplicado detectado al escribir en conflicto y revierte la transacción', async () => {
+    const { manager } = setup();
+    const driverError = Object.assign(new Error('duplicado'), {
+      code: '23505',
+      constraint: 'UQ_compras_proveedor_tipo_serie_numero',
+    });
+    manager.save.mockRejectedValueOnce(
+      new QueryFailedError('INSERT', [], driverError),
+    );
+    const runner = {
+      manager,
+      connect: vi.fn().mockResolvedValue(undefined),
+      startTransaction: vi.fn().mockResolvedValue(undefined),
+      commitTransaction: vi.fn().mockResolvedValue(undefined),
+      rollbackTransaction: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn().mockResolvedValue(undefined),
+    };
+    const handler = new CrearCompraHandler(
+      new UnitOfWork({
+        createQueryRunner: () => runner,
+      } as unknown as DataSource),
+    );
+
+    await expect(
+      handler.execute(new CrearCompraCommand('user-1', data)),
+    ).rejects.toThrow(ConflictException);
+    expect(runner.rollbackTransaction).toHaveBeenCalledOnce();
+    expect(runner.commitTransaction).not.toHaveBeenCalled();
+    expect(manager.save).toHaveBeenCalledTimes(1);
+    expect(manager.query).not.toHaveBeenCalled();
+  });
+
+  it('dos solicitudes paralelas con el mismo documento solo confirman un ingreso al chocar la unicidad', async () => {
+    const { manager } = setup();
+    const originalSave = manager.save.getMockImplementation()!;
+    let releaseFirst!: () => void;
+    const secondAttempt = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    let inserts = 0;
+    manager.save.mockImplementation(async (entity: unknown, record: object) => {
+      if (entity === Compra) {
+        if (++inserts === 1) await secondAttempt;
+        else {
+          releaseFirst();
+          const driverError = Object.assign(new Error('duplicado'), {
+            code: '23505',
+            constraint: 'UQ_compras_proveedor_tipo_serie_numero',
+          });
+          throw new QueryFailedError('INSERT', [], driverError);
+        }
+      }
+      return originalSave(entity, record);
+    });
+    const unit = {
+      execute: vi.fn((work: (manager: unknown) => Promise<unknown>) =>
+        work(manager),
+      ),
+    };
+    const handler = new CrearCompraHandler(unit as unknown as UnitOfWork);
+    const command = new CrearCompraCommand('user-1', data);
+
+    const results = await Promise.allSettled([
+      handler.execute(command),
+      handler.execute(command),
+    ]);
+    expect(results.map((result) => result.status)).toEqual([
+      'fulfilled',
+      'rejected',
+    ]);
+    expect(results[1]).toMatchObject({ reason: { status: 409 } });
+    expect(
+      manager.save.mock.calls.filter(
+        ([entity]) => entity === MovimientoInventario,
+      ),
+    ).toHaveLength(1);
+    expect(manager.query).toHaveBeenCalledTimes(data.renglones.length);
   });
 });

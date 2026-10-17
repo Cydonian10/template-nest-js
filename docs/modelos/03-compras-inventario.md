@@ -1,58 +1,42 @@
-# Compras, comprobantes y recepción en inventario
+# Compras y recepción de inventario
 
-El modelo distingue **la compra** (lo que se acordó con el proveedor) de **la recepción** (lo que realmente llegó a un almacén). Todas las entidades están en `src/features/inventory/entities/`, incluidas las compras y sus comprobantes. Todavía no hay endpoints, lógica de recepción, almacenamiento de archivos ni migración para estas tablas.
+## Flujo implementado: recepción completa e inmediata
 
-## Tablas de compras
+`POST /api/compras` registra una compra con proveedor existente, almacén activo y al menos un renglón; en **una transacción de PostgreSQL** crea la compra, un único movimiento `ingreso` confirmado, sus detalles y suma cantidad y valor de costo en `existencias`. No hay borradores, recepción diferida ni parcial. El usuario del ingreso se toma de la sesión, no del formulario. La fecha de compra corresponde al documento del proveedor; la recepción se confirma al registrar la compra.
 
-### `compras`
+La migración inicial `1791690118249-inventario.ts` crea estas tablas; `1791690118253-documentos-compras.ts` añade `tipo_documento` (`factura`, `boleta`, `otro`), `serie_documento` y la unicidad documental por `(proveedor_id, tipo_documento, serie_documento, numero_documento)` para documentos completos. Las filas antiguas con datos incompletos siguen admitidas. Un documento duplicado devuelve **409** y no vuelve a sumar stock.
 
-| Columna            | Tipo                         | Significado                                                                                                                       |
-| ------------------ | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | `uuid`                       | Identificador de la compra.                                                                                                       |
-| `proveedor_id`     | `uuid`, obligatorio          | Proveedor de la compra.                                                                                                           |
-| `usuario_id`       | `uuid`, obligatorio          | Usuario que la registró.                                                                                                          |
-| `fecha`            | `date`, obligatorio          | Fecha del documento del proveedor; puede ser distinta de la recepción.                                                            |
-| `numero_documento` | `varchar(100) NULL`          | Número de factura o referencia, si existe.                                                                                        |
-| `total_documento`  | `numeric(38,6) NULL`, `>= 0` | Total indicado en el documento; puede incluir impuestos u otros conceptos. No se presupone que sea igual a la suma de las líneas. |
-| `observaciones`    | `text NULL`                  | Notas opcionales.                                                                                                                 |
-| `fecha_registro`   | `timestamptz`                | Fecha en que se registró la compra en el sistema.                                                                                 |
+### Datos y cálculos
 
-### `detalles_compra`
+| Tabla                                           | Contenido en este flujo                                                                                                                             |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `compras`                                       | Proveedor, usuario, fecha, tipo/serie/número documental, observaciones, total calculado y fecha de registro.                                        |
+| `detalles_compra`                               | Variante, unidad, cantidad, factor de conversión copiado del catálogo y precio unitario; admite la misma variante en varios renglones.              |
+| `movimientos_inventario` / `detalle_movimiento` | Un ingreso confirmado por compra y un detalle enlazado por cada renglón; cada detalle conserva cantidad base y costo aplicado.                      |
+| `existencias`                                   | Cantidad y valor de costo por variante y almacén; se incrementan atómicamente mediante `INSERT ... ON CONFLICT DO UPDATE` dentro de la transacción. |
+| `comprobantes_compra`                           | Cero o un archivo en este flujo, con metadatos y clave privada; no almacena el binario.                                                             |
 
-| Columna           | Tipo                    | Significado                                                                |
-| ----------------- | ----------------------- | -------------------------------------------------------------------------- |
-| `id`              | `uuid`                  | Identificador del renglón.                                                 |
-| `compra_id`       | `uuid`, obligatorio     | Compra a la que pertenece.                                                 |
-| `variante_id`     | `uuid`, obligatorio     | Variante comprada.                                                         |
-| `unidad_id`       | `uuid`, obligatorio     | Unidad acordada con el proveedor (p. ej., caja).                           |
-| `cantidad`        | `numeric(20,6)`, `> 0`  | Cantidad comprada en la unidad acordada.                                   |
-| `factor_a_base`   | `numeric(20,8)`, `> 0`  | Copia de cuántas unidades base contiene esa unidad al registrar la compra. |
-| `precio_unitario` | `numeric(20,6)`, `>= 0` | Precio pagado por unidad acordada; no es el precio de venta.               |
+Los decimales se reciben y devuelven como **cadenas**. `total_documento` es la suma de cada subtotal `cantidad × precio_unitario`, redondeado individualmente a seis decimales mitad hacia arriba (PEN). El costo del detalle de movimiento usa ese subtotal. `cantidad_base = cantidad × factor_a_base` debe representarse **exactamente** con seis decimales: si no, se rechaza la compra sin redondear existencias. No se aceptan total, factor o costo calculados por el cliente como autoridad; tampoco se desglosan impuestos, descuentos, gastos ni pagos.
 
-Las cantidades y precios `numeric` se representan como cadenas en TypeORM. El factor guardado permite comparar las unidades compradas y recibidas aunque se modifique después la conversión del catálogo. Los conceptos como descuentos, impuestos y gastos adicionales aún no están desglosados en este modelo sencillo; `total_documento` conserva el total de la factura y **no** sustituye al costo aplicado al stock.
+## Contratos HTTP y permisos
 
-### `comprobantes_compra`
+Todas las rutas llevan el prefijo `/api` y requieren autenticación. Los permisos `COMPRAS_LEER`, `COMPRAS_CREAR` y `PROVEEDORES_LEER` pertenecen al sistema `INVENTARIO` y **no se asignan automáticamente** a roles.
 
-| Columna                | Tipo                  | Significado                                                                                                 |
-| ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `id`                   | `uuid`                | Identificador del comprobante.                                                                              |
-| `compra_id`            | `uuid`, obligatorio   | Compra a la que pertenece. Puede tener varios comprobantes.                                                 |
-| `nombre_original`      | `varchar(255)`        | Nombre visible del PDF o la foto.                                                                           |
-| `tipo_mime`            | `varchar(100)`        | Tipo declarado y validado del archivo.                                                                      |
-| `tamano_bytes`         | `integer`, `> 0`      | Tamaño del archivo.                                                                                         |
-| `clave_almacenamiento` | `varchar(500)`, único | Referencia interna al archivo en almacenamiento privado. **No es una URL pública ni el contenido binario.** |
-| `fecha_subida`         | `timestamptz`         | Fecha en que se añadió el comprobante.                                                                      |
+| Ruta                                                   | Permiso            | Resultado                                                                                                     |
+| ------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `GET /api/proveedores?page=&limit=&nombre=&documento=` | `PROVEEDORES_LEER` | Proveedores paginados y filtrados.                                                                            |
+| `GET /api/proveedores/todos?nombre=&documento=`        | `PROVEEDORES_LEER` | Coincidencias sin paginar para selectores.                                                                    |
+| `GET /api/variantes`                                   | `PRODUCTOS_LEER`   | Variantes activas paginadas, con producto y unidades de compra válidas.                                       |
+| `GET /api/compras?page=&limit=&q=`                     | `COMPRAS_LEER`     | Compras recientes, búsqueda por proveedor/documento.                                                          |
+| `GET /api/compras/:id`                                 | `COMPRAS_LEER`     | Renglones, almacén, ingreso confirmado y metadatos del comprobante o `null`.                                  |
+| `POST /api/compras`                                    | `COMPRAS_CREAR`    | Compra e ingreso confirmados; HTTP 201 con ID y estado del comprobante.                                       |
+| `POST /api/compras/:id/comprobante`                    | `COMPRAS_CREAR`    | Añade el único comprobante pendiente; HTTP 201 con metadatos, 404 si falta la compra y 409 si ya hay archivo. |
+| `GET /api/compras/:id/comprobante/archivo`             | `COMPRAS_LEER`     | Descarga autenticada, privada y sin caché.                                                                    |
 
-Esta tabla **solo prepara el lugar donde registrar el archivo**. Para permitir subir PDF/JPG/PNG harán falta un endpoint autorizado, validación de tipo real y tamaño, almacenamiento privado y descarga controlada. No se debe confiar únicamente en la extensión o en el MIME enviado por el cliente. Los archivos no se guardan como binarios en PostgreSQL.
+La creación recibe `multipart/form-data`: `proveedorId`, `almacenId`, `tipoDocumento`, `fecha` (`YYYY-MM-DD`), `serieDocumento`, `numeroDocumento`, `renglones` (arreglo **JSON serializado** de `{ varianteId, unidadId, cantidad, precioUnitario }`), `observaciones` opcional y archivo opcional `comprobante`. La respuesta 201 es `{ "id": "...", "comprobante": { "estado": "adjuntado" | "pendiente" | "fallido", "advertencia"?: "..." } }`. `pendiente` significa que no se envió archivo; `fallido` significa que se intentó, pero se rechazó o no pudo guardarse: **la compra y el stock ya quedaron confirmados**. No se debe repetir la creación para recuperar el archivo; usar el endpoint posterior.
 
-## Relación con los movimientos
+El adjunto posterior recibe `multipart/form-data` con solo `comprobante`. Se admiten PDF, JPG y PNG de **1 byte a 10 MiB**; se verifica el contenido real contra el MIME declarado y se limita la subida. El archivo se guarda privadamente en `COMPROBANTE_STORAGE_DIR` (por defecto `uploads/comprobantes`), con clave aleatoria que nunca se expone como URL. Si falla el registro de metadatos, se intenta eliminar el archivo huérfano. Un bloqueo transaccional de la compra impide dos adjuntos simultáneos; un fallo permite reintentar mientras no exista comprobante.
 
-- `movimientos_inventario.compra_id` es opcional: solo los movimientos `ingreso` pueden vincular una compra. Un ingreso manual que no sea compra puede dejarla vacía. Una compra puede tener **varios** ingresos para entregas parciales.
-- `detalle_movimiento.detalle_compra_id` es opcional: relaciona lo recibido con el renglón comprado. Una línea puede recibirse en varios movimientos; otros movimientos no tienen que referenciar una compra.
-- `detalles_compra.precio_unitario` conserva el precio pactado; `detalle_movimiento.costo_total` conserva el costo realmente aplicado a cada recepción, que podría incluir costos capitalizables. `existencias.valor_costo` es el valor del saldo. El costo aplicado por unidad base se obtiene dividiendo `costo_total` por `abs(cantidad_base)`. Véase [Costos del inventario](02-inventario-costos.md).
+## Fuera de este flujo
 
-**Flujo previsto, todavía no implementado:** registrar compra y detalles → asociar comprobantes → registrar un ingreso con sus detalles vinculados → confirmar la recepción en una transacción → actualizar cantidad y valor de `existencias`. Registrar o adjuntar una compra **no aumenta el stock**. Por ejemplo, comprar 10 cajas y recibir 6 hoy y 4 mañana produce dos ingresos de la misma compra, no dos compras.
-
-La aplicación futura debe comprobar que el proveedor del ingreso coincida con el de la compra; que cada detalle recibido pertenezca a esa compra y corresponda a la misma variante y unidad; que lo recibido acumulado no exceda lo comprado (también tras convertir a unidades base); y que no se confirme dos veces el mismo ingreso. Estas reglas entre tablas no quedan garantizadas solo por las claves foráneas. Una corrección tras confirmar debe registrarse mediante un movimiento compensatorio, sin cambiar silenciosamente el historial.
-
-La lógica para registrar compras, los pagos al proveedor, los descuentos/impuestos desglosados, la subida/descarga real de archivos y la confirmación de movimientos quedan fuera de este cambio de modelo. Antes de usar las entidades en PostgreSQL se debe generar y revisar la migración correspondiente: la migración inicial actual solo contiene control de acceso.
+El modelo conserva relaciones que podrían soportar **varios ingresos y varios comprobantes** para compras futuras, pero esta API solo crea un ingreso completo y permite un comprobante por compra. La recepción parcial o posterior, el reemplazo de archivos, correcciones/anulaciones, pagos y costos adicionales requieren otro flujo con validaciones propias; **adjuntar un comprobante nunca modifica stock**. Una corrección de una recepción ya confirmada debe registrarse mediante un movimiento compensatorio, no alterando silenciosamente el historial.

@@ -175,4 +175,61 @@ describe('AdjuntarComprobanteHandler', () => {
     );
     expect(unit.execute).toHaveBeenCalledTimes(2);
   });
+
+  it('ante dos subidas simultáneas solo registra una y limpia el archivo perdedor', async () => {
+    let sequence = 0;
+    const storage = {
+      save: vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve({ key: `file-${++sequence}.pdf` }),
+        ),
+      delete: vi.fn().mockResolvedValue(undefined),
+    };
+    let registered: object | null = null;
+    const manager = {
+      findOne: vi.fn((entity: unknown) =>
+        Promise.resolve(entity === Compra ? { id: 'compra-1' } : registered),
+      ),
+      create: vi.fn((entity: unknown, record: object) => record),
+      save: vi.fn(async (entity: unknown, record: object) => {
+        await Promise.resolve();
+        registered = record;
+        return record;
+      }),
+    };
+    // Representa el bloqueo de la fila de compra que PostgreSQL mantiene hasta el commit.
+    let previous = Promise.resolve();
+    const unit = {
+      execute: vi.fn((work: (manager: unknown) => Promise<unknown>) => {
+        const current = previous.then(() => work(manager));
+        previous = current.then(
+          () => undefined,
+          () => undefined,
+        );
+        return current;
+      }),
+    };
+    const handler = new AdjuntarComprobanteHandler(
+      unit as unknown as UnitOfWork,
+      storage as unknown as ComprobanteStorage,
+    );
+    const command = new AdjuntarComprobanteCommand('compra-1', file);
+
+    const results = await Promise.allSettled([
+      handler.execute(command),
+      handler.execute(command),
+    ]);
+    expect(results.map((result) => result.status)).toEqual([
+      'fulfilled',
+      'rejected',
+    ]);
+    expect(results[1]).toMatchObject({ reason: { status: 409 } });
+    expect(manager.save).toHaveBeenCalledOnce();
+    expect(storage.delete).toHaveBeenCalledExactlyOnceWith('file-2.pdf');
+    expect(manager.findOne).toHaveBeenCalledWith(Compra, {
+      where: { id: 'compra-1' },
+      lock: { mode: 'pessimistic_write' },
+    });
+  });
 });
