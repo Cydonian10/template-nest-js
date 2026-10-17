@@ -210,10 +210,10 @@ describe('CrearCompraHandler', () => {
   });
 
   it('interpreta el conflicto documental concurrente sin crear una segunda compra', async () => {
-    const driverError = {
+    const driverError = Object.assign(new Error('duplicado'), {
       code: '23505',
       constraint: 'UQ_compras_proveedor_tipo_serie_numero',
-    };
+    });
     const unitOfWork = {
       execute: vi
         .fn()

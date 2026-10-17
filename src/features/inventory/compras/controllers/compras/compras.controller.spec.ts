@@ -1,4 +1,4 @@
-import type { QueryBus } from '@nestjs/cqrs';
+import type { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { describe, expect, it, vi } from 'vitest';
 import { REQUIRED_PERMISSIONS_KEY } from '../../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
@@ -50,9 +50,10 @@ const compra = {
 describe('ComprasController', () => {
   it('devuelve lista paginada sin exponer claves privadas', async () => {
     const execute = vi.fn().mockResolvedValue([[compra], 1]);
-    const controller = new ComprasController({
-      execute,
-    } as unknown as QueryBus);
+    const controller = new ComprasController(
+      { execute } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
     const filter = { page: 1, limit: 20, q: 'F001' };
 
     const response = await controller.list(filter);
@@ -74,9 +75,10 @@ describe('ComprasController', () => {
 
   it('devuelve detalle con ingreso y metadatos del archivo, sin clave de almacenamiento', async () => {
     const execute = vi.fn().mockResolvedValue(compra);
-    const controller = new ComprasController({
-      execute,
-    } as unknown as QueryBus);
+    const controller = new ComprasController(
+      { execute } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
 
     const response = await controller.getById('c1');
 
@@ -107,9 +109,10 @@ describe('ComprasController', () => {
         detalles: [],
         comprobantes: [],
       });
-    const controller = new ComprasController({
-      execute,
-    } as unknown as QueryBus);
+    const controller = new ComprasController(
+      { execute } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
     expect(await controller.list({ page: 1, limit: 20 })).toEqual({
       data: [],
       meta: { page: 1, limit: 20, total: 0, totalPages: 0 },

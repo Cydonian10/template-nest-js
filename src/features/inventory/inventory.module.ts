@@ -57,6 +57,7 @@ import { ComprasController } from './compras/controllers/compras/compras.control
 import { ListarComprasHandler } from './compras/queries/listar-compras/listar-compras.handler.js';
 import { ObtenerCompraHandler } from './compras/queries/obtener-compra/obtener-compra.handler.js';
 import { CrearCompraHandler } from './compras/commands/crear-compra/crear-compra.handler.js';
+import { AdjuntarComprobanteHandler } from './compras/commands/adjuntar-comprobante/adjuntar-comprobante.handler.js';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { CrearCompraHandler } from './compras/commands/crear-compra/crear-compra
     ListarComprasHandler,
     ObtenerCompraHandler,
     CrearCompraHandler,
+    AdjuntarComprobanteHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
