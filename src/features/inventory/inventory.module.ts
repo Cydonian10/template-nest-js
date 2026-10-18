@@ -60,6 +60,7 @@ import { CrearCompraHandler } from './compras/commands/crear-compra/crear-compra
 import { AdjuntarComprobanteHandler } from './compras/commands/adjuntar-comprobante/adjuntar-comprobante.handler.js';
 import { ExistenciasController } from './existencias/controllers/existencias.controller.js';
 import { ListarAlmacenesActivosHandler } from './existencias/queries/listar-almacenes-activos/listar-almacenes-activos.handler.js';
+import { ListarExistenciasHandler } from './existencias/queries/listar-existencias/listar-existencias.handler.js';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { ListarAlmacenesActivosHandler } from './existencias/queries/listar-alma
     CrearCompraHandler,
     AdjuntarComprobanteHandler,
     ListarAlmacenesActivosHandler,
+    ListarExistenciasHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
