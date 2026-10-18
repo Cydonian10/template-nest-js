@@ -4,7 +4,6 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiProperty,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../../auth/decorators/require-permissions.decorator.js';
