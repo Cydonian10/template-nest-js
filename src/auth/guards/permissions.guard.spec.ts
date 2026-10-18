@@ -159,6 +159,46 @@ describe('PermissionsGuard', () => {
     );
   });
 
+  it('permite consultar existencias sin ALMACENES_LEER y rechaza un permiso de otro sistema', async () => {
+    getAllAndOverride.mockImplementation((key: string) =>
+      key === 'requiredPermissions'
+        ? [PERMISSION_CODES.EXISTENCIAS_READ]
+        : false,
+    );
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.ALMACENES_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.EXISTENCIAS_READ,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.EXISTENCIAS_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+    ]);
+    await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
+      true,
+    );
+  });
+
   it('deniega compras sin el permiso correspondiente en INVENTARIO', async () => {
     for (const required of [
       PERMISSION_CODES.COMPRAS_CREATE,
