@@ -11,6 +11,7 @@ import { RequirePermissions } from '../../../../auth/decorators/require-permissi
 import { PERMISSION_CODES } from '../../../../shared/authorization/permission-codes.js';
 import { FilterExistenciasSchema } from '../dto/filter-existencias.dto.js';
 import type { FilterExistenciasDto } from '../dto/filter-existencias.dto.js';
+import { ListaExistenciasResponseDto } from '../dto/existencia-response.dto.js';
 import { ListarAlmacenesActivosQuery } from '../queries/listar-almacenes-activos/listar-alamcenes-activos.query.js';
 import { ListarExistenciasQuery } from '../queries/listar-existencias/listar-existencias.query.js';
 
@@ -34,22 +35,10 @@ export class ExistenciasController {
 
   @Get()
   @RequirePermissions(PERMISSION_CODES.EXISTENCIAS_READ)
-  @ApiQuery({
-    name: 'almacenId',
-    description: 'UUID de almacén activo o "todos"',
-  })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'q', required: false, type: String })
-  @ApiQuery({ name: 'productoId', required: false, type: String })
-  @ApiQuery({
-    name: 'disponibilidad',
-    required: false,
-    enum: ['todas', 'con_stock', 'sin_stock'],
-  })
+  @ApiOkResponse({ type: ListaExistenciasResponseDto })
   async listar(
     @Query({ schema: FilterExistenciasSchema }) filter: FilterExistenciasDto,
-  ) {
+  ): Promise<ListaExistenciasResponseDto> {
     return this.queries.execute(new ListarExistenciasQuery(filter));
   }
 }
