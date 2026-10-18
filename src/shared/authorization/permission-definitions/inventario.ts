@@ -94,6 +94,12 @@ export const INVENTARIO_PERMISSIONS = [
     actionCode: 'CREAR',
   },
   {
+    code: PERMISSION_CODES.EXISTENCIAS_READ,
+    name: 'Leer existencias',
+    resourceCode: 'EXISTENCIAS',
+    actionCode: 'LEER',
+  },
+  {
     code: PERMISSION_CODES.PROVEEDORES_READ,
     name: 'Leer proveedores',
     resourceCode: 'PROVEEDORES',

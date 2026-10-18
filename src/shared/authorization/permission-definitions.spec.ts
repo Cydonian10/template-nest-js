@@ -43,4 +43,17 @@ describe('PERMISSION_DEFINITIONS', () => {
       actionCode: 'CREAR',
     });
   });
+
+  it('registra EXISTENCIAS_LEER en INVENTARIO sin asignarlo a roles', () => {
+    expect(PERMISSION_DEFINITIONS).toContainEqual({
+      systemCode: SYSTEM_CODES.INVENTARIO,
+      code: PERMISSION_CODES.EXISTENCIAS_READ,
+      name: 'Leer existencias',
+      resourceCode: 'EXISTENCIAS',
+      actionCode: 'LEER',
+    });
+    expect(PERMISSION_DEFINITIONS).not.toContainEqual(
+      expect.objectContaining({ roleCode: expect.anything() }),
+    );
+  });
 });
