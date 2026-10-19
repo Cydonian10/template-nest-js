@@ -17,6 +17,7 @@ import {
   TipoMovimientoInventario,
 } from '../../../entities/movimiento-inventario.entity.js';
 import { Proveedor } from '../../../entities/proveedor.entity.js';
+import { Producto } from '../../../entities/producto.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import type { UnidadProducto } from '../../../entities/unidad-producto.entity.js';
 import { CreateCompraSchema } from '../../dto/create-compra.dto.js';
@@ -45,9 +46,36 @@ export class CrearCompraHandler implements ICommandHandler<CrearCompraCommand> {
           throw new BadRequestException('Proveedor no disponible');
         if (!almacen) throw new BadRequestException('Almacén no disponible');
 
+        const ids = [
+          ...new Set(input.renglones.map((renglon) => renglon.varianteId)),
+        ];
+        const variantesParaBloqueo = await manager.find(VarianteProducto, {
+          where: { id: In(ids) },
+          relations: { producto: true },
+        });
+        if (variantesParaBloqueo.length !== ids.length) {
+          throw new BadRequestException('Variante no disponible');
+        }
+        // Compartir el bloqueo permite compras simultáneas, pero impide que
+        // cambie la unidad base mientras se leen los factores y se registra stock.
+        const productosIds = [
+          ...new Set(
+            variantesParaBloqueo.map((variante) => variante.producto.id),
+          ),
+        ].sort();
+        for (const id of productosIds) {
+          const producto = await manager.findOne(Producto, {
+            where: { id },
+            lock: { mode: 'pessimistic_read' },
+          });
+          if (!producto)
+            throw new BadRequestException('Producto no disponible');
+        }
+
+        // Cargar la unidad base después de adquirir los bloqueos, no antes.
         const variantes = await manager.find(VarianteProducto, {
           where: {
-            id: In([...new Set(input.renglones.map((r) => r.varianteId))]),
+            id: In(ids),
           },
           relations: {
             producto: { unidadBase: true, unidades: { unidad: true } },

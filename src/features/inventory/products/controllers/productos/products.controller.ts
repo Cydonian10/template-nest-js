@@ -42,6 +42,7 @@ import {
 } from '../../dto/buscar-productos.dto.js';
 import type { BuscarProductosDto } from '../../dto/buscar-productos.dto.js';
 import { BuscarProductosQuery } from '../../queries/buscar-productos/buscar-productos.query.js';
+import { PuedeCambiarUnidadBaseQuery } from '../../queries/puede-cambiar-unidad-base/puede-cambiar-unidad-base.query.js';
 
 @ApiBearerAuth()
 @ApiTags('productos')
@@ -85,7 +86,7 @@ export class ProductsController {
     const producto: Producto = await this.commandBus.execute(
       new CreateProductCommand({ ...dto, imagenes }),
     );
-    return ProductResponseDto.from(producto);
+    return ProductResponseDto.from(producto, true);
   }
 
   @Get(':id')
@@ -97,7 +98,10 @@ export class ProductsController {
     const producto: Producto = await this.queryBus.execute(
       new FindProductByIdQuery(id),
     );
-    return ProductResponseDto.from(producto);
+    const puedeCambiarUnidadBase: boolean = await this.queryBus.execute(
+      new PuedeCambiarUnidadBaseQuery(id),
+    );
+    return ProductResponseDto.from(producto, puedeCambiarUnidadBase);
   }
 
   @Patch(':id')
@@ -141,6 +145,9 @@ export class ProductsController {
     const producto: Producto = await this.commandBus.execute(
       new UpdateProductCommand(id, dto, imagenes),
     );
-    return ProductResponseDto.from(producto);
+    const puedeCambiarUnidadBase: boolean = await this.queryBus.execute(
+      new PuedeCambiarUnidadBaseQuery(id),
+    );
+    return ProductResponseDto.from(producto, puedeCambiarUnidadBase);
   }
 }

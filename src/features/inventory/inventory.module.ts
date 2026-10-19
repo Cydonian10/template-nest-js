@@ -36,6 +36,7 @@ import { ListarVariantesHandler } from './variante-producto/queries/listar-varia
 import { VarianteProducto } from './entities/variante-producto.entity.js';
 import { FindProductByIdHandler } from './products/queries/find-product-by-id/find-product-by-id.handler.js';
 import { BuscarProductosHandler } from './products/queries/buscar-productos/buscar-productos.handler.js';
+import { PuedeCambiarUnidadBaseHandler } from './products/queries/puede-cambiar-unidad-base/puede-cambiar-unidad-base.handler.js';
 import { UpdateProductHandler } from './products/commands/update-product/update-product.handler.js';
 import { Almacen } from './entities/almacen.entity.js';
 import { Existencia } from './entities/existencia.entity.js';
@@ -98,6 +99,7 @@ import { ListarExistenciasHandler } from './existencias/queries/listar-existenci
     CreateProductHandler,
     FindProductByIdHandler,
     BuscarProductosHandler,
+    PuedeCambiarUnidadBaseHandler,
     UpdateProductHandler,
     FindAllAlmacenesHandler,
     CreateAlmacenHandler,

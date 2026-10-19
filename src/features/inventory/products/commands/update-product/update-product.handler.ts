@@ -9,6 +9,7 @@ import { ImageStorage } from '../../../../images/storage/image-storage.js';
 import { prepareImage } from '../../../../images/utils/prepare-image.js';
 import { Producto } from '../../../entities/producto.entity.js';
 import { Unidad } from '../../../entities/unidad.entity.js';
+import { puedeCambiarUnidadBase } from '../../queries/puede-cambiar-unidad-base.js';
 import { UpdateProductCommand } from './update-product.command.js';
 
 @CommandHandler(UpdateProductCommand)
@@ -46,6 +47,11 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
           data.unidadBaseId !== undefined &&
           data.unidadBaseId !== actual.unidadBase.id
         ) {
+          if (!(await puedeCambiarUnidadBase(manager, id))) {
+            throw new BadRequestException(
+              'No se puede cambiar la unidad base de un producto con saldos o movimientos',
+            );
+          }
           const unidad = await manager.findOne(Unidad, {
             where: { id: data.unidadBaseId },
           });

@@ -13,6 +13,7 @@ import { DetalleCompra } from '../../../entities/detalle-compra.entity.js';
 import { DetalleMovimiento } from '../../../entities/detalle-movimiento.entity.js';
 import { MovimientoInventario } from '../../../entities/movimiento-inventario.entity.js';
 import { Proveedor } from '../../../entities/proveedor.entity.js';
+import { Producto } from '../../../entities/producto.entity.js';
 import type { CreateCompraDto } from '../../dto/create-compra.dto.js';
 import { CrearCompraCommand } from './crear-compra.command.js';
 import { CrearCompraHandler } from './crear-compra.handler.js';
@@ -65,6 +66,7 @@ function setup() {
       return null;
     }),
     find: vi.fn().mockResolvedValue([variante]),
+    findOne: vi.fn().mockResolvedValue(variante.producto),
     create: vi.fn((entity: unknown, record: object) => record),
     save: vi.fn((entity: unknown, record: object) =>
       Promise.resolve({ ...record, id: `new-${++nextId}` }),
@@ -97,6 +99,16 @@ describe('CrearCompraHandler', () => {
       id: data.almacenId,
       activo: true,
     });
+    expect(manager.findOne).toHaveBeenCalledWith(Producto, {
+      where: { id: 'producto-1' },
+      lock: { mode: 'pessimistic_read' },
+    });
+    expect(manager.find.mock.invocationCallOrder[0]).toBeLessThan(
+      manager.findOne.mock.invocationCallOrder[0],
+    );
+    expect(manager.findOne.mock.invocationCallOrder[0]).toBeLessThan(
+      manager.find.mock.invocationCallOrder[1],
+    );
     expect(
       manager.save.mock.calls.filter(([entity]) => entity === Compra),
     ).toHaveLength(1);
@@ -134,6 +146,34 @@ describe('CrearCompraHandler', () => {
       [data.renglones[0].varianteId, data.almacenId, '2.000000', '0.246912'],
     ]);
     expect(manager.query.mock.calls[0][0]).toContain('ON CONFLICT');
+  });
+
+  it('bloquea productos compartidamente en orden antes de leer unidades base de varios productos', async () => {
+    const { handler, manager, variante } = setup();
+    const otraVariante = {
+      ...variante,
+      id: '6ef90b51-24bf-45da-8a2a-4be5a424e40e',
+      producto: { ...variante.producto, id: 'a-producto' },
+    };
+    variante.producto.id = 'z-producto';
+    manager.find.mockResolvedValue([variante, otraVariante]);
+
+    await handler.execute(
+      new CrearCompraCommand('user-1', {
+        ...data,
+        renglones: [
+          data.renglones[0],
+          { ...data.renglones[1], varianteId: otraVariante.id },
+        ],
+      }),
+    );
+
+    expect(
+      manager.findOne.mock.calls.map(([, options]) => options.where.id),
+    ).toEqual(['a-producto', 'z-producto']);
+    expect(manager.findOne.mock.invocationCallOrder[1]).toBeLessThan(
+      manager.find.mock.invocationCallOrder[1],
+    );
   });
 
   it('rechaza usuario, proveedor o almacén no disponibles antes de escribir', async () => {
