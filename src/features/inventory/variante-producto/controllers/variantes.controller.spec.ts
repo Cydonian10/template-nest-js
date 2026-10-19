@@ -2,6 +2,7 @@ import type { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { REQUIRED_PERMISSIONS_KEY } from '../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../shared/authorization/permission-codes.js';
 import { CrearVarianteProducto } from '../commands/crear-variante-producto/crear-variante-producto.command.js';
+import { ActualizarVarianteProducto } from '../commands/actualizar-variante-producto/actualizar-variante-producto.command.js';
 import { VariantesController } from './variantes.controller.js';
 
 describe('VariantesController', () => {
@@ -70,5 +71,49 @@ describe('VariantesController', () => {
     expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
       PERMISSION_CODES.PRODUCTS_UPDATE,
     ]);
+  });
+
+  it('despacha la actualización parcial y exige PRODUCTOS_EDITAR', async () => {
+    const variante = {
+      id: 'v1',
+      productoId: 'p1',
+      sku: 'CAM-NEG-M',
+      precio: '24.50',
+      codigoBarras: null,
+      activo: false,
+      valores: [{ atributoId: 'a1', valor: 'Negro' }],
+      imagenes: [],
+    };
+    const execute = vi.fn().mockResolvedValue(variante);
+    const controller = new VariantesController(
+      { execute } as unknown as CommandBus,
+      { execute: vi.fn() } as unknown as QueryBus,
+    );
+    const dto = { precio: '24.50', codigoBarras: null, activo: false };
+
+    await expect(controller.update('p1', 'v1', dto)).resolves.toEqual(variante);
+    expect(execute).toHaveBeenCalledWith(
+      new ActualizarVarianteProducto('p1', 'v1', dto),
+    );
+    const method = Object.getOwnPropertyDescriptor(
+      VariantesController.prototype,
+      'update',
+    )?.value as object;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+      PERMISSION_CODES.PRODUCTS_UPDATE,
+    ]);
+  });
+
+  it('rechaza PATCH vacío antes de despachar el comando', async () => {
+    const execute = vi.fn();
+    const controller = new VariantesController(
+      { execute } as unknown as CommandBus,
+      { execute: vi.fn() } as unknown as QueryBus,
+    );
+
+    await expect(controller.update('p1', 'v1', {})).rejects.toThrow(
+      'Debe proporcionar al menos un campo',
+    );
+    expect(execute).not.toHaveBeenCalled();
   });
 });
