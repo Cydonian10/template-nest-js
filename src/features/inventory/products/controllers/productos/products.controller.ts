@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseInterceptors,
   VERSION_NEUTRAL,
@@ -34,6 +35,13 @@ import { UpdateProductSchema } from '../../dto/update-product.dto.js';
 import type { UpdateProductDto } from '../../dto/update-product.dto.js';
 import { RequirePermissions } from '../../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import {
+  BuscarProductosSchema,
+  ProductoSeleccionDto,
+  ProductosPaginaDto,
+} from '../../dto/buscar-productos.dto.js';
+import type { BuscarProductosDto } from '../../dto/buscar-productos.dto.js';
+import { BuscarProductosQuery } from '../../queries/buscar-productos/buscar-productos.query.js';
 
 @ApiBearerAuth()
 @ApiTags('productos')
@@ -43,6 +51,24 @@ export class ProductsController {
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}
+
+  @Get()
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_READ)
+  @ApiOkResponse({ type: ProductosPaginaDto })
+  async search(
+    @Query({ schema: BuscarProductosSchema }) filter: BuscarProductosDto,
+  ): Promise<ProductosPaginaDto> {
+    const [productos, totalItems] = await this.queryBus.execute<
+      BuscarProductosQuery,
+      [Producto[], number]
+    >(new BuscarProductosQuery(filter));
+    return {
+      items: productos.map((producto) => ProductoSeleccionDto.from(producto)),
+      page: filter.page,
+      limit: filter.limit,
+      totalItems,
+    };
+  }
 
   @Post()
   @UseInterceptors(
