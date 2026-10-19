@@ -136,6 +136,21 @@ describe('ActualizarVarianteProductoHandler', () => {
     expect(storage.save).not.toHaveBeenCalled();
   });
 
+  it('desactiva una variante con stock sin escribir existencias ni movimientos', async () => {
+    const { handler, manager, variante } = setup();
+    await handler.execute(
+      new ActualizarVarianteProducto('p1', 'v1', { activo: false }),
+    );
+
+    expect(variante.activo).toBe(false);
+    expect(manager.save.mock.calls.map(([entity]) => entity)).toEqual([
+      VarianteProducto,
+    ]);
+    expect(manager.delete).not.toHaveBeenCalled();
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.find).not.toHaveBeenCalled();
+  });
+
   it('rechaza una variante inexistente o ajena al producto antes de escribir', async () => {
     const { manager, handler } = setup();
     manager.exists.mockResolvedValue(false);

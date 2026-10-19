@@ -163,6 +163,22 @@ describe('UpdateProductHandler', () => {
     expect(manager.exists).not.toHaveBeenCalled();
   });
 
+  it('desactiva el producto con stock sin escribir existencias ni movimientos', async () => {
+    const { handler, manager, current } = setup();
+    manager.exists.mockResolvedValue(true);
+    await handler.execute(
+      new UpdateProductCommand('producto-1', { activo: false }),
+    );
+
+    expect(current.activo).toBe(false);
+    expect(manager.save.mock.calls.map(([entity]) => entity)).toEqual([
+      Producto,
+    ]);
+    expect(manager.delete).not.toHaveBeenCalled();
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.exists).not.toHaveBeenCalled();
+  });
+
   it('quita la portada, conserva la otra y sube una nueva en la misma transacción', async () => {
     const { handler, manager, storage } = setup([
       image('primera', true),

@@ -25,6 +25,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../shared/authorization/permission-codes.js';
 import { ImagesService, type UploadedImage } from './images.service.js';
 import { ProductImageResponseDto } from './product-image-response.dto.js';
 
@@ -38,6 +40,7 @@ export class ImagesController {
   constructor(private readonly images: ImagesService) {}
 
   @Get()
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_READ)
   @ApiOkResponse({ type: ProductImageResponseDto, isArray: true })
   async list(
     @Param('productoId', new ParseUUIDPipe()) productoId: string,
@@ -48,6 +51,7 @@ export class ImagesController {
   }
 
   @Post()
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @UseInterceptors(
     FileInterceptor('imagen', {
       limits: { fileSize: 5 * 1024 * 1024, files: 1 },
@@ -72,6 +76,7 @@ export class ImagesController {
   }
 
   @Patch(':imagenId/principal')
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @ApiOkResponse({ type: ProductImageResponseDto })
   async setPrincipal(
     @Param('productoId', new ParseUUIDPipe()) productoId: string,
@@ -83,6 +88,7 @@ export class ImagesController {
   }
 
   @Get(':imagenId/archivo')
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_READ)
   @Header('Cache-Control', 'private, max-age=3600')
   async download(
     @Param('productoId', new ParseUUIDPipe()) productoId: string,
@@ -96,6 +102,7 @@ export class ImagesController {
   }
 
   @Delete(':imagenId')
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @HttpCode(204)
   @ApiNoContentResponse()
   async remove(

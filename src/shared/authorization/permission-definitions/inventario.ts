@@ -28,6 +28,12 @@ export const INVENTARIO_PERMISSIONS = [
     actionCode: 'ELIMINAR',
   },
   {
+    code: PERMISSION_CODES.PRODUCTS_READ,
+    name: 'Leer productos',
+    resourceCode: 'PRODUCTOS',
+    actionCode: 'LEER',
+  },
+  {
     code: PERMISSION_CODES.PRODUCTS_UPDATE,
     name: 'Editar productos',
     resourceCode: 'PRODUCTOS',
