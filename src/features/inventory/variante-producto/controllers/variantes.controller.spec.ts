@@ -116,4 +116,31 @@ describe('VariantesController', () => {
     );
     expect(execute).not.toHaveBeenCalled();
   });
+
+  it('permite actualizar solo la galería y enviar archivos al mismo comando', async () => {
+    const execute = vi.fn().mockResolvedValue({
+      id: 'v1',
+      productoId: 'p1',
+      sku: 'CAM-NEG-M',
+      codigoBarras: null,
+      precio: '19.90',
+      activo: true,
+      valores: [],
+      imagenes: [],
+    });
+    const controller = new VariantesController(
+      { execute } as unknown as CommandBus,
+      { execute: vi.fn() } as unknown as QueryBus,
+    );
+    const imagen = {
+      buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1]),
+      mimetype: 'image/png',
+      originalname: 'foto.png',
+      size: 9,
+    };
+    await controller.update('p1', 'v1', {}, [imagen]);
+    expect(execute).toHaveBeenCalledWith(
+      new ActualizarVarianteProducto('p1', 'v1', {}, [imagen]),
+    );
+  });
 });

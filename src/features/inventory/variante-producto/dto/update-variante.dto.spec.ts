@@ -12,19 +12,43 @@ describe('UpdateVarianteSchema', () => {
     expect(UpdateVarianteSchema.parse({ codigoBarras: ' 1234 ' })).toEqual({
       codigoBarras: '1234',
     });
+    expect(
+      UpdateVarianteSchema.parse({ activo: 'false', codigoBarras: '' }),
+    ).toEqual({ activo: false, codigoBarras: null });
+    expect(UpdateVarianteSchema.parse({ activo: 'true' })).toEqual({
+      activo: true,
+    });
   });
 
-  it('rechaza cargas vacías, precios inválidos y edición de SKU/atributos/fotos', () => {
+  it('acepta IDs de fotos propias como arreglo JSON de multipart o JSON nativo', () => {
+    const id = '3ef90b51-24bf-45da-8a2a-4be5a424e40e';
+    expect(
+      UpdateVarianteSchema.parse({ imagenesConservarIds: `["${id}"]` }),
+    ).toEqual({
+      imagenesConservarIds: [id],
+    });
+    expect(UpdateVarianteSchema.parse({ imagenesConservarIds: [] })).toEqual({
+      imagenesConservarIds: [],
+    });
+    expect(UpdateVarianteSchema.parse({})).toEqual({});
+  });
+
+  it('rechaza precios inválidos, IDs incorrectos y edición de SKU/atributos', () => {
     for (const invalid of [
-      {},
       { precio: '-1' },
       { precio: '1.999' },
       { precio: 20 },
-      { codigoBarras: '' },
-      { activo: 'false' },
+      { activo: 'yes' },
       { sku: 'otro' },
       { valores: [] },
-      { imagenesConservarIds: [] },
+      { imagenes: ['archivo'] },
+      { imagenesConservarIds: ['no-uuid'] },
+      { imagenesConservarIds: '[mal JSON' },
+      {
+        imagenesConservarIds: Array(11).fill(
+          '3ef90b51-24bf-45da-8a2a-4be5a424e40e',
+        ),
+      },
     ]) {
       expect(UpdateVarianteSchema.safeParse(invalid).success).toBe(false);
     }
