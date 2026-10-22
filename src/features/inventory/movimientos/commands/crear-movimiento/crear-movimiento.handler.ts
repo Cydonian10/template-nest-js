@@ -9,10 +9,18 @@ import {
   TipoMovimientoInventario,
 } from '../../../entities/movimiento-inventario.entity.js';
 import { calcularSalida } from './calcular-salida.js';
+import { calcularEntrada } from './calcular-entrada.js';
 import { CrearMovimientoCommand } from './crear-movimiento.command.js';
 import { validarMovimiento } from './validar-movimiento.js';
+import type { DetalleValidado } from './validar-movimiento.js';
 
 type SaldoBloqueado = { cantidad: string; valorCosto: string };
+type Plan = {
+  detalle: DetalleValidado;
+  costoTotal: string;
+  salida?: ReturnType<typeof calcularSalida>;
+  entradaAlmacenId?: string;
+};
 
 @CommandHandler(CrearMovimientoCommand)
 export class CrearMovimientoHandler implements ICommandHandler<CrearMovimientoCommand> {
@@ -21,49 +29,71 @@ export class CrearMovimientoHandler implements ICommandHandler<CrearMovimientoCo
   async execute(
     command: CrearMovimientoCommand,
   ): Promise<MovimientoInventario> {
-    // Las otras operaciones se habilitan en el siguiente paso; nunca confirmar una parte.
-    if (
-      command.data.tipo === 'traslado' ||
-      (command.data.detalles?.some(
-        (detalle) => !detalle.cantidad.startsWith('-'),
-      ) &&
-        command.data.tipo === 'ajuste')
-    ) {
-      throw new BadRequestException(
-        'Este tipo de movimiento aún no está disponible',
-      );
-    }
-
     return this.unitOfWork.execute(async (manager) => {
-      const { input, usuario, origen, detalles } = await validarMovimiento(
-        manager,
-        command,
-      );
+      const { input, usuario, origen, destino, detalles } =
+        await validarMovimiento(manager, command);
 
-      // El orden fijo de los bloqueos evita interbloqueos entre movimientos.
-      // Se valida todo el saldo antes de escribir el movimiento o sus detalles.
-      const salidas = [];
-      for (const detalle of [...detalles].sort((a, b) =>
-        a.variante.id.localeCompare(b.variante.id),
-      )) {
+      // Bloquear todas las filas existentes en un único orden (incluidos los
+      // destinos) evita ciclos entre traslados de sentido opuesto.
+      const pares = detalles
+        .flatMap((detalle) => [
+          { varianteId: detalle.variante.id, almacenId: origen.id },
+          ...(destino
+            ? [{ varianteId: detalle.variante.id, almacenId: destino.id }]
+            : []),
+        ])
+        .sort(
+          (a, b) =>
+            a.varianteId.localeCompare(b.varianteId) ||
+            a.almacenId.localeCompare(b.almacenId),
+        );
+      const saldos = new Map<string, SaldoBloqueado | null>();
+      for (const { varianteId, almacenId } of pares) {
         const rows = await manager.query<SaldoBloqueado[]>(
           `SELECT "cantidad", "valor_costo" AS "valorCosto" FROM "existencias"
            WHERE "variante_id" = $1 AND "almacen_id" = $2 FOR UPDATE`,
-          [detalle.variante.id, origen.id],
+          [varianteId, almacenId],
         );
-        if (!rows.length)
-          throw new BadRequestException(
-            'Stock insuficiente en el almacén de origen',
-          );
-        salidas.push({
-          detalle,
-          ...calcularSalida(
-            rows[0].cantidad,
-            rows[0].valorCosto,
-            detalle.cantidadBase,
-          ),
-        });
+        saldos.set(`${varianteId}:${almacenId}`, rows[0] ?? null);
       }
+
+      // No escribir hasta comprobar stock, catálogo y valoración de cada línea.
+      const planes: Plan[] = detalles.map((detalle) => {
+        const salida =
+          input.tipo !== 'ajuste' || detalle.cantidadBase.startsWith('-');
+        if (salida) {
+          const saldo = saldos.get(`${detalle.variante.id}:${origen.id}`);
+          if (!saldo) {
+            throw new BadRequestException(
+              'Stock insuficiente en el almacén de origen',
+            );
+          }
+          const calculo = calcularSalida(
+            saldo.cantidad,
+            saldo.valorCosto,
+            detalle.cantidadBase,
+          );
+          return {
+            detalle,
+            costoTotal: calculo.costoTotal,
+            salida: calculo,
+            ...(destino ? { entradaAlmacenId: destino.id } : {}),
+          };
+        }
+        if (detalle.costoUnitarioBase === undefined) {
+          throw new BadRequestException(
+            'El costo unitario base es obligatorio',
+          );
+        }
+        return {
+          detalle,
+          costoTotal: calcularEntrada(
+            detalle.cantidadBase,
+            detalle.costoUnitarioBase,
+          ),
+          entradaAlmacenId: origen.id,
+        };
+      });
 
       const movimiento = await manager.save(
         MovimientoInventario,
@@ -71,42 +101,70 @@ export class CrearMovimientoHandler implements ICommandHandler<CrearMovimientoCo
           tipo:
             input.tipo === 'salida'
               ? TipoMovimientoInventario.SALIDA
-              : TipoMovimientoInventario.AJUSTE,
+              : input.tipo === 'traslado'
+                ? TipoMovimientoInventario.TRASLADO
+                : TipoMovimientoInventario.AJUSTE,
           estado: EstadoMovimientoInventario.CONFIRMADO,
           usuario,
-          almacenOrigen: input.tipo === 'salida' ? origen : null,
-          almacenDestino: input.tipo === 'ajuste' ? origen : null,
+          almacenOrigen: input.tipo === 'ajuste' ? null : origen,
+          almacenDestino:
+            input.tipo === 'traslado'
+              ? destino
+              : input.tipo === 'ajuste'
+                ? origen
+                : null,
           motivo: input.motivo ?? null,
           proveedor: null,
           compra: null,
-          // La clave única ya bloquea duplicaciones; el replay con la misma
-          // respuesta y la huella se completan en el paso 6.
+          // La clave única evita duplicaciones; la respuesta al reintento
+          // y la huella se completan en el paso 6.
           idempotenciaClave: input.idempotenciaClave,
           idempotenciaHash: null,
         }),
       );
-      for (const salida of salidas) {
+      for (const plan of planes.sort((a, b) =>
+        a.detalle.variante.id.localeCompare(b.detalle.variante.id),
+      )) {
         await manager.save(
           DetalleMovimiento,
           manager.create(DetalleMovimiento, {
             movimiento,
             detalleCompra: null,
-            variante: salida.detalle.variante,
-            unidad: salida.detalle.unidad,
-            cantidad: salida.detalle.cantidad,
-            factorABase: salida.detalle.factorABase,
-            cantidadBase: salida.detalle.cantidadBase,
-            costoTotal: salida.costoTotal,
+            variante: plan.detalle.variante,
+            unidad: plan.detalle.unidad,
+            cantidad: plan.detalle.cantidad,
+            factorABase: plan.detalle.factorABase,
+            cantidadBase: plan.detalle.cantidadBase,
+            costoTotal: plan.costoTotal,
           }),
         );
-        await manager.update(
-          Existencia,
-          { varianteId: salida.detalle.variante.id, almacenId: origen.id },
-          {
-            cantidad: salida.cantidadRestante,
-            valorCosto: salida.valorRestante,
-          },
-        );
+        if (plan.salida) {
+          await manager.update(
+            Existencia,
+            { varianteId: plan.detalle.variante.id, almacenId: origen.id },
+            {
+              cantidad: plan.salida.cantidadRestante,
+              valorCosto: plan.salida.valorRestante,
+            },
+          );
+        }
+        if (plan.entradaAlmacenId) {
+          // ON CONFLICT cubre destinos sin fila y entradas concurrentes sin
+          // perder cantidades ni costo del saldo anterior.
+          await manager.query(
+            `INSERT INTO "existencias" ("variante_id", "almacen_id", "cantidad", "valor_costo")
+             VALUES ($1, $2, $3::numeric, $4::numeric)
+             ON CONFLICT ("variante_id", "almacen_id") DO UPDATE
+             SET "cantidad" = "existencias"."cantidad" + EXCLUDED."cantidad",
+                 "valor_costo" = "existencias"."valor_costo" + EXCLUDED."valor_costo"`,
+            [
+              plan.detalle.variante.id,
+              plan.entradaAlmacenId,
+              plan.detalle.cantidadBase.replace(/^-/, ''),
+              plan.costoTotal,
+            ],
+          );
+        }
       }
       return movimiento;
     });

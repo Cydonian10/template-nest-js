@@ -16,10 +16,11 @@ function setup() {
   const manager = {
     findOneBy: vi
       .fn()
-      .mockImplementation((entity: { name: string }) =>
-        entity.name === 'User'
-          ? { id: 'u1', active: true }
-          : { id: origenId, activo: true },
+      .mockImplementation(
+        (entity: { name: string }, options: { id: string }) =>
+          entity.name === 'User'
+            ? { id: 'u1', active: true }
+            : { id: options.id, activo: true },
       ),
     find: vi.fn().mockResolvedValue([
       {
@@ -203,8 +204,215 @@ describe('CrearMovimientoHandler', () => {
     expect(commitTransaction).not.toHaveBeenCalled();
   });
 
-  it('no confirma traslados ni ajustes positivos hasta el siguiente paso', async () => {
-    const { handler, command, manager } = setup();
+  it('traslada el mismo valor descontado aunque el destino no tenga fila', async () => {
+    const { handler, manager, commitTransaction } = setup();
+    manager.query.mockImplementation((_sql: string, params: string[]) =>
+      Promise.resolve(
+        params?.[1] === clave
+          ? []
+          : [{ cantidad: '10.000000', valorCosto: '50.000000' }],
+      ),
+    );
+    const result = await handler.execute(
+      new CrearMovimientoCommand('u1', {
+        tipo: 'traslado',
+        idempotenciaClave: clave,
+        almacenOrigenId: origenId,
+        almacenDestinoId: clave,
+        detalles: [{ varianteId, unidadId, cantidad: '4' }],
+      }),
+    );
+    expect(result).toMatchObject({ tipo: 'traslado', estado: 'confirmado' });
+    expect(manager.save).toHaveBeenCalledWith(
+      MovimientoInventario,
+      expect.objectContaining({
+        almacenOrigen: expect.objectContaining({ id: origenId }),
+        almacenDestino: expect.objectContaining({ id: clave }),
+      }),
+    );
+    expect(manager.update).toHaveBeenCalledWith(
+      Existencia,
+      { varianteId, almacenId: origenId },
+      {
+        cantidad: '6.000000',
+        valorCosto: '30.000000',
+      },
+    );
+    expect(manager.query).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'ON CONFLICT ("variante_id", "almacen_id") DO UPDATE',
+      ),
+      [varianteId, clave, '4.000000', '20.000000'],
+    );
+    expect(
+      manager.query.mock.calls
+        .filter(([sql]) => sql.includes('FOR UPDATE'))
+        .map(([, params]) => params),
+    ).toEqual([
+      [varianteId, origenId],
+      [varianteId, clave],
+    ]);
+    expect(commitTransaction).toHaveBeenCalledOnce();
+  });
+
+  it('usa el mismo orden de bloqueo para traslados en sentidos opuestos', async () => {
+    const ida = setup();
+    const vuelta = setup();
+    await Promise.all([
+      ida.handler.execute(
+        new CrearMovimientoCommand('u1', {
+          tipo: 'traslado',
+          idempotenciaClave: clave,
+          almacenOrigenId: origenId,
+          almacenDestinoId: clave,
+          detalles: [{ varianteId, unidadId, cantidad: '1' }],
+        }),
+      ),
+      vuelta.handler.execute(
+        new CrearMovimientoCommand('u1', {
+          tipo: 'traslado',
+          idempotenciaClave: '550e8400-e29b-41d4-a716-446655440007',
+          almacenOrigenId: clave,
+          almacenDestinoId: origenId,
+          detalles: [{ varianteId, unidadId, cantidad: '1' }],
+        }),
+      ),
+    ]);
+    for (const { manager } of [ida, vuelta]) {
+      expect(
+        manager.query.mock.calls
+          .filter(([sql]) => sql.includes('FOR UPDATE'))
+          .map(([, params]) => params),
+      ).toEqual([
+        [varianteId, origenId],
+        [varianteId, clave],
+      ]);
+    }
+  });
+
+  it('ajuste positivo admite costo cero y crea saldo sin fila previa', async () => {
+    const { handler, manager } = setup();
+    manager.query.mockResolvedValue([]);
+    const result = await handler.execute(
+      new CrearMovimientoCommand('u1', {
+        tipo: 'ajuste',
+        idempotenciaClave: clave,
+        almacenOrigenId: origenId,
+        motivo: 'Conteo',
+        detalles: [
+          { varianteId, unidadId, cantidad: '2', costoUnitarioBase: '0' },
+        ],
+      }),
+    );
+    expect(result).toMatchObject({ tipo: 'ajuste', estado: 'confirmado' });
+    expect(manager.save).toHaveBeenCalledWith(
+      MovimientoInventario,
+      expect.objectContaining({
+        almacenOrigen: null,
+        almacenDestino: expect.objectContaining({ id: origenId }),
+      }),
+    );
+    expect(manager.save).toHaveBeenCalledWith(
+      DetalleMovimiento,
+      expect.objectContaining({
+        cantidadBase: '2.000000',
+        costoTotal: '0.000000',
+      }),
+    );
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.query).toHaveBeenCalledWith(
+      expect.stringContaining('ON CONFLICT'),
+      [varianteId, origenId, '2.000000', '0.000000'],
+    );
+    const upsert = manager.query.mock.calls.find(([sql]) =>
+      sql.includes('ON CONFLICT'),
+    )?.[0];
+    expect(upsert).toContain('"existencias"."cantidad" + EXCLUDED."cantidad"');
+    expect(upsert).toContain(
+      '"existencias"."valor_costo" + EXCLUDED."valor_costo"',
+    );
+    // Compras usa también bloqueo compartido de producto antes de escribir stock.
+    expect(manager.findOne.mock.invocationCallOrder[0]).toBeLessThan(
+      manager.query.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('ajuste positivo valora desde unidad base y suma al saldo previo', async () => {
+    const { handler, manager } = setup();
+    await handler.execute(
+      new CrearMovimientoCommand('u1', {
+        tipo: 'ajuste',
+        idempotenciaClave: clave,
+        almacenOrigenId: origenId,
+        motivo: 'Conteo',
+        detalles: [
+          {
+            varianteId,
+            unidadId,
+            cantidad: '2',
+            costoUnitarioBase: '3.500000',
+          },
+        ],
+      }),
+    );
+    expect(manager.save).toHaveBeenCalledWith(
+      DetalleMovimiento,
+      expect.objectContaining({
+        cantidadBase: '2.000000',
+        costoTotal: '7.000000',
+      }),
+    );
+    expect(manager.query).toHaveBeenCalledWith(
+      expect.stringContaining('ON CONFLICT'),
+      [varianteId, origenId, '2.000000', '7.000000'],
+    );
+  });
+
+  it('rechaza aumentar o trasladar catálogo inactivo antes de tocar saldos', async () => {
+    const { handler, manager } = setup();
+    manager.find.mockResolvedValue([
+      {
+        id: varianteId,
+        activo: false,
+        producto: {
+          id: 'p1',
+          activo: true,
+          unidadBase: { id: unidadId },
+          unidades: [],
+        },
+      },
+    ]);
+    for (const data of [
+      {
+        tipo: 'traslado' as const,
+        almacenDestinoId: clave,
+        detalles: [{ varianteId, unidadId, cantidad: '1' }],
+      },
+      {
+        tipo: 'ajuste' as const,
+        motivo: 'Conteo',
+        detalles: [
+          { varianteId, unidadId, cantidad: '1', costoUnitarioBase: '2' },
+        ],
+      },
+    ]) {
+      await expect(
+        handler.execute(
+          new CrearMovimientoCommand('u1', {
+            idempotenciaClave: clave,
+            almacenOrigenId: origenId,
+            ...data,
+          }),
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(manager.query).not.toHaveBeenCalled();
+    expect(manager.save).not.toHaveBeenCalled();
+  });
+
+  it('no confirma un traslado sin saldo origen ni deja abono parcial', async () => {
+    const { handler, manager, rollbackTransaction } = setup();
+    manager.query.mockResolvedValue([]);
     await expect(
       handler.execute(
         new CrearMovimientoCommand('u1', {
@@ -216,9 +424,11 @@ describe('CrearMovimientoHandler', () => {
         }),
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
-    await expect(
-      handler.execute(command('ajuste', '1')),
-    ).rejects.toBeInstanceOf(BadRequestException);
     expect(manager.save).not.toHaveBeenCalled();
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(
+      manager.query.mock.calls.every(([sql]) => sql.includes('FOR UPDATE')),
+    ).toBe(true);
+    expect(rollbackTransaction).toHaveBeenCalledOnce();
   });
 });
