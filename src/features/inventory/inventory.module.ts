@@ -65,6 +65,9 @@ import { AdjuntarComprobanteHandler } from './compras/commands/adjuntar-comproba
 import { ExistenciasController } from './existencias/controllers/existencias.controller.js';
 import { ListarAlmacenesActivosHandler } from './existencias/queries/listar-almacenes-activos/listar-almacenes-activos.handler.js';
 import { ListarExistenciasHandler } from './existencias/queries/listar-existencias/listar-existencias.handler.js';
+import { MovimientosController } from './movimientos/controllers/movimientos.controller.js';
+import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
+import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
 
 @Module({
   imports: [
@@ -95,6 +98,7 @@ import { ListarExistenciasHandler } from './existencias/queries/listar-existenci
     ComprobantesController,
     ComprasController,
     ExistenciasController,
+    MovimientosController,
   ],
   providers: [
     CreateProductHandler,
@@ -115,6 +119,8 @@ import { ListarExistenciasHandler } from './existencias/queries/listar-existenci
     AdjuntarComprobanteHandler,
     ListarAlmacenesActivosHandler,
     ListarExistenciasHandler,
+    ListarAlmacenesMovimientoHandler,
+    BuscarVariantesMovimientoHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
