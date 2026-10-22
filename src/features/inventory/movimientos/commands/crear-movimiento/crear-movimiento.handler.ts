@@ -1,6 +1,11 @@
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
+import { User } from '../../../../access-control/entities/user.entity.js';
 import { DetalleMovimiento } from '../../../entities/detalle-movimiento.entity.js';
 import { Existencia } from '../../../entities/existencia.entity.js';
 import {
@@ -11,6 +16,11 @@ import {
 import { calcularSalida } from './calcular-salida.js';
 import { calcularEntrada } from './calcular-entrada.js';
 import { CrearMovimientoCommand } from './crear-movimiento.command.js';
+import { CreateMovimientoSchema } from '../../dto/create-movimiento.dto.js';
+import {
+  bloqueoMovimiento,
+  hashMovimiento,
+} from './idempotencia-movimiento.js';
 import { validarMovimiento } from './validar-movimiento.js';
 import type { DetalleValidado } from './validar-movimiento.js';
 
@@ -29,7 +39,37 @@ export class CrearMovimientoHandler implements ICommandHandler<CrearMovimientoCo
   async execute(
     command: CrearMovimientoCommand,
   ): Promise<MovimientoInventario> {
+    const parsed = CreateMovimientoSchema.safeParse(command.data);
+    if (!parsed.success)
+      throw new BadRequestException('Datos de movimiento no válidos');
+    const hash = hashMovimiento(parsed.data);
+
     return this.unitOfWork.execute(async (manager) => {
+      // Adquirir este bloqueo antes de leer existencias evita que el segundo
+      // envío del mismo usuario y clave falle por stock ya consumido.
+      await manager.query('SELECT pg_advisory_xact_lock($1::bigint)', [
+        bloqueoMovimiento(command.userId, parsed.data.idempotenciaClave),
+      ]);
+      const anterior = await manager.findOne(MovimientoInventario, {
+        where: {
+          usuario: { id: command.userId },
+          idempotenciaClave: parsed.data.idempotenciaClave,
+        },
+      });
+      if (anterior) {
+        const usuario = await manager.findOneBy(User, {
+          id: command.userId,
+          active: true,
+        });
+        if (!usuario) throw new UnauthorizedException();
+        if (anterior.idempotenciaHash !== hash) {
+          throw new ConflictException(
+            'La clave ya corresponde a otro movimiento',
+          );
+        }
+        return anterior;
+      }
+
       const { input, usuario, origen, destino, detalles } =
         await validarMovimiento(manager, command);
 
@@ -116,10 +156,8 @@ export class CrearMovimientoHandler implements ICommandHandler<CrearMovimientoCo
           motivo: input.motivo ?? null,
           proveedor: null,
           compra: null,
-          // La clave única evita duplicaciones; la respuesta al reintento
-          // y la huella se completan en el paso 6.
           idempotenciaClave: input.idempotenciaClave,
-          idempotenciaHash: null,
+          idempotenciaHash: hash,
         }),
       );
       for (const plan of planes.sort((a, b) =>

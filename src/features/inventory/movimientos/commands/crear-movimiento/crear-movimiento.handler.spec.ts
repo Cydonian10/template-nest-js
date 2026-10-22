@@ -1,4 +1,8 @@
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { DetalleMovimiento } from '../../../entities/detalle-movimiento.entity.js';
@@ -6,6 +10,10 @@ import { Existencia } from '../../../entities/existencia.entity.js';
 import { MovimientoInventario } from '../../../entities/movimiento-inventario.entity.js';
 import { CrearMovimientoCommand } from './crear-movimiento.command.js';
 import { CrearMovimientoHandler } from './crear-movimiento.handler.js';
+import {
+  hashMovimiento,
+  bloqueoMovimiento,
+} from './idempotencia-movimiento.js';
 
 const origenId = '550e8400-e29b-41d4-a716-446655440000';
 const varianteId = '550e8400-e29b-41d4-a716-446655440002';
@@ -48,6 +56,9 @@ function setup() {
       ),
     update: vi.fn().mockResolvedValue({ affected: 1 }),
   };
+  manager.findOne.mockImplementation((entity: unknown) =>
+    Promise.resolve(entity === MovimientoInventario ? null : { id: 'p1' }),
+  );
   const commitTransaction = vi.fn();
   const rollbackTransaction = vi.fn();
   const runner = {
@@ -114,6 +125,7 @@ describe('CrearMovimientoHandler', () => {
         MovimientoInventario,
         expect.objectContaining({
           idempotenciaClave: clave,
+          idempotenciaHash: hashMovimiento(command(tipo, cantidad).data),
           almacenOrigen:
             tipo === 'salida'
               ? expect.objectContaining({ id: origenId })
@@ -130,6 +142,7 @@ describe('CrearMovimientoHandler', () => {
 
   it('rechaza antes de escribir cuando falta saldo o es insuficiente', async () => {
     const { handler, command, manager, rollbackTransaction } = setup();
+    manager.query.mockImplementationOnce(() => Promise.resolve([]));
     manager.query.mockResolvedValueOnce([]);
     await expect(handler.execute(command('salida'))).rejects.toBeInstanceOf(
       BadRequestException,
@@ -138,6 +151,7 @@ describe('CrearMovimientoHandler', () => {
     expect(manager.update).not.toHaveBeenCalled();
     expect(rollbackTransaction).toHaveBeenCalledOnce();
 
+    manager.query.mockImplementationOnce(() => Promise.resolve([]));
     manager.query.mockResolvedValueOnce([
       { cantidad: '2.000000', valorCosto: '10.000000' },
     ]);
@@ -161,6 +175,7 @@ describe('CrearMovimientoHandler', () => {
       { id: segundaId, activo: true, producto },
     ]);
     manager.query
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { cantidad: '10.000000', valorCosto: '50.000000' },
       ])
@@ -180,10 +195,11 @@ describe('CrearMovimientoHandler', () => {
     await expect(handler.execute(command)).rejects.toBeInstanceOf(
       BadRequestException,
     );
-    expect(manager.query.mock.calls.map(([, params]) => params[0])).toEqual([
-      segundaId,
-      varianteId,
-    ]);
+    expect(
+      manager.query.mock.calls
+        .filter(([sql]) => sql.includes('FOR UPDATE'))
+        .map(([, params]) => params[0]),
+    ).toEqual([segundaId, varianteId]);
     expect(manager.save).not.toHaveBeenCalled();
     expect(manager.update).not.toHaveBeenCalled();
   });
@@ -332,8 +348,8 @@ describe('CrearMovimientoHandler', () => {
       '"existencias"."valor_costo" + EXCLUDED."valor_costo"',
     );
     // Compras usa también bloqueo compartido de producto antes de escribir stock.
-    expect(manager.findOne.mock.invocationCallOrder[0]).toBeLessThan(
-      manager.query.mock.invocationCallOrder[0],
+    expect(manager.findOne.mock.invocationCallOrder[1]).toBeLessThan(
+      manager.query.mock.invocationCallOrder[1],
     );
   });
 
@@ -406,7 +422,11 @@ describe('CrearMovimientoHandler', () => {
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     }
-    expect(manager.query).not.toHaveBeenCalled();
+    expect(
+      manager.query.mock.calls.every(([sql]) =>
+        sql.includes('pg_advisory_xact_lock'),
+      ),
+    ).toBe(true);
     expect(manager.save).not.toHaveBeenCalled();
   });
 
@@ -427,8 +447,130 @@ describe('CrearMovimientoHandler', () => {
     expect(manager.save).not.toHaveBeenCalled();
     expect(manager.update).not.toHaveBeenCalled();
     expect(
-      manager.query.mock.calls.every(([sql]) => sql.includes('FOR UPDATE')),
+      manager.query.mock.calls.every(
+        ([sql]) =>
+          sql.includes('FOR UPDATE') || sql.includes('pg_advisory_xact_lock'),
+      ),
     ).toBe(true);
     expect(rollbackTransaction).toHaveBeenCalledOnce();
+  });
+
+  it('devuelve el mismo movimiento tras reintentar sin volver a validar stock', async () => {
+    const { handler, command, manager } = setup();
+    const primerMovimiento = await handler.execute(command('salida'));
+    const consultasAntes = manager.query.mock.calls.length;
+    const escriturasAntes = manager.save.mock.calls.length;
+    manager.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(
+        entity === MovimientoInventario ? primerMovimiento : { id: 'p1' },
+      ),
+    );
+    // La cantidad anterior ya podría ser cero, pero el replay no la consulta.
+    manager.query.mockImplementation((sql: string) => {
+      if (sql.includes('FOR UPDATE')) throw new Error('No se debe leer stock');
+      return Promise.resolve([]);
+    });
+    expect(await handler.execute(command('salida'))).toBe(primerMovimiento);
+    expect(manager.save).toHaveBeenCalledTimes(escriturasAntes);
+    expect(manager.update).toHaveBeenCalledOnce();
+    expect(manager.query).toHaveBeenCalledTimes(consultasAntes + 1);
+    expect(manager.query).toHaveBeenLastCalledWith(
+      'SELECT pg_advisory_xact_lock($1::bigint)',
+      [bloqueoMovimiento('u1', clave)],
+    );
+  });
+
+  it('rechaza clave repetida con contenido diferente o huella anterior desconocida', async () => {
+    const { handler, command, manager } = setup();
+    const anterior = await handler.execute(command('salida'));
+    manager.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(
+        entity === MovimientoInventario ? anterior : { id: 'p1' },
+      ),
+    );
+    const escrituras = manager.save.mock.calls.length;
+    await expect(
+      handler.execute(command('salida', '3')),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(manager.save).toHaveBeenCalledTimes(escrituras);
+
+    manager.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(
+        entity === MovimientoInventario
+          ? { id: anterior.id, idempotenciaHash: null }
+          : { id: 'p1' },
+      ),
+    );
+    await expect(handler.execute(command('salida'))).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+  });
+
+  it('rechaza un reintento si el usuario ya no está activo', async () => {
+    const { handler, command, manager } = setup();
+    const anterior = await handler.execute(command('salida'));
+    manager.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(
+        entity === MovimientoInventario ? anterior : { id: 'p1' },
+      ),
+    );
+    manager.findOneBy.mockResolvedValue(null);
+    await expect(handler.execute(command('salida'))).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+  });
+
+  it('serializa dos envíos simultáneos con la misma clave sin duplicar stock', async () => {
+    const primero = setup();
+    const segundo = setup();
+    let ultimoBloqueo: Promise<void> | undefined;
+    let confirmado: MovimientoInventario | null = null;
+    for (const caso of [primero, segundo]) {
+      let liberar = () => {};
+      let pendiente: MovimientoInventario | null = null;
+      caso.manager.query.mockImplementation(async (sql: string) => {
+        if (!sql.includes('pg_advisory_xact_lock')) {
+          return [{ cantidad: '10.000000', valorCosto: '50.000000' }];
+        }
+        const anterior = ultimoBloqueo;
+        ultimoBloqueo = new Promise<void>((resolve) => {
+          liberar = resolve;
+        });
+        if (anterior) await anterior;
+        return [];
+      });
+      caso.manager.findOne.mockImplementation((entity: unknown) =>
+        Promise.resolve(
+          entity === MovimientoInventario ? confirmado : { id: 'p1' },
+        ),
+      );
+      caso.manager.save.mockImplementation((entity: unknown, data: unknown) => {
+        const result = {
+          id: 'm1',
+          ...(data as object),
+        } as MovimientoInventario;
+        if (entity === MovimientoInventario) pendiente = result;
+        return Promise.resolve(result);
+      });
+      caso.commitTransaction.mockImplementation(() => {
+        if (pendiente) confirmado = pendiente;
+        liberar();
+      });
+      caso.rollbackTransaction.mockImplementation(() => liberar());
+    }
+
+    const [uno, dos] = await Promise.all([
+      primero.handler.execute(primero.command('salida')),
+      segundo.handler.execute(segundo.command('salida')),
+    ]);
+    expect(uno.id).toBe(dos.id);
+    expect(
+      primero.manager.update.mock.calls.length +
+        segundo.manager.update.mock.calls.length,
+    ).toBe(1);
+    expect(
+      primero.manager.save.mock.calls.length +
+        segundo.manager.save.mock.calls.length,
+    ).toBe(2);
   });
 });
