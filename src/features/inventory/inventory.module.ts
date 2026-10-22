@@ -68,6 +68,7 @@ import { ListarExistenciasHandler } from './existencias/queries/listar-existenci
 import { MovimientosController } from './movimientos/controllers/movimientos.controller.js';
 import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
 import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
+import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/crear-movimiento.handler.js';
 
 @Module({
   imports: [
@@ -121,6 +122,7 @@ import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-v
     ListarExistenciasHandler,
     ListarAlmacenesMovimientoHandler,
     BuscarVariantesMovimientoHandler,
+    CrearMovimientoHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
@@ -13,6 +14,7 @@ import { UserRole } from '../../features/access-control/entities/user_roles.enti
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
 import { PERMISSION_DEFINITIONS } from '../../shared/authorization/permission-definitions.js';
 import { REQUIRED_PERMISSIONS_KEY } from '../decorators/require-permissions.decorator.js';
+import { PERMISSION_BY_BODY_TYPE_KEY } from '../decorators/require-permission-by-body-type.decorator.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import type { AuthenticatedUser } from '../interfaces/authenticated-user.interface.js';
 
@@ -30,19 +32,33 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const required = this.reflector.getAllAndOverride<string[]>(
-      REQUIRED_PERMISSIONS_KEY,
+    const required =
+      this.reflector.getAllAndOverride<string[]>(
+        REQUIRED_PERMISSIONS_KEY,
+        targets,
+      ) ?? [];
+    const byType = this.reflector.getAllAndOverride<Record<string, string>>(
+      PERMISSION_BY_BODY_TYPE_KEY,
       targets,
     );
-    if (!required?.length) return true;
+    if (!required.length && !byType) return true;
 
     const request = context
       .switchToHttp()
       .getRequest<Request & { user?: AuthenticatedUser }>();
     if (!request.user?.id) throw new UnauthorizedException();
 
+    const tipo = (request.body as { tipo?: unknown } | undefined)?.tipo;
+    const selected =
+      byType && typeof tipo === 'string' && Object.hasOwn(byType, tipo)
+        ? byType[tipo]
+        : undefined;
+    if (byType && !selected)
+      throw new BadRequestException('Tipo de operación no válido');
+    const permissions = selected ? [...required, selected] : required;
+
     const expected = PERMISSION_DEFINITIONS.filter(({ code }) =>
-      required.includes(code),
+      permissions.includes(code),
     );
     const systemCodes = [
       ...new Set(expected.map(({ systemCode }) => systemCode)),
@@ -58,7 +74,7 @@ export class PermissionsGuard implements CanActivate {
         'grant.permission',
         'permission',
         'permission.code IN (:...required)',
-        { required },
+        { required: permissions },
       )
       .leftJoin(
         'permission.system',
@@ -98,7 +114,7 @@ export class PermissionsGuard implements CanActivate {
       grants.map(({ code, systemCode }) => `${systemCode}/${code}`),
     );
     if (
-      !required.every((code) =>
+      !permissions.every((code) =>
         expected.some(
           (definition) =>
             definition.code === code &&

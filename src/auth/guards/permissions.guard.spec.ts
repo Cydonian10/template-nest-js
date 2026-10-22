@@ -1,4 +1,8 @@
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Repository } from 'typeorm';
@@ -26,11 +30,11 @@ describe('PermissionsGuard', () => {
     { getAllAndOverride } as unknown as Reflector,
     { createQueryBuilder } as unknown as Repository<UserRole>,
   );
-  const context = (user?: { id: string }) =>
+  const context = (user?: { id: string }, body?: unknown) =>
     ({
       getHandler: () => vi.fn(),
       getClass: () => class UsersController {},
-      switchToHttp: () => ({ getRequest: () => ({ user }) }),
+      switchToHttp: () => ({ getRequest: () => ({ user, body }) }),
     }) as unknown as ExecutionContext;
 
   beforeEach(() => {
@@ -244,5 +248,41 @@ describe('PermissionsGuard', () => {
     await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
       true,
     );
+  });
+  it('exige solo el permiso del tipo del cuerpo y rechaza tipos desconocidos', async () => {
+    getAllAndOverride.mockImplementation((key: string) => {
+      if (key === 'permissionByBodyType')
+        return {
+          salida: PERMISSION_CODES.SALIDAS_CREATE,
+          traslado: PERMISSION_CODES.TRASLADOS_CREATE,
+          ajuste: PERMISSION_CODES.AJUSTES_CREATE,
+        };
+      return key === 'requiredPermissions' ? undefined : false;
+    });
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.SALIDAS_CREATE,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' }, { tipo: 'salida' })),
+    ).resolves.toBe(true);
+    expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+      'grant.permission',
+      'permission',
+      'permission.code IN (:...required)',
+      { required: [PERMISSION_CODES.SALIDAS_CREATE] },
+    );
+    await expect(
+      guard.canActivate(context({ id: 'user-1' }, { tipo: 'ajuste' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' }, { tipo: 'ingreso' })),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

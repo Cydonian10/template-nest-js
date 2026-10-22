@@ -31,6 +31,7 @@ function setup({ activo = true, productoActivo = true } = {}) {
     id: varianteId,
     activo,
     producto: {
+      id: 'p1',
       activo: productoActivo,
       unidadBase: { id: unidadId, nombre: 'Unidad' },
       unidades: [
@@ -45,6 +46,7 @@ function setup({ activo = true, productoActivo = true } = {}) {
       return null;
     }),
     find: vi.fn().mockResolvedValue([variante]),
+    findOne: vi.fn().mockResolvedValue({ id: 'p1' }),
     save: vi.fn(),
     query: vi.fn(),
   };
@@ -143,6 +145,10 @@ describe('validarMovimiento', () => {
         },
       }),
     );
+    expect(manager.findOne).toHaveBeenCalledWith(expect.anything(), {
+      where: { id: expect.anything() },
+      lock: { mode: 'pessimistic_read' },
+    });
     expect(manager.save).not.toHaveBeenCalled();
     expect(manager.query).not.toHaveBeenCalled();
   });

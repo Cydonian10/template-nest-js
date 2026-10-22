@@ -3,6 +3,7 @@ import { In } from 'typeorm';
 import type { EntityManager } from 'typeorm';
 import { User } from '../../../../access-control/entities/user.entity.js';
 import { Almacen } from '../../../entities/almacen.entity.js';
+import { Producto } from '../../../entities/producto.entity.js';
 import { Unidad } from '../../../entities/unidad.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import type { CreateMovimientoDto } from '../../dto/create-movimiento.dto.js';
@@ -83,6 +84,24 @@ export async function validarMovimiento(
   }
 
   const ids = input.detalles.map(({ varianteId }) => varianteId);
+  const referencias = await manager.find(VarianteProducto, {
+    where: { id: In(ids) },
+    relations: { producto: true },
+  });
+  if (referencias.length !== ids.length) {
+    throw new BadRequestException('Variante no disponible');
+  }
+  // El mismo orden que Compras protege la unidad base frente a cambios concurrentes.
+  const productoIds = [
+    ...new Set(referencias.map(({ producto }) => producto.id)),
+  ].sort();
+  for (const id of productoIds) {
+    const producto = await manager.findOne(Producto, {
+      where: { id },
+      lock: { mode: 'pessimistic_read' },
+    });
+    if (!producto) throw new BadRequestException('Producto no disponible');
+  }
   const variantes = await manager.find(VarianteProducto, {
     where: { id: In(ids) },
     relations: { producto: { unidadBase: true, unidades: { unidad: true } } },
