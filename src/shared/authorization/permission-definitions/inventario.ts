@@ -106,6 +106,30 @@ export const INVENTARIO_PERMISSIONS = [
     actionCode: 'LEER',
   },
   {
+    code: PERMISSION_CODES.MOVIMIENTOS_READ,
+    name: 'Leer movimientos',
+    resourceCode: 'MOVIMIENTOS',
+    actionCode: 'LEER',
+  },
+  {
+    code: PERMISSION_CODES.SALIDAS_CREATE,
+    name: 'Crear salidas',
+    resourceCode: 'SALIDAS',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.TRASLADOS_CREATE,
+    name: 'Crear traslados',
+    resourceCode: 'TRASLADOS',
+    actionCode: 'CREAR',
+  },
+  {
+    code: PERMISSION_CODES.AJUSTES_CREATE,
+    name: 'Crear ajustes',
+    resourceCode: 'AJUSTES',
+    actionCode: 'CREAR',
+  },
+  {
     code: PERMISSION_CODES.PROVEEDORES_READ,
     name: 'Leer proveedores',
     resourceCode: 'PROVEEDORES',

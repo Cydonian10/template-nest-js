@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -30,6 +31,14 @@ export enum EstadoMovimientoInventario {
 }
 
 @Entity('movimientos_inventario')
+@Index(
+  'UQ_movimientos_usuario_idempotencia',
+  ['usuario', 'idempotenciaClave'],
+  {
+    unique: true,
+    where: '"idempotencia_clave" IS NOT NULL',
+  },
+)
 @Check(
   'CHK_movimientos_inventario_almacenes',
   `("tipo" = 'ingreso' AND "almacen_origen_id" IS NULL AND "almacen_destino_id" IS NOT NULL)
@@ -85,6 +94,17 @@ export class MovimientoInventario {
 
   @RelationId((movimiento: MovimientoInventario) => movimiento.usuario)
   usuarioId: string;
+
+  @Column({ name: 'idempotencia_clave', type: 'uuid', nullable: true })
+  idempotenciaClave: string | null;
+
+  @Column({
+    name: 'idempotencia_hash',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  idempotenciaHash: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   fecha: Date;

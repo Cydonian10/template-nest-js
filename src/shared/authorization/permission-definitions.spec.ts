@@ -56,4 +56,38 @@ describe('PERMISSION_DEFINITIONS', () => {
       expect.objectContaining({ roleCode: expect.anything() }),
     );
   });
+
+  it('registra permisos de movimientos por lectura y tipo sin asignarlos a roles', () => {
+    expect(PERMISSION_DEFINITIONS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          systemCode: SYSTEM_CODES.INVENTARIO,
+          code: PERMISSION_CODES.MOVIMIENTOS_READ,
+          resourceCode: 'MOVIMIENTOS',
+          actionCode: 'LEER',
+        }),
+        expect.objectContaining({
+          systemCode: SYSTEM_CODES.INVENTARIO,
+          code: PERMISSION_CODES.SALIDAS_CREATE,
+          resourceCode: 'SALIDAS',
+          actionCode: 'CREAR',
+        }),
+        expect.objectContaining({
+          systemCode: SYSTEM_CODES.INVENTARIO,
+          code: PERMISSION_CODES.TRASLADOS_CREATE,
+          resourceCode: 'TRASLADOS',
+          actionCode: 'CREAR',
+        }),
+        expect.objectContaining({
+          systemCode: SYSTEM_CODES.INVENTARIO,
+          code: PERMISSION_CODES.AJUSTES_CREATE,
+          resourceCode: 'AJUSTES',
+          actionCode: 'CREAR',
+        }),
+      ]),
+    );
+    expect(PERMISSION_DEFINITIONS).not.toContainEqual(
+      expect.objectContaining({ roleCode: expect.anything() }),
+    );
+  });
 });
