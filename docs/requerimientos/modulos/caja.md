@@ -21,8 +21,8 @@ El usuario abre un turno de la caja, registra ventas y, cuando corresponde, ingr
 ### RF-CAJA-002 — Cuadrar al cerrar
 
 - Estado: confirmado.
-- Regla: todo cierre de turno y de día exige registrar el efectivo contado y calcular la diferencia respecto del efectivo esperado. Se permite cerrar con diferencia, que queda registrada; no se ajusta ni oculta automáticamente. El efectivo esperado se obtiene del saldo inicial, los cobros en efectivo y los ingresos de efectivo, menos los egresos de efectivo. Yape se informa separadamente.
-- Comprobación: con saldo inicial S/ 50, cobros en efectivo S/ 100, ingresos S/ 20 y egresos S/ 10, se esperan S/ 160; si se cuentan S/ 155, el cierre guarda una diferencia de S/ -5 y, si sigue otro turno, este inicia con S/ 155.
+- Regla: todo cierre de turno y de día exige registrar el efectivo contado y calcular la diferencia respecto del efectivo esperado. Se permite cerrar con diferencia, que queda registrada; no se ajusta ni oculta automáticamente. El efectivo esperado se obtiene del saldo inicial, el efectivo recibido por ventas menos el vuelto entregado en efectivo, más los ingresos de efectivo y menos los egresos de efectivo. Los reintegros en efectivo por anulaciones y devoluciones reducen el efectivo esperado del turno en que se entregan, sin contarlos otra vez como egresos manuales. Vuelto y reintegros por Yape se informan por separado y no reducen el efectivo físico.
+- Comprobación: con saldo inicial S/ 50, cobros en efectivo S/ 100, ingresos S/ 20 y egresos S/ 10, sin vueltos ni reintegros, se esperan S/ 160; si se cuentan S/ 155, el cierre guarda una diferencia de S/ -5 y, si sigue otro turno, este inicia con S/ 155. Un reintegro posterior en efectivo afecta solo al turno en que se paga, no al ya cerrado.
 - Dependencias: [RF-CAJA-003](#rf-caja-003--registrar-ingresos-y-egresos), [RF-VENT-003](ventas-y-promociones.md#rf-vent-003--cobrar-una-venta).
 - Fuente: solicitante.
 
@@ -45,7 +45,7 @@ El usuario abre un turno de la caja, registra ventas y, cuando corresponde, ingr
 ### RF-CAJA-005 — Cerrar día y consultar reporte
 
 - Estado: confirmado.
-- Regla: «cerrar día» exige el cuadre del último turno, impide reabrir la misma caja física en esa fecha y deja disponible un reporte consolidado de todos los turnos de esa caja en ese día. El reporte separa ventas en efectivo y Yape, ingresos, egresos y diferencias de cuadre. No cuenta como nuevo ingreso el efectivo trasladado como saldo inicial entre turnos.
+- Regla: «cerrar día» exige el cuadre del último turno, impide reabrir la misma caja física en esa fecha y deja disponible un reporte consolidado de todos los turnos de esa caja en ese día. El reporte separa ventas en efectivo y Yape, ingresos, egresos, reintegros y diferencias de cuadre. No cuenta como nuevo ingreso el efectivo trasladado como saldo inicial entre turnos. Una anulación o devolución posterior no reescribe los importes ya cerrados; queda pendiente cómo se refleja en los reportes por fecha de venta y de reintegro.
 - Comprobación: tras varios cierres de turno, el reporte incluye todos ellos y el cierre final; no duplica los saldos trasladados. Una nueva apertura de esa caja en la misma fecha es rechazada.
 - Dependencias: [RF-CAJA-002](#rf-caja-002--cuadrar-al-cerrar), [RF-CAJA-004](#rf-caja-004--cerrar-turno).
 - Fuente: recomendación aceptada por el solicitante.
@@ -62,4 +62,5 @@ El usuario abre un turno de la caja, registra ventas y, cuando corresponde, ingr
 - Política para el saldo al abrir el primer turno de un nuevo día, incluidos retiros o depósitos al cierre diario.
 - Zona horaria y fecha operativa de la caja; permisos para apertura, movimientos, cierres y consulta de reportes.
 - Si un cierre puede corregirse, quién lo autoriza y cómo conservar su historial; formato y filtros del reporte.
-- Tratamiento de devoluciones o anulaciones de ventas después de un cierre y de las transferencias entre cajas físicas si se incorporan más adelante.
+- Registro del vuelto en ambos medios; identificación del turno abierto que efectúa un reintegro tras cerrar el turno de venta; reportes del día original frente al día de reintegro, incluso si el día original ya cerró. No modificar ni ocultar un cuadre histórico.
+- Transferencias entre cajas físicas, si se incorporan más adelante.
