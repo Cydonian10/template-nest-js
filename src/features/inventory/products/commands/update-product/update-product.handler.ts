@@ -1,5 +1,6 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
 import { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { ResourceNotFoundException } from '../../../../../shared/exceptions/resource-not-found.exception.js';
 import { Imagen } from '../../../../images/entities/imagen.entity.js';
@@ -8,6 +9,8 @@ import { VarianteImagen } from '../../../../images/entities/variante-imagen.enti
 import { ImageStorage } from '../../../../images/storage/image-storage.js';
 import { prepareImage } from '../../../../images/utils/prepare-image.js';
 import { Producto } from '../../../entities/producto.entity.js';
+import { Marca } from '../../../entities/marca.entity.js';
+import { Categoria } from '../../../entities/categoria.entity.js';
 import { Unidad } from '../../../entities/unidad.entity.js';
 import { puedeCambiarUnidadBase } from '../../queries/puede-cambiar-unidad-base.js';
 import { UpdateProductCommand } from './update-product.command.js';
@@ -26,6 +29,16 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
     data,
     imagenes,
   }: UpdateProductCommand): Promise<Producto> {
+    if (
+      data.categoriasIds !== undefined &&
+      (!Array.isArray(data.categoriasIds) ||
+        !data.categoriasIds.length ||
+        new Set(data.categoriasIds).size !== data.categoriasIds.length)
+    ) {
+      throw new BadRequestException(
+        'Debe indicar categorías únicas y no vacías',
+      );
+    }
     const nuevas = imagenes.map(prepareImage);
     const archivosNuevos: string[] = [];
     const archivosEliminados: string[] = [];
@@ -40,8 +53,50 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
         if (!locked) throw new ResourceNotFoundException('Producto', id);
         const actual = await manager.findOneOrFail(Producto, {
           where: { id },
-          relations: { unidadBase: true },
+          relations: { unidadBase: true, marca: true, categorias: true },
         });
+
+        // Las relaciones omitidas se mantienen, aun si se desactivaron después
+        // de la asignación. Solo las asignaciones nuevas deben estar activas.
+        if (data.marcaId !== undefined && data.marcaId !== actual.marca.id) {
+          const marca = await manager.findOne(Marca, {
+            where: { id: data.marcaId },
+            lock: { mode: 'pessimistic_read' },
+          });
+          if (!marca) throw new NotFoundException('Marca no encontrada');
+          if (!marca.activo)
+            throw new BadRequestException('La marca está inactiva');
+          actual.marca = marca;
+        }
+        if (data.categoriasIds !== undefined) {
+          const existentes = new Map(
+            actual.categorias.map((categoria) => [categoria.id, categoria]),
+          );
+          const nuevosIds = data.categoriasIds.filter(
+            (id) => !existentes.has(id),
+          );
+          const nuevasCategorias = nuevosIds.length
+            ? await manager.find(Categoria, {
+                where: { id: In(nuevosIds) },
+                lock: { mode: 'pessimistic_read' },
+              })
+            : [];
+          if (nuevasCategorias.length !== nuevosIds.length) {
+            throw new NotFoundException('Alguna categoría no existe');
+          }
+          if (nuevasCategorias.some((categoria) => !categoria.activo)) {
+            throw new BadRequestException('Alguna categoría está inactiva');
+          }
+          const seleccionadas = new Map([
+            ...existentes,
+            ...nuevasCategorias.map(
+              (categoria) => [categoria.id, categoria] as const,
+            ),
+          ]);
+          actual.categorias = data.categoriasIds.map((id) =>
+            seleccionadas.get(id)!,
+          );
+        }
 
         if (
           data.unidadBaseId !== undefined &&
@@ -143,7 +198,12 @@ export class UpdateProductHandler implements ICommandHandler<UpdateProductComman
 
         return manager.findOneOrFail(Producto, {
           where: { id },
-          relations: { unidadBase: true, imagenes: { imagen: true } },
+          relations: {
+            unidadBase: true,
+            marca: { imagen: true },
+            categorias: true,
+            imagenes: { imagen: true },
+          },
           order: { imagenes: { orden: 'ASC' } },
         });
       });

@@ -8,6 +8,8 @@ import { Producto } from '../../../entities/producto.entity.js';
 import { DetalleMovimiento } from '../../../entities/detalle-movimiento.entity.js';
 import { Existencia } from '../../../entities/existencia.entity.js';
 import { Unidad } from '../../../entities/unidad.entity.js';
+import { Marca } from '../../../entities/marca.entity.js';
+import { Categoria } from '../../../entities/categoria.entity.js';
 import { UpdateProductCommand } from './update-product.command.js';
 import { UpdateProductHandler } from './update-product.handler.js';
 
@@ -18,9 +20,9 @@ describe('UpdateProductHandler', () => {
       nombre: 'Martillo',
       descripcion: null,
       activo: true,
-      marca: { id: 'marca-1' },
+      marca: { id: 'marca-1', nombre: 'Bosch', activo: true, imagenId: null },
       marcaId: 'marca-1',
-      categorias: [{ id: 'categoria-1' }],
+      categorias: [{ id: 'categoria-1', nombre: 'Herramientas', activo: true }],
       unidadBase: { id: 'unidad-1' },
       imagenes: [],
     }) as Producto;
@@ -273,5 +275,171 @@ describe('UpdateProductHandler', () => {
     ).rejects.toThrow('Falló la base de datos');
     expect(storage.delete).toHaveBeenCalledWith('nueva.png');
     expect(storage.delete).not.toHaveBeenCalledWith('primera.png');
+  });
+
+  it('sustituye solo las relaciones enviadas y exige que las nuevas estén activas', async () => {
+    const { handler, manager, current } = setup();
+    const nuevaMarca = {
+      id: 'marca-2',
+      nombre: 'Makita',
+      activo: true,
+      imagenId: null,
+    };
+    const nuevaCategoria = {
+      id: 'categoria-2',
+      nombre: 'Eléctricas',
+      activo: true,
+    };
+    manager.findOne.mockImplementation(async (entity: unknown) => {
+      if (entity === Producto) return current;
+      if (entity === Marca) return nuevaMarca;
+    });
+    manager.find.mockImplementation(async (entity: unknown) =>
+      entity === Categoria ? [nuevaCategoria] : [],
+    );
+
+    const result = await handler.execute(
+      new UpdateProductCommand('producto-1', {
+        marcaId: 'marca-2',
+        categoriasIds: ['categoria-2', 'categoria-1'],
+      }),
+    );
+
+    expect(manager.findOne).toHaveBeenCalledWith(Marca, {
+      where: { id: 'marca-2' },
+      lock: { mode: 'pessimistic_read' },
+    });
+    expect(manager.find).toHaveBeenCalledWith(Categoria, {
+      where: {
+        id: expect.objectContaining({ _type: 'in', _value: ['categoria-2'] }),
+      },
+      lock: { mode: 'pessimistic_read' },
+    });
+    expect(result.marca).toBe(nuevaMarca);
+    expect(result.categorias).toEqual([
+      nuevaCategoria,
+      expect.objectContaining({ id: 'categoria-1' }),
+    ]);
+    expect(manager.save).toHaveBeenCalledWith(Producto, current);
+    expect(manager.findOneOrFail).toHaveBeenLastCalledWith(
+      Producto,
+      expect.objectContaining({
+        relations: {
+          unidadBase: true,
+          marca: { imagen: true },
+          categorias: true,
+          imagenes: { imagen: true },
+        },
+      }),
+    );
+  });
+
+  it('conserva relaciones inactivas omitidas al editar otros campos', async () => {
+    const { handler, manager, current } = setup();
+    current.marca.activo = false;
+    current.categorias[0].activo = false;
+    const marca = current.marca;
+    const categorias = current.categorias;
+
+    const result = await handler.execute(
+      new UpdateProductCommand('producto-1', { nombre: 'Martillo nuevo' }),
+    );
+
+    expect(result.nombre).toBe('Martillo nuevo');
+    expect(result.marca).toBe(marca);
+    expect(result.categorias).toBe(categorias);
+    expect(manager.findOne).not.toHaveBeenCalledWith(Marca, expect.anything());
+    expect(manager.find).not.toHaveBeenCalledWith(Categoria, expect.anything());
+  });
+
+  it('permite reenviar la misma marca y categorías ya asociadas aunque estén inactivas', async () => {
+    const { handler, manager, current } = setup();
+    current.marca.activo = false;
+    current.categorias[0].activo = false;
+
+    await handler.execute(
+      new UpdateProductCommand('producto-1', {
+        marcaId: 'marca-1',
+        categoriasIds: ['categoria-1'],
+      }),
+    );
+
+    expect(manager.findOne).not.toHaveBeenCalledWith(Marca, expect.anything());
+    expect(manager.find).not.toHaveBeenCalledWith(Categoria, expect.anything());
+    expect(manager.save).toHaveBeenCalledWith(Producto, current);
+  });
+
+  it.each([
+    { categoriasIds: [] },
+    { categoriasIds: ['categoria-1', 'categoria-1'] },
+  ])(
+    'rechaza conjuntos vacíos o duplicados sin iniciar la transacción',
+    async (data) => {
+      const { handler, manager } = setup();
+      await expect(
+        handler.execute(new UpdateProductCommand('producto-1', data)),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(manager.save).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { entity: Marca, value: null, exception: NotFoundException },
+    {
+      entity: Marca,
+      value: { id: 'marca-2', activo: false },
+      exception: BadRequestException,
+    },
+    { entity: Categoria, value: [], exception: NotFoundException },
+    {
+      entity: Categoria,
+      value: [{ id: 'categoria-2', activo: false }],
+      exception: BadRequestException,
+    },
+  ])(
+    'rechaza una relación nueva inválida sin guardar otros cambios: $entity.name',
+    async ({ entity, value, exception }) => {
+      const { handler, manager, current, storage } = setup();
+      manager.findOne.mockImplementation(async (requested: unknown) => {
+        if (requested === Producto) return current;
+        if (requested === Marca)
+          return entity === Marca ? value : { id: 'marca-2', activo: true };
+      });
+      manager.find.mockImplementation(async (requested: unknown) =>
+        requested === Categoria
+          ? entity === Categoria
+            ? value
+            : [{ id: 'categoria-2', activo: true }]
+          : [],
+      );
+
+      await expect(
+        handler.execute(
+          new UpdateProductCommand('producto-1', {
+            nombre: 'No guardar',
+            marcaId: 'marca-2',
+            categoriasIds: ['categoria-2'],
+          }),
+        ),
+      ).rejects.toBeInstanceOf(exception);
+      expect(manager.save).not.toHaveBeenCalled();
+      expect(storage.save).not.toHaveBeenCalled();
+      expect(current.nombre).toBe('Martillo');
+    },
+  );
+
+  it('no confirma un reemplazo si falla la escritura del producto', async () => {
+    const { handler, manager } = setup();
+    manager.find.mockImplementation(async (entity: unknown) =>
+      entity === Categoria ? [{ id: 'categoria-2', activo: true }] : [],
+    );
+    manager.save.mockRejectedValueOnce(new Error('falló escritura'));
+    await expect(
+      handler.execute(
+        new UpdateProductCommand('producto-1', {
+          categoriasIds: ['categoria-2'],
+        }),
+      ),
+    ).rejects.toThrow('falló escritura');
   });
 });

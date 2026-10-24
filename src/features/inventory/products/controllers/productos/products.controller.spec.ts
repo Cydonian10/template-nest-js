@@ -62,9 +62,20 @@ describe('ProductsController: unidad base', () => {
     nombre: 'Martillo',
     descripcion: null,
     activo: true,
+    marca: { id: 'marca-1', nombre: 'Bosch', activo: true, imagenId: null },
+    categorias: [{ id: 'categoria-1', nombre: 'Herramientas', activo: true }],
     unidadBase: { id: 'u1' },
     imagenes: [],
   };
+
+  it('leer el detalle y sus relaciones solo exige PRODUCTOS_LEER', () => {
+    expect(
+      Reflect.getMetadata(
+        REQUIRED_PERMISSIONS_KEY,
+        ProductsController.prototype.findById,
+      ),
+    ).toEqual([PERMISSION_CODES.PRODUCTS_READ]);
+  });
 
   it('devuelve la capacidad calculada al leer y actualizar el producto', async () => {
     const commands = { execute: vi.fn().mockResolvedValue(producto) };
@@ -81,7 +92,13 @@ describe('ProductsController: unidad base', () => {
     );
 
     await expect(controller.findById('p1')).resolves.toEqual(
-      expect.objectContaining({ puedeCambiarUnidadBase: false }),
+      expect.objectContaining({
+        puedeCambiarUnidadBase: false,
+        marca: { id: 'marca-1', nombre: 'Bosch', activo: true, imagenId: null },
+        categorias: [
+          { id: 'categoria-1', nombre: 'Herramientas', activo: true },
+        ],
+      }),
     );
     await expect(
       controller.update('p1', { nombre: 'Martillo' }),
@@ -112,9 +129,36 @@ describe('ProductsController: unidad base', () => {
         activo: true,
       }),
     ).resolves.toEqual(
-      expect.objectContaining({ puedeCambiarUnidadBase: true }),
+      expect.objectContaining({
+        puedeCambiarUnidadBase: true,
+        marca: { id: 'marca-1', nombre: 'Bosch', activo: true, imagenId: null },
+        categorias: [
+          { id: 'categoria-1', nombre: 'Herramientas', activo: true },
+        ],
+      }),
     );
     expect(queries.execute).not.toHaveBeenCalled();
+  });
+
+  it('el PATCH muestra el estado de catálogos ya inactivos', async () => {
+    const commands = {
+      execute: vi.fn().mockResolvedValue({
+        ...producto,
+        marca: { ...producto.marca, activo: false },
+        categorias: [{ ...producto.categorias[0], activo: false }],
+      }),
+    };
+    const queries = { execute: vi.fn().mockResolvedValue(false) };
+    const controller = new ProductsController(
+      commands as unknown as CommandBus,
+      queries as unknown as QueryBus,
+    );
+    await expect(
+      controller.update('p1', { nombre: 'Martillo nuevo' }),
+    ).resolves.toMatchObject({
+      marca: { id: 'marca-1', activo: false },
+      categorias: [{ id: 'categoria-1', activo: false }],
+    });
   });
 
   it('despacha el arreglo JSON de categorías recibido por multipart', async () => {

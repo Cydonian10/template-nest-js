@@ -17,7 +17,12 @@ describe('FindProductByIdHandler', () => {
     expect(findOne).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'producto-1' },
-        relations: { unidadBase: true, imagenes: { imagen: true } },
+        relations: {
+          unidadBase: true,
+          marca: { imagen: true },
+          categorias: true,
+          imagenes: { imagen: true },
+        },
       }),
     );
   });

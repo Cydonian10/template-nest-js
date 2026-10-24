@@ -140,6 +140,13 @@ export class ProductsController {
         nombre: { type: 'string' },
         descripcion: { type: 'string' },
         unidadBaseId: { type: 'string', format: 'uuid' },
+        marcaId: { type: 'string', format: 'uuid' },
+        categoriasIds: {
+          type: 'string',
+          description:
+            'Arreglo JSON no vacío de UUID únicos; omitir para conservar',
+          example: '["22222222-2222-4222-8222-222222222222"]',
+        },
         activo: { type: 'boolean' },
         imagenesConservarIds: {
           type: 'string',

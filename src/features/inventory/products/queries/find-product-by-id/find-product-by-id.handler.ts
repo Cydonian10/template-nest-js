@@ -15,7 +15,12 @@ export class FindProductByIdHandler implements IQueryHandler<FindProductByIdQuer
   async execute({ id }: FindProductByIdQuery): Promise<Producto> {
     const producto = await this.productos.findOne({
       where: { id },
-      relations: { unidadBase: true, imagenes: { imagen: true } },
+      relations: {
+        unidadBase: true,
+        marca: { imagen: true },
+        categorias: true,
+        imagenes: { imagen: true },
+      },
       order: { imagenes: { orden: 'ASC' } },
     });
     if (!producto) throw new ResourceNotFoundException('Producto', id);
