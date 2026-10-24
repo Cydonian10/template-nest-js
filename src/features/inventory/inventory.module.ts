@@ -71,6 +71,19 @@ import { MovimientosController } from './movimientos/controllers/movimientos.con
 import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
 import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
 import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/crear-movimiento.handler.js';
+import { CategoriasController } from './categorias/controllers/categorias.controller.js';
+import { ListarCategoriasHandler } from './categorias/queries/listar-categorias/listar-categorias.handler.js';
+import { ObtenerCategoriaHandler } from './categorias/queries/obtener-categoria/obtener-categoria.handler.js';
+import { CrearCategoriaHandler } from './categorias/commands/crear-categoria/crear-categoria.handler.js';
+import { EditarCategoriaHandler } from './categorias/commands/editar-categoria/editar-categoria.handler.js';
+import { CambiarEstadoCategoriaHandler } from './categorias/commands/cambiar-estado-categoria/cambiar-estado-categoria.handler.js';
+import { MarcasController } from './marcas/controllers/marcas.controller.js';
+import { ListarMarcasHandler } from './marcas/queries/listar-marcas/listar-marcas.handler.js';
+import { ObtenerMarcaHandler } from './marcas/queries/obtener-marca/obtener-marca.handler.js';
+import { LeerImagenMarcaHandler } from './marcas/queries/leer-imagen-marca/leer-imagen-marca.handler.js';
+import { CrearMarcaHandler } from './marcas/commands/crear-marca/crear-marca.handler.js';
+import { EditarMarcaHandler } from './marcas/commands/editar-marca/editar-marca.handler.js';
+import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marca/cambiar-estado-marca.handler.js';
 
 @Module({
   imports: [
@@ -104,6 +117,8 @@ import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/
     ComprasController,
     ExistenciasController,
     MovimientosController,
+    CategoriasController,
+    MarcasController,
   ],
   providers: [
     CreateProductHandler,
@@ -127,6 +142,17 @@ import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/
     ListarAlmacenesMovimientoHandler,
     BuscarVariantesMovimientoHandler,
     CrearMovimientoHandler,
+    ListarCategoriasHandler,
+    ObtenerCategoriaHandler,
+    CrearCategoriaHandler,
+    EditarCategoriaHandler,
+    CambiarEstadoCategoriaHandler,
+    ListarMarcasHandler,
+    ObtenerMarcaHandler,
+    LeerImagenMarcaHandler,
+    CrearMarcaHandler,
+    EditarMarcaHandler,
+    CambiarEstadoMarcaHandler,
     CreateUnidadHandle,
     FindAllUnidadesHandler,
     UpdateUnidadHandler,
