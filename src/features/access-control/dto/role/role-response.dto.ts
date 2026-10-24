@@ -22,7 +22,7 @@ export class RoleResponseDto {
       name: role.name,
       description: role.description,
       users: (role.userRoles ?? []).map((assignment) =>
-        UserRoleResponseDto.from(assignment, role.id),
+        UserRoleResponseDto.from(assignment, role.id, role.name),
       ),
       permissions: (role.rolePermissions ?? []).map((assignment) =>
         RolePermissionResponseDto.from(assignment, role.id),

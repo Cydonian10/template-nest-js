@@ -26,7 +26,11 @@ describe('creación y asignación de roles por sistema', () => {
   };
   const execute = vi.fn();
   const bus = { execute } as unknown as CommandBus;
-  const roles = new RolesController(bus, {} as QueryBus);
+  const roles = new RolesController(
+    bus,
+    {} as QueryBus,
+    { setContext: vi.fn() } as never,
+  );
   const systems = new SystemController(
     bus,
     {} as QueryBus,
@@ -72,24 +76,47 @@ describe('creación y asignación de roles por sistema', () => {
     expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'update')).toEqual([
       PERMISSION_CODES.ROLES_UPDATE,
     ]);
-    expect(roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'replacePermissions')).toEqual([
-      PERMISSION_CODES.ROLES_ASSIGN_PERMISSION,
-    ]);
+    expect(
+      roleMethodMetadata(REQUIRED_PERMISSIONS_KEY, 'replacePermissions'),
+    ).toEqual([PERMISSION_CODES.ROLES_ASSIGN_PERMISSION]);
   });
 
   it('reemplaza la lista completa de permisos con una sola operación protegida', async () => {
     const permissionId = '00000000-0000-4000-8000-000000000003';
     const data = { permissionIds: [permissionId] };
     expect(ReplaceRolePermissionsSchema.safeParse(data).success).toBe(true);
-    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: [] }).success).toBe(true);
-    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: [permissionId, permissionId] }).success).toBe(false);
-    expect(ReplaceRolePermissionsSchema.safeParse({ permissionIds: ['invalido'] }).success).toBe(false);
+    expect(
+      ReplaceRolePermissionsSchema.safeParse({ permissionIds: [] }).success,
+    ).toBe(true);
+    expect(
+      ReplaceRolePermissionsSchema.safeParse({
+        permissionIds: [permissionId, permissionId],
+      }).success,
+    ).toBe(false);
+    expect(
+      ReplaceRolePermissionsSchema.safeParse({ permissionIds: ['invalido'] })
+        .success,
+    ).toBe(false);
     execute.mockResolvedValue(data);
     await expect(roles.replacePermissions(roleId, data)).resolves.toEqual(data);
-    expect(execute).toHaveBeenCalledWith(new ReplaceRolePermissionsCommand(roleId, [permissionId]));
-    expect(roleMethodMetadata(PATH_METADATA, 'replacePermissions')).toBe(':id/permissions');
-    expect(Object.getOwnPropertyDescriptor(RolesController.prototype, 'assignPermission')).toBeUndefined();
-    expect(Object.getOwnPropertyDescriptor(RolesController.prototype, 'removePermission')).toBeUndefined();
+    expect(execute).toHaveBeenCalledWith(
+      new ReplaceRolePermissionsCommand(roleId, [permissionId]),
+    );
+    expect(roleMethodMetadata(PATH_METADATA, 'replacePermissions')).toBe(
+      ':id/permissions',
+    );
+    expect(
+      Object.getOwnPropertyDescriptor(
+        RolesController.prototype,
+        'assignPermission',
+      ),
+    ).toBeUndefined();
+    expect(
+      Object.getOwnPropertyDescriptor(
+        RolesController.prototype,
+        'removePermission',
+      ),
+    ).toBeUndefined();
   });
 
   it('crea roles dentro de systems con ROLES_CREATE y sin permisos automáticos', async () => {

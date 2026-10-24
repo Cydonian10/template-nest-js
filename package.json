@@ -28,7 +28,8 @@
     "migration:drop": "npm run build && node scripts/migration-drop.mjs",
     "migration:remove": "npm run build && node scripts/migration-remove.mjs",
     "migration:super-admin": "npm run build && node scripts/create-super-admin.mjs",
-    "migration:permissions": "npm run build && node scripts/seed-permissions.mjs"
+    "migration:permissions": "npm run build && node scripts/seed-permissions.mjs",
+    "data:reset-dev": "node scripts/reset-development-data.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

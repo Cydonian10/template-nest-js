@@ -72,6 +72,7 @@ export class ProductsController {
   }
 
   @Post()
+  @RequirePermissions(PERMISSION_CODES.PRODUCTS_UPDATE)
   @UseInterceptors(
     FilesInterceptor('imagenes', 8, { limits: { fileSize: 5 * 1024 * 1024 } }),
   )

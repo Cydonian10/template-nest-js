@@ -2,6 +2,7 @@ import { AppDataSource } from '../dist/database/data-source.js';
 import { Permission } from '../dist/features/access-control/entities/permission.entity.js';
 import { System } from '../dist/features/access-control/entities/system.entity.js';
 import { PERMISSION_DEFINITIONS } from '../dist/shared/authorization/permission-definitions.js';
+import { SYSTEM_DEFINITIONS } from '../dist/shared/authorization/system-definitions.js';
 
 /**
  * Inserta o actualiza los permisos definidos en el código, sin borrar permisos
@@ -24,10 +25,20 @@ async function main() {
             system = await manager.save(
               manager.create(System, {
                 code: definition.systemCode,
-                name: definition.systemCode,
-                description: 'Sistema de permisos',
+                ...SYSTEM_DEFINITIONS[definition.systemCode],
               }),
             );
+          }
+          // Actualiza solo la presentación de los sistemas conocidos, no sus accesos.
+          const presentation = SYSTEM_DEFINITIONS[definition.systemCode];
+          if (
+            presentation &&
+            (system.name !== presentation.name ||
+              system.description !== presentation.description)
+          ) {
+            system.name = presentation.name;
+            system.description = presentation.description;
+            await manager.save(system);
           }
           systems.set(definition.systemCode, system);
         }

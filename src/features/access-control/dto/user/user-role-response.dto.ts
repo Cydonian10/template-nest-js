@@ -20,12 +20,16 @@ export class UserRoleResponseDto {
 
   rol: string;
 
-  static from(assignment: UserRole, roleId?: string): UserRoleResponseDto {
+  static from(
+    assignment: UserRole,
+    roleId?: string,
+    roleName?: string,
+  ): UserRoleResponseDto {
     return {
       id: assignment.id,
       userId: assignment.user.id,
       roleId: roleId ?? assignment.role.id,
-      rol: assignment.role.name,
+      rol: roleName ?? assignment.role.name,
       validFrom: assignment.validFrom,
       validUntil: assignment.validUntil,
     };

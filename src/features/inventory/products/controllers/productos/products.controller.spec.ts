@@ -8,6 +8,14 @@ import { PuedeCambiarUnidadBaseQuery } from '../../queries/puede-cambiar-unidad-
 import { ProductsController } from './products.controller.js';
 
 describe('ProductsController: búsqueda', () => {
+  it('crear exige PRODUCTOS_EDITAR y no permite escribir con solo consulta', () => {
+    expect(
+      Reflect.getMetadata(
+        REQUIRED_PERMISSIONS_KEY,
+        ProductsController.prototype.create,
+      ),
+    ).toEqual([PERMISSION_CODES.PRODUCTS_UPDATE]);
+  });
   it('devuelve activos e inactivos con el total de todas las páginas', async () => {
     const execute = vi.fn().mockResolvedValue([
       [
