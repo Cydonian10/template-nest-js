@@ -77,6 +77,27 @@ Ejecuta `npm run migration:permissions` para registrar el catálogo de permisos 
 
 ### Reiniciar la base local
 
+**Antes de aplicar la migración de marcas y categorías a productos:** se requiere
+reiniciar **manualmente solo la base de desarrollo** para que `productos` esté vacía.
+Verifica que `.env` apunte a esa base, revisa su contenido y haz un respaldo si
+necesitas conservar inventario, variantes, movimientos o compras. El reinicio
+elimina esos datos y no debe realizarse en producción ni en una base compartida.
+La migración no borra registros: si encuentra productos, falla antes de crear las
+nuevas tablas o relaciones. La interfaz actual de alta de productos no envía aún
+marca ni categorías; hasta implementar la interfaz dependiente de esta API, no
+podrá crear productos.
+
+Las pruebas PostgreSQL de esta migración usan una conexión de pruebas separada,
+indicada expresamente mediante `TEST_DATABASE_URL` (con `uuid-ossp` disponible).
+Crean esquemas temporales dentro de transacciones que se revierten:
+
+```bash
+TEST_DATABASE_URL=postgres://usuario:clave@localhost:5432/base_de_pruebas npx vitest run src/database/migrations/1791690118255-marcas-categorias-productos.spec.ts
+```
+
+Sin esa variable se ejecuta solo la prueba unitaria y se omiten las pruebas
+PostgreSQL. No utilices la URL de producción para probar migraciones.
+
 Para borrar **todas las tablas y vistas** de la base configurada en `.env` (incluida la tabla de migraciones), sin eliminar el volumen de PostgreSQL ni los archivos fuente, ejecuta:
 
 ```bash

@@ -1,0 +1,130 @@
+import { DataSource } from 'typeorm';
+import type { QueryRunner } from 'typeorm';
+import { MarcasCategoriasProductos1791690118255 } from './1791690118255-marcas-categorias-productos.js';
+
+describe('MarcasCategoriasProductos1791690118255', () => {
+  it('rechaza productos preexistentes antes de cualquier cambio del esquema', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce([{ existen: true }]);
+    const runner = { query } as unknown as QueryRunner;
+
+    await expect(
+      new MarcasCategoriasProductos1791690118255().up(runner),
+    ).rejects.toThrow('requiere productos vacíos');
+    expect(query.mock.calls.map(([sql]: [string]) => sql)).toEqual([
+      'LOCK TABLE "productos" IN ACCESS EXCLUSIVE MODE',
+      'SELECT EXISTS (SELECT 1 FROM "productos") AS "existen"',
+    ]);
+  });
+});
+
+// Se ejecuta solo con una base PostgreSQL de pruebas explícita. Cada caso
+// crea su propio esquema y revierte toda la transacción; nunca toca datos reales.
+describe.skipIf(!process.env.TEST_DATABASE_URL)(
+  'migración de marcas y categorías en PostgreSQL',
+  () => {
+    let dataSource: DataSource;
+
+    beforeAll(async () => {
+      dataSource = new DataSource({
+        type: 'postgres',
+        url: process.env.TEST_DATABASE_URL,
+      });
+      await dataSource.initialize();
+    });
+
+    afterAll(async () => {
+      await dataSource?.destroy();
+    });
+
+    async function withTestSchema(
+      test: (runner: QueryRunner) => Promise<void>,
+    ): Promise<void> {
+      const runner = dataSource.createQueryRunner();
+      await runner.connect();
+      await runner.startTransaction();
+      try {
+        const schema = `test_catalogos_${crypto.randomUUID().replaceAll('-', '')}`;
+        await runner.query(`CREATE SCHEMA "${schema}"`);
+        await runner.query(`SET LOCAL search_path TO "${schema}", public`);
+        await runner.query(`CREATE TABLE "productos" ("id" uuid PRIMARY KEY)`);
+        await runner.query(`CREATE TABLE "imagenes" ("id" uuid PRIMARY KEY)`);
+        await runner.query(
+          `CREATE TABLE "variantes_producto" ("id" uuid PRIMARY KEY)`,
+        );
+        await runner.query(
+          `CREATE TABLE "movimientos_inventario" ("id" uuid PRIMARY KEY)`,
+        );
+        await runner.query(`CREATE TABLE "compras" ("id" uuid PRIMARY KEY)`);
+        await test(runner);
+      } finally {
+        await runner.rollbackTransaction();
+        await runner.release();
+      }
+    }
+
+    it('falla sin borrar productos ni registros relacionados', async () => {
+      await withTestSchema(async (runner) => {
+        const id = '11111111-1111-4111-8111-111111111111';
+        for (const table of [
+          'productos',
+          'variantes_producto',
+          'movimientos_inventario',
+          'compras',
+        ]) {
+          await runner.query(`INSERT INTO "${table}" ("id") VALUES ($1)`, [id]);
+        }
+
+        await expect(
+          new MarcasCategoriasProductos1791690118255().up(runner),
+        ).rejects.toThrow('requiere productos vacíos');
+
+        for (const table of [
+          'productos',
+          'variantes_producto',
+          'movimientos_inventario',
+          'compras',
+        ]) {
+          expect(await runner.query(`SELECT "id" FROM "${table}"`)).toEqual([
+            { id },
+          ]);
+        }
+        expect(
+          await runner.query(
+            `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'marcas') AS "existe"`,
+          ),
+        ).toEqual([{ existe: false }]);
+      });
+    });
+
+    it('crea las tablas y relaciones con la base de productos vacía', async () => {
+      await withTestSchema(async (runner) => {
+        const migration = new MarcasCategoriasProductos1791690118255();
+        await migration.up(runner);
+
+        for (const table of ['marcas', 'categorias', 'productos_categorias']) {
+          expect(
+            await runner.query(
+              `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1) AS "existe"`,
+              [table],
+            ),
+          ).toEqual([{ existe: true }]);
+        }
+        expect(
+          await runner.query(
+            `SELECT is_nullable FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'productos' AND column_name = 'marca_id'`,
+          ),
+        ).toEqual([{ is_nullable: 'NO' }]);
+
+        await migration.down(runner);
+        expect(
+          await runner.query(
+            `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'marcas') AS "existe"`,
+          ),
+        ).toEqual([{ existe: false }]);
+      });
+    });
+  },
+);
