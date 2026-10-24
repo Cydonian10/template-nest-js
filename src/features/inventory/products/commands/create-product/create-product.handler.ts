@@ -8,6 +8,9 @@ import { Unidad } from '../../../entities/unidad.entity.js';
 import { Imagen } from '../../../../images/entities/imagen.entity.js';
 import { ProductoImagen } from '../../../../images/entities/producto-imagen.entity.js';
 import { prepareImage } from '../../../../images/utils/prepare-image.js';
+import { In } from 'typeorm';
+import { Marca } from '../../../entities/marca.entity.js';
+import { Categoria } from '../../../entities/categoria.entity.js';
 
 @CommandHandler(CreateProductCommand)
 export class CreateProductHandler implements ICommandHandler<CreateProductCommand> {
@@ -20,6 +23,19 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
 
   async execute(command: CreateProductCommand): Promise<Producto> {
     const { imagenes = [], ...productoData } = command.data;
+    if (!productoData.marcaId) {
+      throw new BadRequestException('La marca es obligatoria');
+    }
+    if (
+      !Array.isArray(productoData.categoriasIds) ||
+      !productoData.categoriasIds.length ||
+      new Set(productoData.categoriasIds).size !==
+        productoData.categoriasIds.length
+    ) {
+      throw new BadRequestException(
+        'Debe indicar categorías únicas y no vacías',
+      );
+    }
     if (imagenes.length > 8) {
       throw new BadRequestException(
         'Un producto puede tener como máximo 8 imágenes',
@@ -37,11 +53,34 @@ export class CreateProductHandler implements ICommandHandler<CreateProductComman
           throw new NotFoundException('Unidad base no encontrada');
         }
 
+        // Los bloqueos impiden que una desactivación cambie el estado entre
+        // esta comprobación y la confirmación del producto.
+        const marca = await manager.findOne(Marca, {
+          where: { id: productoData.marcaId },
+          lock: { mode: 'pessimistic_read' },
+        });
+        if (!marca) throw new NotFoundException('Marca no encontrada');
+        if (!marca.activo)
+          throw new BadRequestException('La marca está inactiva');
+
+        const categorias = await manager.find(Categoria, {
+          where: { id: In(productoData.categoriasIds) },
+          lock: { mode: 'pessimistic_read' },
+        });
+        if (categorias.length !== productoData.categoriasIds.length) {
+          throw new NotFoundException('Alguna categoría no existe');
+        }
+        if (categorias.some((categoria) => !categoria.activo)) {
+          throw new BadRequestException('Alguna categoría está inactiva');
+        }
+
         const producto = manager.create(Producto, {
           nombre: productoData.nombre,
           descripcion: productoData.descripcion ?? null,
           activo: productoData.activo ?? true,
           unidadBase,
+          marca,
+          categorias,
         });
         await manager.save(Producto, producto);
 

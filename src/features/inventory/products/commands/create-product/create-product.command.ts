@@ -6,6 +6,8 @@ export class CreateProductCommand {
       nombre: string;
       descripcion?: string | null;
       unidadBaseId: string;
+      marcaId: string;
+      categoriasIds: string[];
       activo?: boolean;
       imagenes?: UploadedImage[];
     },

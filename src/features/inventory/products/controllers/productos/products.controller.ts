@@ -78,6 +78,28 @@ export class ProductsController {
   )
   @ApiOperation({ summary: 'Crear un producto con imágenes opcionales' })
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['nombre', 'unidadBaseId', 'marcaId', 'categoriasIds'],
+      properties: {
+        nombre: { type: 'string' },
+        descripcion: { type: 'string' },
+        unidadBaseId: { type: 'string', format: 'uuid' },
+        marcaId: { type: 'string', format: 'uuid' },
+        categoriasIds: {
+          type: 'string',
+          description: 'Arreglo JSON no vacío de UUID únicos',
+          example: '["22222222-2222-4222-8222-222222222222"]',
+        },
+        activo: { type: 'boolean' },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
   @ApiCreatedResponse({ type: ProductResponseDto })
   async create(
     @Body({ schema: CreateProductSchema }) dto: CreateProductDto,

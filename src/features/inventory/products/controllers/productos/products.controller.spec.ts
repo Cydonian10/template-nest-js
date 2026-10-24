@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { REQUIRED_PERMISSIONS_KEY } from '../../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import { CreateProductCommand } from '../../commands/create-product/create-product.command.js';
 import { BuscarProductosSchema } from '../../dto/buscar-productos.dto.js';
+import { CreateProductSchema } from '../../dto/create-product.dto.js';
 import { BuscarProductosQuery } from '../../queries/buscar-productos/buscar-productos.query.js';
 import { PuedeCambiarUnidadBaseQuery } from '../../queries/puede-cambiar-unidad-base/puede-cambiar-unidad-base.query.js';
 import { ProductsController } from './products.controller.js';
@@ -105,11 +107,31 @@ describe('ProductsController: unidad base', () => {
         nombre: 'Martillo',
         descripcion: '',
         unidadBaseId: 'u1',
+        marcaId: '11111111-1111-4111-8111-111111111111',
+        categoriasIds: ['22222222-2222-4222-8222-222222222222'],
         activo: true,
       }),
     ).resolves.toEqual(
       expect.objectContaining({ puedeCambiarUnidadBase: true }),
     );
     expect(queries.execute).not.toHaveBeenCalled();
+  });
+
+  it('despacha el arreglo JSON de categorías recibido por multipart', async () => {
+    const commands = { execute: vi.fn().mockResolvedValue(producto) };
+    const controller = new ProductsController(
+      commands as unknown as CommandBus,
+      {} as QueryBus,
+    );
+    const parsed = CreateProductSchema.parse({
+      nombre: 'Martillo',
+      unidadBaseId: '11111111-1111-4111-8111-111111111111',
+      marcaId: '22222222-2222-4222-8222-222222222222',
+      categoriasIds: '["33333333-3333-4333-8333-333333333333"]',
+    });
+    await controller.create(parsed);
+    expect(commands.execute).toHaveBeenCalledWith(
+      new CreateProductCommand({ ...parsed, imagenes: [] }),
+    );
   });
 });
