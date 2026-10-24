@@ -10,9 +10,34 @@ import { UserRole } from '../../features/access-control/entities/user_roles.enti
 import { PERMISSION_CODES } from '../../shared/authorization/permission-codes.js';
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
 import { SYSTEM_CODES } from '../../shared/authorization/system-codes.js';
+import {
+  REQUIRED_PERMISSION_SYSTEM_KEY,
+  REQUIRED_PERMISSIONS_KEY,
+  RequirePermissionsInSystem,
+} from '../decorators/require-permissions.decorator.js';
 import { PermissionsGuard } from './permissions.guard.js';
 
 describe('PermissionsGuard', () => {
+  it('el decorador guarda el código y el sistema requeridos para futuros catálogos', () => {
+    class Catalogo {
+      @RequirePermissionsInSystem(
+        SYSTEM_CODES.INVENTARIO,
+        PERMISSION_CODES.PRODUCTS_READ,
+      )
+      listar() {}
+    }
+
+    expect(
+      Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, Catalogo.prototype.listar),
+    ).toEqual([PERMISSION_CODES.PRODUCTS_READ]);
+    expect(
+      Reflect.getMetadata(
+        REQUIRED_PERMISSION_SYSTEM_KEY,
+        Catalogo.prototype.listar,
+      ),
+    ).toBe(SYSTEM_CODES.INVENTARIO);
+  });
+
   const getAllAndOverride = vi.fn();
   const getRawMany = vi.fn();
   const queryBuilder = {
@@ -161,6 +186,64 @@ describe('PermissionsGuard', () => {
     await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
       true,
     );
+  });
+
+  it('reutiliza PRODUCTOS_LEER y PRODUCTOS_EDITAR de INVENTARIO sin concederlos desde otro sistema', async () => {
+    const lectura = PERMISSION_CODES.PRODUCTS_READ;
+    const escritura = PERMISSION_CODES.PRODUCTS_UPDATE;
+
+    for (const requerido of [lectura, escritura]) {
+      getAllAndOverride.mockImplementation((key: string) =>
+        key === 'requiredPermissions'
+          ? [requerido]
+          : key === 'requiredPermissionSystem'
+            ? SYSTEM_CODES.INVENTARIO
+            : false,
+      );
+
+      await expect(guard.canActivate(context())).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+
+      getRawMany.mockResolvedValue([
+        {
+          roleCode: 'OPERADOR',
+          code: requerido,
+          systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+        },
+      ]);
+      await expect(
+        guard.canActivate(context({ id: 'user-1' })),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(queryBuilder.leftJoin).toHaveBeenCalledWith(
+        'permission.system',
+        'system',
+        'system.active = true AND system.code IN (:...systemCodes)',
+        { systemCodes: [SYSTEM_CODES.INVENTARIO] },
+      );
+
+      getRawMany.mockResolvedValue([
+        {
+          roleCode: 'OPERADOR',
+          code: requerido === lectura ? escritura : lectura,
+          systemCode: SYSTEM_CODES.INVENTARIO,
+        },
+      ]);
+      await expect(
+        guard.canActivate(context({ id: 'user-1' })),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      getRawMany.mockResolvedValue([
+        {
+          roleCode: 'OPERADOR',
+          code: requerido,
+          systemCode: SYSTEM_CODES.INVENTARIO,
+        },
+      ]);
+      await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
+        true,
+      );
+    }
   });
 
   it('permite consultar existencias sin ALMACENES_LEER y rechaza un permiso de otro sistema', async () => {

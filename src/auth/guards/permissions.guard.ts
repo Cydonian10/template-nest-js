@@ -13,7 +13,10 @@ import type { Repository } from 'typeorm';
 import { UserRole } from '../../features/access-control/entities/user_roles.entity.js';
 import { ROLE_CODES } from '../../shared/authorization/role-codes.js';
 import { PERMISSION_DEFINITIONS } from '../../shared/authorization/permission-definitions.js';
-import { REQUIRED_PERMISSIONS_KEY } from '../decorators/require-permissions.decorator.js';
+import {
+  REQUIRED_PERMISSIONS_KEY,
+  REQUIRED_PERMISSION_SYSTEM_KEY,
+} from '../decorators/require-permissions.decorator.js';
 import { PERMISSION_BY_BODY_TYPE_KEY } from '../decorators/require-permission-by-body-type.decorator.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import type { AuthenticatedUser } from '../interfaces/authenticated-user.interface.js';
@@ -37,6 +40,10 @@ export class PermissionsGuard implements CanActivate {
         REQUIRED_PERMISSIONS_KEY,
         targets,
       ) ?? [];
+    const requiredSystem = this.reflector.getAllAndOverride<string>(
+      REQUIRED_PERMISSION_SYSTEM_KEY,
+      targets,
+    );
     const byType = this.reflector.getAllAndOverride<Record<string, string>>(
       PERMISSION_BY_BODY_TYPE_KEY,
       targets,
@@ -57,8 +64,10 @@ export class PermissionsGuard implements CanActivate {
       throw new BadRequestException('Tipo de operación no válido');
     const permissions = selected ? [...required, selected] : required;
 
-    const expected = PERMISSION_DEFINITIONS.filter(({ code }) =>
-      permissions.includes(code),
+    const expected = PERMISSION_DEFINITIONS.filter(
+      ({ code, systemCode }) =>
+        permissions.includes(code) &&
+        (!requiredSystem || systemCode === requiredSystem),
     );
     const systemCodes = [
       ...new Set(expected.map(({ systemCode }) => systemCode)),

@@ -57,6 +57,24 @@ describe('PERMISSION_DEFINITIONS', () => {
     );
   });
 
+  it('reutiliza los dos permisos de productos para marcas y categorías sin crear permisos nuevos', () => {
+    expect(
+      PERMISSION_DEFINITIONS.filter(
+        ({ systemCode, resourceCode }) =>
+          systemCode === SYSTEM_CODES.INVENTARIO &&
+          resourceCode === 'PRODUCTOS',
+      ).map(({ code }) => code),
+    ).toEqual([
+      PERMISSION_CODES.PRODUCTS_READ,
+      PERMISSION_CODES.PRODUCTS_UPDATE,
+    ]);
+    expect(
+      PERMISSION_DEFINITIONS.some(({ resourceCode }) =>
+        ['MARCAS', 'CATEGORIAS'].includes(resourceCode),
+      ),
+    ).toBe(false);
+  });
+
   it('registra permisos de movimientos por lectura y tipo sin asignarlos a roles', () => {
     expect(PERMISSION_DEFINITIONS).toEqual(
       expect.arrayContaining([
