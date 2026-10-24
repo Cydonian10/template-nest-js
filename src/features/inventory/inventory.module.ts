@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Producto } from './entities/producto.entity.js';
+import { Marca } from './entities/marca.entity.js';
+import { Categoria } from './entities/categoria.entity.js';
 import { ImageStorage } from '../images/storage/image-storage.js';
 import { LocalImageStorage } from '../images/storage/local-image-storage.js';
 import { UnitOfWork } from '../../shared/database/unit-of-work.js';
@@ -74,6 +76,8 @@ import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/
   imports: [
     TypeOrmModule.forFeature([
       Producto,
+      Marca,
+      Categoria,
       Unidad,
       UnidadProducto,
       Atributo,

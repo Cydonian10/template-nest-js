@@ -18,6 +18,9 @@ describe('UpdateProductHandler', () => {
       nombre: 'Martillo',
       descripcion: null,
       activo: true,
+      marca: { id: 'marca-1' },
+      marcaId: 'marca-1',
+      categorias: [{ id: 'categoria-1' }],
       unidadBase: { id: 'unidad-1' },
       imagenes: [],
     }) as Producto;
