@@ -19,6 +19,7 @@ describe('ListarVariantesHandler', () => {
   });
 
   it('consulta solo las variantes de ese producto y expone valores e imágenes', async () => {
+    const fechaSubida = new Date('2026-10-24T14:32:47.000Z');
     const products = { existsBy: vi.fn().mockResolvedValue(true) };
     const variants = {
       find: vi.fn().mockResolvedValue([
@@ -30,7 +31,18 @@ describe('ListarVariantesHandler', () => {
           codigoBarras: null,
           activo: true,
           valores: [{ atributoId: 'a1', valor: 'Negro' }],
-          imagenes: [],
+          imagenes: [
+            {
+              id: 'asociacion-1',
+              orden: 0,
+              esPrincipal: true,
+              imagen: {
+                id: 'imagen-1',
+                tipoMime: 'image/jpeg',
+                fechaSubida,
+              },
+            },
+          ],
         },
       ]),
     };
@@ -47,13 +59,22 @@ describe('ListarVariantesHandler', () => {
         codigoBarras: null,
         activo: true,
         valores: [{ atributoId: 'a1', valor: 'Negro' }],
-        imagenes: [],
+        imagenes: [
+          {
+            id: 'asociacion-1',
+            imagenId: 'imagen-1',
+            tipoMime: 'image/jpeg',
+            orden: 0,
+            esPrincipal: true,
+            fechaSubida,
+          },
+        ],
       },
     ]);
     expect(variants.find).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { producto: { id: 'p1' } },
-        relations: { producto: true, valores: true, imagenes: true },
+        relations: { producto: true, valores: true, imagenes: { imagen: true } },
       }),
     );
   });

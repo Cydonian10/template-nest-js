@@ -24,7 +24,7 @@ export class ListarVariantesHandler implements IQueryHandler<ListarVariantesQuer
     }
     const variantes = await this.variantes.find({
       where: { producto: { id: productoId } },
-      relations: { producto: true, valores: true, imagenes: true },
+      relations: { producto: true, valores: true, imagenes: { imagen: true } },
       order: { sku: 'ASC' },
     });
     return variantes.map((variante) => VarianteResponseDto.from(variante));
