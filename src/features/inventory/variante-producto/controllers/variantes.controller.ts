@@ -79,28 +79,6 @@ export class VariantesController {
     FilesInterceptor('imagenes', 10, { limits: { fileSize: 5 * 1024 * 1024 } }),
   )
   @ApiConsumes('application/json', 'multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      minProperties: 1,
-      additionalProperties: false,
-      properties: {
-        precio: { type: 'string', example: '24.50' },
-        codigoBarras: { type: 'string', nullable: true },
-        activo: { type: 'boolean' },
-        imagenesConservarIds: {
-          type: 'string',
-          description:
-            'JSON de IDs de asociaciones propias a conservar; omitir para mantenerlas',
-          example: '[]',
-        },
-        imagenes: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-        },
-      },
-    },
-  })
   @ApiOkResponse({ type: VarianteResponseDto })
   async update(
     @Param('productoId', new ParseUUIDPipe()) productoId: string,

@@ -33,14 +33,24 @@ describe('UpdateVarianteSchema', () => {
     expect(UpdateVarianteSchema.parse({})).toEqual({});
   });
 
-  it('rechaza precios inválidos, IDs incorrectos y edición de SKU/atributos', () => {
+  it('acepta valores completos como JSON o lista multipart y normaliza espacios', () => {
+    const atributoId = '3ef90b51-24bf-45da-8a2a-4be5a424e40e';
+    const valores = [{ atributoId, valor: 'Azul' }];
+    expect(UpdateVarianteSchema.parse({ valores })).toEqual({ valores });
+    expect(UpdateVarianteSchema.parse({ valores: JSON.stringify([{ atributoId, valor: ' Azul ' }]) }))
+      .toEqual({ valores });
+  });
+
+  it('rechaza precios inválidos, valores inválidos y edición de SKU', () => {
     for (const invalid of [
       { precio: '-1' },
       { precio: '1.999' },
       { precio: 20 },
       { activo: 'yes' },
       { sku: 'otro' },
-      { valores: [] },
+      { valores: '[mal JSON' },
+      { valores: [{ atributoId: 'no-uuid', valor: 'Azul' }] },
+      { valores: [{ atributoId: '3ef90b51-24bf-45da-8a2a-4be5a424e40e', valor: ' ' }] },
       { imagenes: ['archivo'] },
       { imagenesConservarIds: ['no-uuid'] },
       { imagenesConservarIds: '[mal JSON' },

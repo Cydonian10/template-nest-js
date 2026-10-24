@@ -8,6 +8,8 @@ import type { UnitOfWork } from '../../../../../shared/database/unit-of-work.js'
 import { Imagen } from '../../../../images/entities/imagen.entity.js';
 import { ProductoImagen } from '../../../../images/entities/producto-imagen.entity.js';
 import { VarianteImagen } from '../../../../images/entities/variante-imagen.entity.js';
+import { AtributoProducto } from '../../../entities/atributo-producto.entity.js';
+import { ValorVariante } from '../../../entities/valor-variante.entity.js';
 import type { ImageStorage } from '../../../../images/storage/image-storage.js';
 import type { UploadedImage } from '../../../../images/images.service.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
@@ -46,7 +48,15 @@ describe('ActualizarVarianteProductoHandler', () => {
     const manager = {
       findOne: vi.fn().mockResolvedValue(variante),
       exists: vi.fn().mockResolvedValue(true),
-      find: vi.fn().mockResolvedValue(existing),
+      find: vi
+        .fn()
+        .mockImplementation(async (entity: unknown) =>
+          entity === AtributoProducto
+            ? [{ atributoId: 'a1' }]
+            : entity === ValorVariante
+              ? [{ varianteId: 'v1', atributoId: 'a1', valor: 'Negro' }]
+              : existing,
+        ),
       save: vi
         .fn()
         .mockImplementation(async (entity: unknown, item: unknown) =>
@@ -136,6 +146,51 @@ describe('ActualizarVarianteProductoHandler', () => {
     expect(storage.save).not.toHaveBeenCalled();
   });
 
+  it('actualiza los valores asignados conservando el SKU y permite guardar campos y fotos a la vez', async () => {
+    const { variante, manager, handler } = setup();
+    await handler.execute(
+      new ActualizarVarianteProducto('p1', 'v1', {
+        valores: [{ atributoId: 'a1', valor: 'Azul' }],
+        precio: '22.50',
+        imagenesConservarIds: [],
+      }),
+    );
+
+    expect(manager.update).toHaveBeenCalledWith(
+      ValorVariante,
+      { varianteId: 'v1', atributoId: 'a1' },
+      { valor: 'Azul' },
+    );
+    expect(variante.sku).toBe('CAM-NEG-M');
+    expect(variante.precio).toBe('22.50');
+    expect(manager.findOneOrFail).toHaveBeenCalledWith(
+      VarianteProducto,
+      expect.objectContaining({
+        relations: expect.objectContaining({ valores: true }),
+      }),
+    );
+  });
+
+  it('rechaza valores incompletos, duplicados o ajenos al producto antes de escribir', async () => {
+    for (const valores of [
+      [],
+      [{ atributoId: 'a2', valor: 'Azul' }],
+      [
+        { atributoId: 'a1', valor: 'Azul' },
+        { atributoId: 'a1', valor: 'Rojo' },
+      ],
+    ]) {
+      const { handler, manager } = setup();
+      await expect(
+        handler.execute(
+          new ActualizarVarianteProducto('p1', 'v1', { valores }),
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(manager.update).not.toHaveBeenCalled();
+      expect(manager.save).not.toHaveBeenCalled();
+    }
+  });
+
   it('desactiva una variante con stock sin escribir existencias ni movimientos', async () => {
     const { handler, manager, variante } = setup();
     await handler.execute(
@@ -178,7 +233,11 @@ describe('ActualizarVarianteProductoHandler', () => {
   it('devuelve 409 al duplicar un código de barras', async () => {
     const { manager, handler } = setup();
     manager.save.mockRejectedValueOnce(
-      new QueryFailedError('UPDATE', [], { code: '23505' }),
+      new QueryFailedError(
+        'UPDATE',
+        [],
+        Object.assign(new Error('duplicate key'), { code: '23505' }),
+      ),
     );
 
     await expect(

@@ -8,6 +8,8 @@ import { ProductoImagen } from '../../../../images/entities/producto-imagen.enti
 import { VarianteImagen } from '../../../../images/entities/variante-imagen.entity.js';
 import { ImageStorage } from '../../../../images/storage/image-storage.js';
 import { prepareImage } from '../../../../images/utils/prepare-image.js';
+import { AtributoProducto } from '../../../entities/atributo-producto.entity.js';
+import { ValorVariante } from '../../../entities/valor-variante.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import { ActualizarVarianteProducto } from './actualizar-variante-producto.command.js';
 
@@ -47,6 +49,32 @@ export class ActualizarVarianteProductoHandler implements ICommandHandler<Actual
           }))
         )
           throw new ResourceNotFoundException('Variante', varianteId);
+
+        if (data.valores !== undefined) {
+          const asignaciones = await manager.find(AtributoProducto, {
+            where: { productoId },
+            select: { atributoId: true },
+          });
+          const permitidos = new Set(asignaciones.map(({ atributoId }) => atributoId));
+          const recibidos = new Set(data.valores.map(({ atributoId }) => atributoId));
+          const existentes = await manager.find(ValorVariante, {
+            where: { varianteId },
+          });
+          if (
+            recibidos.size !== data.valores.length ||
+            recibidos.size !== permitidos.size ||
+            [...recibidos].some((id) => !permitidos.has(id)) ||
+            existentes.length !== permitidos.size ||
+            existentes.some(({ atributoId }) => !permitidos.has(atributoId))
+          ) {
+            throw new BadRequestException(
+              'Los valores deben coincidir con los atributos del producto, sin repetirlos',
+            );
+          }
+          for (const { atributoId, valor } of data.valores) {
+            await manager.update(ValorVariante, { varianteId, atributoId }, { valor });
+          }
+        }
 
         const galleryChanged =
           data.imagenesConservarIds !== undefined || nuevas.length > 0;

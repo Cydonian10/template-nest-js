@@ -9,6 +9,18 @@ const ImagenesConservarIdsSchema = z.preprocess((value) => {
   }
 }, z.array(z.uuid()).max(10));
 
+const ValoresSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return value;
+  }
+}, z.array(z.strictObject({
+  atributoId: z.uuid(),
+  valor: z.string().trim().min(1).max(150),
+}))).optional();
+
 export const UpdateVarianteSchema = z.strictObject({
   precio: z
     .string()
@@ -26,6 +38,7 @@ export const UpdateVarianteSchema = z.strictObject({
       z.boolean(),
     )
     .optional(),
+  valores: ValoresSchema,
   imagenesConservarIds: ImagenesConservarIdsSchema.optional(),
 });
 
