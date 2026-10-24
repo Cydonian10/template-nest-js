@@ -197,5 +197,42 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await runner.query('ROLLBACK TO SAVEPOINT comprobar_duplicado');
       });
     });
+
+    it('conserva la asociación del producto al desactivar una categoría', async () => {
+      await withTestSchema(async (runner) => {
+        await new MarcasCategoriasProductos1791690118255().up(runner);
+        const marcaId = '11111111-1111-4111-8111-111111111111';
+        const categoriaId = '22222222-2222-4222-8222-222222222222';
+        const productoId = '33333333-3333-4333-8333-333333333333';
+        await runner.query(
+          `INSERT INTO "marcas" ("id", "nombre") VALUES ($1, 'Bosch')`,
+          [marcaId],
+        );
+        await runner.query(
+          `INSERT INTO "categorias" ("id", "nombre") VALUES ($1, 'Taladros')`,
+          [categoriaId],
+        );
+        await runner.query(
+          `INSERT INTO "productos" ("id", "marca_id") VALUES ($1, $2)`,
+          [productoId, marcaId],
+        );
+        await runner.query(
+          `INSERT INTO "productos_categorias" ("producto_id", "categoria_id") VALUES ($1, $2)`,
+          [productoId, categoriaId],
+        );
+
+        await runner.query(
+          `UPDATE "categorias" SET "activo" = false WHERE "id" = $1`,
+          [categoriaId],
+        );
+
+        expect(
+          await runner.query(
+            `SELECT pc."producto_id" AS "productoId", c."activo" FROM "productos_categorias" pc JOIN "categorias" c ON c."id" = pc."categoria_id" WHERE pc."categoria_id" = $1`,
+            [categoriaId],
+          ),
+        ).toEqual([{ productoId, activo: false }]);
+      });
+    });
   },
 );
