@@ -8,8 +8,10 @@ import { PERMISSION_CODES } from '../../../../../shared/authorization/permission
 import { SYSTEM_CODES } from '../../../../../shared/authorization/system-codes.js';
 import { CrearProveedorCommand } from '../../commands/crear-proveedor/crear-proveedor.command.js';
 import { CrearProveedorSchema } from '../../dto/crear-proveedor.dto.js';
+import { FilterComprasProveedorSchema } from '../../dto/informe-compras-proveedor.dto.js';
 import { FindProveedoresQuery } from '../../queries/find-proveedores/find-proveedores.query.js';
 import { FindTodosProveedoresQuery } from '../../queries/find-todos-proveedores/find-todos-proveedores.query.js';
+import { ListarComprasProveedorQuery } from '../../queries/listar-compras-proveedor/listar-compras-proveedor.query.js';
 import { ProveedoresController } from './proveedores.controller.js';
 
 describe('ProveedoresController', () => {
@@ -83,6 +85,36 @@ describe('ProveedoresController', () => {
     )?.value;
     expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
       PERMISSION_CODES.PROVEEDORES_CREATE,
+    ]);
+    expect(Reflect.getMetadata(REQUIRED_PERMISSION_SYSTEM_KEY, method)).toBe(
+      SYSTEM_CODES.INVENTARIO,
+    );
+  });
+
+  it('despacha el informe con filtros y exige ambos permisos de Inventario', async () => {
+    const informe = {
+      proveedor: { id: 'p1', nombre: 'Acme', documento: null, contacto: null },
+      resumen: { cantidadCompras: 0, totalDocumento: '0' },
+      data: [],
+      meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    };
+    const execute = vi.fn().mockResolvedValue(informe);
+    const controller = new ProveedoresController(
+      { execute } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
+    const filtro = FilterComprasProveedorSchema.parse({ desde: '2026-10-01' });
+
+    await expect(controller.listCompras('p1', filtro)).resolves.toEqual(
+      informe,
+    );
+    expect(execute).toHaveBeenCalledWith(
+      new ListarComprasProveedorQuery('p1', filtro),
+    );
+    const method = ProveedoresController.prototype.listCompras;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+      PERMISSION_CODES.PROVEEDORES_READ,
+      PERMISSION_CODES.COMPRAS_READ,
     ]);
     expect(Reflect.getMetadata(REQUIRED_PERMISSION_SYSTEM_KEY, method)).toBe(
       SYSTEM_CODES.INVENTARIO,

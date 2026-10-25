@@ -323,6 +323,62 @@ describe('PermissionsGuard', () => {
     }
   });
 
+  it('exige ambos permisos de Inventario para el informe del proveedor', async () => {
+    getAllAndOverride.mockImplementation((key: string) => {
+      if (key === REQUIRED_PERMISSIONS_KEY) {
+        return [
+          PERMISSION_CODES.PROVEEDORES_READ,
+          PERMISSION_CODES.COMPRAS_READ,
+        ];
+      }
+      if (key === REQUIRED_PERMISSION_SYSTEM_KEY)
+        return SYSTEM_CODES.INVENTARIO;
+      return false;
+    });
+    for (const code of [
+      PERMISSION_CODES.PROVEEDORES_READ,
+      PERMISSION_CODES.COMPRAS_READ,
+    ]) {
+      getRawMany.mockResolvedValue([
+        { roleCode: 'OPERADOR', code, systemCode: SYSTEM_CODES.INVENTARIO },
+      ]);
+      await expect(
+        guard.canActivate(context({ id: 'user-1' })),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    }
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.PROVEEDORES_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.COMPRAS_READ,
+        systemCode: SYSTEM_CODES.ACCESS_CONTROL,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.PROVEEDORES_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.COMPRAS_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+    ]);
+    await expect(guard.canActivate(context({ id: 'user-1' }))).resolves.toBe(
+      true,
+    );
+  });
+
   it('autoriza a SUPER_ADMIN sin asignaciones de permisos', async () => {
     getRawMany.mockResolvedValue([
       { roleCode: ROLE_CODES.SUPER_ADMIN, code: null },

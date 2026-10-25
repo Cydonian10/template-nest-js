@@ -52,6 +52,7 @@ import { ProveedoresController } from './proveedores/controllers/proveedores/pro
 import { FindProveedoresHandler } from './proveedores/queries/find-proveedores/find-proveedores.handler.js';
 import { FindTodosProveedoresHandler } from './proveedores/queries/find-todos-proveedores/find-todos-proveedores.handler.js';
 import { CrearProveedorHandler } from './proveedores/commands/crear-proveedor/crear-proveedor.handler.js';
+import { ListarComprasProveedorHandler } from './proveedores/queries/listar-compras-proveedor/listar-compras-proveedor.handler.js';
 import { VariantesCompraController } from './variante-producto/controllers/variantes-compra.controller.js';
 import { BuscarVariantesCompraHandler } from './variante-producto/queries/buscar-variantes-compra.handler.js';
 import { ComprobanteCompra } from './entities/comprobante-compra.entity.js';
@@ -137,6 +138,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     FindProveedoresHandler,
     FindTodosProveedoresHandler,
     CrearProveedorHandler,
+    ListarComprasProveedorHandler,
     BuscarVariantesCompraHandler,
     DescargarComprobanteHandler,
     ListarComprasHandler,

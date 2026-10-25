@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   Query,
   VERSION_NEUTRAL,
@@ -24,6 +26,11 @@ import { CrearProveedorCommand } from '../../commands/crear-proveedor/crear-prov
 import { CrearProveedorSchema } from '../../dto/crear-proveedor.dto.js';
 import type { CrearProveedorDto } from '../../dto/crear-proveedor.dto.js';
 import {
+  FilterComprasProveedorSchema,
+  InformeComprasProveedorDto,
+} from '../../dto/informe-compras-proveedor.dto.js';
+import type { FilterComprasProveedorDto } from '../../dto/informe-compras-proveedor.dto.js';
+import {
   FilterProveedoresSchema,
   PaginatedProveedoresResponseDto,
   PaginatedProveedoresSchema,
@@ -35,6 +42,7 @@ import type {
 } from '../../dto/proveedores.dto.js';
 import { FindProveedoresQuery } from '../../queries/find-proveedores/find-proveedores.query.js';
 import { FindTodosProveedoresQuery } from '../../queries/find-todos-proveedores/find-todos-proveedores.query.js';
+import { ListarComprasProveedorQuery } from '../../queries/listar-compras-proveedor/listar-compras-proveedor.query.js';
 import type { Proveedor } from '../../../entities/proveedor.entity.js';
 
 @ApiBearerAuth()
@@ -91,5 +99,20 @@ export class ProveedoresController {
       Proveedor[]
     >(new FindTodosProveedoresQuery(filter));
     return proveedores.map((proveedor) => ProveedorResponseDto.from(proveedor));
+  }
+
+  @Get(':id/compras')
+  @RequirePermissionsInSystem(
+    SYSTEM_CODES.INVENTARIO,
+    PERMISSION_CODES.PROVEEDORES_READ,
+    PERMISSION_CODES.COMPRAS_READ,
+  )
+  @ApiOkResponse({ type: InformeComprasProveedorDto })
+  listCompras(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query({ schema: FilterComprasProveedorSchema })
+    filter: FilterComprasProveedorDto,
+  ): Promise<InformeComprasProveedorDto> {
+    return this.queries.execute(new ListarComprasProveedorQuery(id, filter));
   }
 }
