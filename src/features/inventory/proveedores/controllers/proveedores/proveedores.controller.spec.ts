@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { QueryBus } from '@nestjs/cqrs';
-import { REQUIRED_PERMISSIONS_KEY } from '../../../../../auth/decorators/require-permissions.decorator.js';
+import type { CommandBus, QueryBus } from '@nestjs/cqrs';
+import {
+  REQUIRED_PERMISSIONS_KEY,
+  REQUIRED_PERMISSION_SYSTEM_KEY,
+} from '../../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import { SYSTEM_CODES } from '../../../../../shared/authorization/system-codes.js';
+import { CrearProveedorCommand } from '../../commands/crear-proveedor/crear-proveedor.command.js';
+import { CrearProveedorSchema } from '../../dto/crear-proveedor.dto.js';
 import { FindProveedoresQuery } from '../../queries/find-proveedores/find-proveedores.query.js';
 import { FindTodosProveedoresQuery } from '../../queries/find-todos-proveedores/find-todos-proveedores.query.js';
 import { ProveedoresController } from './proveedores.controller.js';
@@ -14,9 +20,12 @@ describe('ProveedoresController', () => {
         [{ id: 'p1', nombre: 'Acme', documento: null, contacto: null }],
         1,
       ]);
-    const controller = new ProveedoresController({
-      execute,
-    } as unknown as QueryBus);
+    const controller = new ProveedoresController(
+      {
+        execute,
+      } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
     const filter = { page: 1, limit: 20, nombre: 'Acme' };
     await expect(controller.list(filter)).resolves.toEqual({
       data: [{ id: 'p1', nombre: 'Acme', documento: null, contacto: null }],
@@ -27,9 +36,12 @@ describe('ProveedoresController', () => {
 
   it('responde con lista completa y protege ambas operaciones', async () => {
     const execute = vi.fn().mockResolvedValue([]);
-    const controller = new ProveedoresController({
-      execute,
-    } as unknown as QueryBus);
+    const controller = new ProveedoresController(
+      {
+        execute,
+      } as unknown as QueryBus,
+      { execute: vi.fn() } as unknown as CommandBus,
+    );
     await expect(controller.listAll({ documento: '20' })).resolves.toEqual([]);
     expect(execute).toHaveBeenCalledWith(
       new FindTodosProveedoresQuery({ documento: '20' }),
@@ -43,5 +55,37 @@ describe('ProveedoresController', () => {
         ),
       ).toEqual([PERMISSION_CODES.PROVEEDORES_READ]);
     }
+  });
+
+  it('crea un proveedor con respuesta normalizada y permiso de creación de Inventario', async () => {
+    const execute = vi.fn().mockResolvedValue({
+      id: 'p2',
+      nombre: 'Acero Norte',
+      documento: null,
+      contacto: null,
+    });
+    const controller = new ProveedoresController(
+      { execute: vi.fn() } as unknown as QueryBus,
+      { execute } as unknown as CommandBus,
+    );
+    const data = CrearProveedorSchema.parse({ nombre: ' Acero Norte ' });
+
+    await expect(controller.create(data)).resolves.toEqual({
+      id: 'p2',
+      nombre: 'Acero Norte',
+      documento: null,
+      contacto: null,
+    });
+    expect(execute).toHaveBeenCalledWith(new CrearProveedorCommand(data));
+    const method = Object.getOwnPropertyDescriptor(
+      ProveedoresController.prototype,
+      'create',
+    )?.value;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+      PERMISSION_CODES.PROVEEDORES_CREATE,
+    ]);
+    expect(Reflect.getMetadata(REQUIRED_PERMISSION_SYSTEM_KEY, method)).toBe(
+      SYSTEM_CODES.INVENTARIO,
+    );
   });
 });

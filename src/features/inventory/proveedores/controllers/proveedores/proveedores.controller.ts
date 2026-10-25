@@ -1,9 +1,28 @@
-import { Controller, Get, Query, VERSION_NEUTRAL } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '../../../../../auth/decorators/require-permissions.decorator.js';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  RequirePermissions,
+  RequirePermissionsInSystem,
+} from '../../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
+import { SYSTEM_CODES } from '../../../../../shared/authorization/system-codes.js';
 import { PaginatedResponseDto } from '../../../../../shared/pagination/paginated-response.dto.js';
+import { CrearProveedorCommand } from '../../commands/crear-proveedor/crear-proveedor.command.js';
+import { CrearProveedorSchema } from '../../dto/crear-proveedor.dto.js';
+import type { CrearProveedorDto } from '../../dto/crear-proveedor.dto.js';
 import {
   FilterProveedoresSchema,
   PaginatedProveedoresResponseDto,
@@ -22,7 +41,26 @@ import type { Proveedor } from '../../../entities/proveedor.entity.js';
 @ApiTags('proveedores')
 @Controller({ path: 'proveedores', version: VERSION_NEUTRAL })
 export class ProveedoresController {
-  constructor(private readonly queries: QueryBus) {}
+  constructor(
+    private readonly queries: QueryBus,
+    private readonly commands: CommandBus,
+  ) {}
+
+  @Post()
+  @RequirePermissionsInSystem(
+    SYSTEM_CODES.INVENTARIO,
+    PERMISSION_CODES.PROVEEDORES_CREATE,
+  )
+  @ApiCreatedResponse({ type: ProveedorResponseDto })
+  async create(
+    @Body({ schema: CrearProveedorSchema }) data: CrearProveedorDto,
+  ): Promise<ProveedorResponseDto> {
+    const proveedor = await this.commands.execute<
+      CrearProveedorCommand,
+      Proveedor
+    >(new CrearProveedorCommand(data));
+    return ProveedorResponseDto.from(proveedor);
+  }
 
   @Get()
   @RequirePermissions(PERMISSION_CODES.PROVEEDORES_READ)
