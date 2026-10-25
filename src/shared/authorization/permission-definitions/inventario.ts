@@ -135,4 +135,10 @@ export const INVENTARIO_PERMISSIONS = [
     resourceCode: 'PROVEEDORES',
     actionCode: 'LEER',
   },
+  {
+    code: PERMISSION_CODES.PROVEEDORES_CREATE,
+    name: 'Crear proveedores',
+    resourceCode: 'PROVEEDORES',
+    actionCode: 'CREAR',
+  },
 ] as const satisfies readonly PermissionDefinition[];

@@ -57,6 +57,22 @@ describe('PERMISSION_DEFINITIONS', () => {
     );
   });
 
+  it('registra PROVEEDORES_CREAR independientemente de lectura sin asignarlo a roles', () => {
+    expect(PERMISSION_DEFINITIONS).toContainEqual({
+      systemCode: SYSTEM_CODES.INVENTARIO,
+      code: PERMISSION_CODES.PROVEEDORES_CREATE,
+      name: 'Crear proveedores',
+      resourceCode: 'PROVEEDORES',
+      actionCode: 'CREAR',
+    });
+    expect(PERMISSION_CODES.PROVEEDORES_CREATE).not.toBe(
+      PERMISSION_CODES.PROVEEDORES_READ,
+    );
+    expect(PERMISSION_DEFINITIONS).not.toContainEqual(
+      expect.objectContaining({ roleCode: expect.anything() }),
+    );
+  });
+
   it('reutiliza los dos permisos de productos para marcas y categorías sin crear permisos nuevos', () => {
     expect(
       PERMISSION_DEFINITIONS.filter(
