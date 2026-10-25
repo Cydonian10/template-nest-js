@@ -61,10 +61,12 @@ import { DescargarComprobanteHandler } from './compras/queries/descargar-comprob
 import { ComprobanteStorage } from './compras/storage/comprobante-storage.js';
 import { LocalComprobanteStorage } from './compras/storage/local-comprobante-storage.js';
 import { Compra } from './entities/compra.entity.js';
+import { CorreccionCompra } from './entities/correccion-compra.entity.js';
 import { ComprasController } from './compras/controllers/compras/compras.controller.js';
 import { ListarComprasHandler } from './compras/queries/listar-compras/listar-compras.handler.js';
 import { ObtenerCompraHandler } from './compras/queries/obtener-compra/obtener-compra.handler.js';
 import { CrearCompraHandler } from './compras/commands/crear-compra/crear-compra.handler.js';
+import { EditarCompraHandler } from './compras/commands/editar-compra/editar-compra.handler.js';
 import { AdjuntarComprobanteHandler } from './compras/commands/adjuntar-comprobante/adjuntar-comprobante.handler.js';
 import { ExistenciasController } from './existencias/controllers/existencias.controller.js';
 import { ListarAlmacenesActivosHandler } from './existencias/queries/listar-almacenes-activos/listar-almacenes-activos.handler.js';
@@ -106,6 +108,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
       Proveedor,
       ComprobanteCompra,
       Compra,
+      CorreccionCompra,
       MovimientoInventario,
     ]),
   ],
@@ -144,6 +147,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     ListarComprasHandler,
     ObtenerCompraHandler,
     CrearCompraHandler,
+    EditarCompraHandler,
     AdjuntarComprobanteHandler,
     ListarAlmacenesActivosHandler,
     ListarExistenciasHandler,

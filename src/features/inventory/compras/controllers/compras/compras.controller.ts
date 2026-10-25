@@ -5,10 +5,12 @@ import {
   Logger,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
   VERSION_NEUTRAL,
+  Body,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -27,6 +29,7 @@ import { PaginatedResponseDto } from '../../../../../shared/pagination/paginated
 import { Compra } from '../../../entities/compra.entity.js';
 import { AdjuntarComprobanteCommand } from '../../commands/adjuntar-comprobante/adjuntar-comprobante.command.js';
 import { CrearCompraCommand } from '../../commands/crear-compra/crear-compra.command.js';
+import { EditarCompraCommand } from '../../commands/editar-compra/editar-compra.command.js';
 import {
   CompraDetalleResponseDto,
   CompraListadoResponseDto,
@@ -36,6 +39,7 @@ import { FilterComprasSchema } from '../../dto/filter-compras.dto.js';
 import type { FilterComprasDto } from '../../dto/filter-compras.dto.js';
 import { CreateCompraSchema } from '../../dto/create-compra.dto.js';
 import { CreateCompraResponseDto } from '../../dto/create-compra-response.dto.js';
+import { UpdateCompraSchema } from '../../dto/update-compra.dto.js';
 import { parseCompraMultipart } from '../../multipart/parse-compra-multipart.js';
 import { prepareComprobante } from '../../prepare-comprobante.js';
 import { ListarComprasQuery } from '../../queries/listar-compras/listar-compras.query.js';
@@ -159,6 +163,59 @@ export class ComprasController {
   async getById(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<CompraDetalleResponseDto> {
+    const compra = await this.queries.execute<ObtenerCompraQuery, Compra>(
+      new ObtenerCompraQuery(id),
+    );
+    return CompraDetalleResponseDto.from(compra);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(PERMISSION_CODES.COMPRAS_UPDATE)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: [
+        'revision',
+        'tipoDocumento',
+        'fecha',
+        'serieDocumento',
+        'numeroDocumento',
+        'observaciones',
+        'precios',
+      ],
+      properties: {
+        revision: { type: 'integer', minimum: 0 },
+        tipoDocumento: { type: 'string', enum: ['factura', 'boleta', 'otro'] },
+        fecha: { type: 'string', format: 'date' },
+        serieDocumento: { type: 'string' },
+        numeroDocumento: { type: 'string' },
+        observaciones: { type: 'string' },
+        precios: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['renglonId', 'precioUnitario'],
+            properties: {
+              renglonId: { type: 'string', format: 'uuid' },
+              precioUnitario: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiOkResponse({ type: CompraDetalleResponseDto })
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: unknown,
+  ): Promise<CompraDetalleResponseDto> {
+    const parsed = UpdateCompraSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException('Datos de compra no válidos');
+    await this.commands.execute(
+      new EditarCompraCommand(id, userId, parsed.data),
+    );
     const compra = await this.queries.execute<ObtenerCompraQuery, Compra>(
       new ObtenerCompraQuery(id),
     );

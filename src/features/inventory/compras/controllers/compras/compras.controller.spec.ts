@@ -5,9 +5,11 @@ import { PERMISSION_CODES } from '../../../../../shared/authorization/permission
 import { ListarComprasQuery } from '../../queries/listar-compras/listar-compras.query.js';
 import { ObtenerCompraQuery } from '../../queries/obtener-compra/obtener-compra.query.js';
 import { ComprasController } from './compras.controller.js';
+import { EditarCompraCommand } from '../../commands/editar-compra/editar-compra.command.js';
 
 const compra = {
   id: 'c1',
+  revision: 0,
   fecha: '2026-10-17',
   fechaRegistro: new Date('2026-10-17T10:00:00Z'),
   tipoDocumento: 'factura',
@@ -135,5 +137,48 @@ describe('ComprasController', () => {
         PERMISSION_CODES.COMPRAS_READ,
       ]);
     }
+  });
+
+  it('protege la corrección con COMPRAS_EDITAR y no acepta montos enviados por el cliente', async () => {
+    const queries = {
+      execute: vi.fn().mockResolvedValue({ ...compra, revision: 1 }),
+    };
+    const commands = { execute: vi.fn() };
+    const controller = new ComprasController(
+      queries as unknown as QueryBus,
+      commands as unknown as CommandBus,
+    );
+    const body = {
+      revision: 0,
+      tipoDocumento: 'factura',
+      fecha: '2026-10-17',
+      serieDocumento: 'F001',
+      numeroDocumento: '123',
+      observaciones: '',
+      precios: [
+        {
+          renglonId: '388f7d3d-e46b-427f-aeef-51f870809031',
+          precioUnitario: '12.00',
+        },
+      ],
+    };
+    const method = Object.getOwnPropertyDescriptor(
+      ComprasController.prototype,
+      'update',
+    )?.value;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+      PERMISSION_CODES.COMPRAS_UPDATE,
+    ]);
+    expect(await controller.update('c1', 'usuario', body)).toMatchObject({
+      id: 'c1',
+      revision: 1,
+    });
+    expect(commands.execute).toHaveBeenCalledWith(
+      new EditarCompraCommand('c1', 'usuario', body),
+    );
+    await expect(
+      controller.update('c1', 'usuario', { ...body, totalDocumento: '0' }),
+    ).rejects.toThrow();
+    expect(commands.execute).toHaveBeenCalledTimes(1);
   });
 });

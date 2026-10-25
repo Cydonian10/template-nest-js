@@ -24,7 +24,7 @@ import { ComprobanteCompra } from './comprobante-compra.entity.js';
 )
 @Check(
   'CHK_compras_tipo_documento',
-  '"tipo_documento" IS NULL OR "tipo_documento" IN (\'factura\', \'boleta\', \'otro\')',
+  "\"tipo_documento\" IS NULL OR \"tipo_documento\" IN ('factura', 'boleta', 'otro')",
 )
 @Index(
   'UQ_compras_proveedor_tipo_serie_numero',
@@ -58,10 +58,20 @@ export class Compra {
   fecha: string;
 
   // Los registros anteriores a este flujo pueden no tener tipo ni serie.
-  @Column({ name: 'tipo_documento', type: 'varchar', length: 20, nullable: true })
+  @Column({
+    name: 'tipo_documento',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   tipoDocumento: 'factura' | 'boleta' | 'otro' | null;
 
-  @Column({ name: 'serie_documento', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'serie_documento',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   serieDocumento: string | null;
 
   @Column({
@@ -86,6 +96,9 @@ export class Compra {
 
   @CreateDateColumn({ name: 'fecha_registro', type: 'timestamptz' })
   fechaRegistro: Date;
+
+  @Column({ type: 'integer', default: 0 })
+  revision: number;
 
   @OneToMany(() => DetalleCompra, (detalle) => detalle.compra)
   detalles: Relation<DetalleCompra[]>;

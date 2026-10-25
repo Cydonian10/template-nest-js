@@ -100,6 +100,12 @@ export const INVENTARIO_PERMISSIONS = [
     actionCode: 'CREAR',
   },
   {
+    code: PERMISSION_CODES.COMPRAS_UPDATE,
+    name: 'Editar compras',
+    resourceCode: 'COMPRAS',
+    actionCode: 'EDITAR',
+  },
+  {
     code: PERMISSION_CODES.EXISTENCIAS_READ,
     name: 'Leer existencias',
     resourceCode: 'EXISTENCIAS',

@@ -20,7 +20,7 @@ Los decimales se reciben y devuelven como **cadenas**. `total_documento` es la s
 
 ## Contratos HTTP y permisos
 
-Todas las rutas llevan el prefijo `/api` y requieren autenticación. Los permisos `COMPRAS_LEER`, `COMPRAS_CREAR` y `PROVEEDORES_LEER` pertenecen al sistema `INVENTARIO` y **no se asignan automáticamente** a roles.
+Todas las rutas llevan el prefijo `/api` y requieren autenticación. Los permisos `COMPRAS_LEER`, `COMPRAS_CREAR`, `COMPRAS_EDITAR` y `PROVEEDORES_LEER` pertenecen al sistema `INVENTARIO` y **no se asignan automáticamente** a roles.
 
 | Ruta                                                   | Permiso            | Resultado                                                                                                     |
 | ------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------- |
@@ -30,6 +30,7 @@ Todas las rutas llevan el prefijo `/api` y requieren autenticación. Los permiso
 | `GET /api/compras?page=&limit=&q=`                     | `COMPRAS_LEER`     | Compras recientes, búsqueda por proveedor/documento.                                                          |
 | `GET /api/compras/:id`                                 | `COMPRAS_LEER`     | Renglones, almacén, ingreso confirmado y metadatos del comprobante o `null`.                                  |
 | `POST /api/compras`                                    | `COMPRAS_CREAR`    | Compra e ingreso confirmados; HTTP 201 con ID y estado del comprobante.                                       |
+| `PATCH /api/compras/:id`                               | `COMPRAS_EDITAR`   | Corrige datos documentales y precios de los renglones existentes; no cambia cantidades ni productos.          |
 | `POST /api/compras/:id/comprobante`                    | `COMPRAS_CREAR`    | Añade el único comprobante pendiente; HTTP 201 con metadatos, 404 si falta la compra y 409 si ya hay archivo. |
 | `GET /api/compras/:id/comprobante/archivo`             | `COMPRAS_LEER`     | Descarga autenticada, privada y sin caché.                                                                    |
 
@@ -37,6 +38,8 @@ La creación recibe `multipart/form-data`: `proveedorId`, `almacenId`, `tipoDocu
 
 El adjunto posterior recibe `multipart/form-data` con solo `comprobante`. Se admiten PDF, JPG y PNG de **1 byte a 10 MiB**; se verifica el contenido real contra el MIME declarado y se limita la subida. El archivo se guarda privadamente en `COMPROBANTE_STORAGE_DIR` (por defecto `uploads/comprobantes`), con clave aleatoria que nunca se expone como URL. Si falla el registro de metadatos, se intenta eliminar el archivo huérfano. Un bloqueo transaccional de la compra impide dos adjuntos simultáneos; un fallo permite reintentar mientras no exista comprobante.
 
+La corrección recibe JSON con `revision` (devuelta por el detalle), `tipoDocumento`, `fecha`, `serieDocumento`, `numeroDocumento`, `observaciones` y `precios` (todos los `{ renglonId, precioUnitario }` existentes). El cliente no envía el total: se recalcula con la misma regla de redondeo que la creación. El usuario corrector y los valores antes/después quedan registrados en `correcciones_compra`; no se reescriben los detalles del ingreso histórico ni las cantidades. Si un precio cambia el costo, se revalúa el saldo del almacén en la misma transacción **solo cuando no existen otros movimientos confirmados posteriores para esas variantes en el almacén**. Una corrección documental no tiene esa restricción. Cambios concurrentes, documentos duplicados o precios no revaluables devuelven 409. Migrar la base de datos y asignar expresamente `COMPRAS_EDITAR` al rol correspondiente; el permiso no se concede automáticamente.
+
 ## Fuera de este flujo
 
-El modelo conserva relaciones que podrían soportar **varios ingresos y varios comprobantes** para compras futuras, pero esta API solo crea un ingreso completo y permite un comprobante por compra. La recepción parcial o posterior, el reemplazo de archivos, correcciones/anulaciones, pagos y costos adicionales requieren otro flujo con validaciones propias; **adjuntar un comprobante nunca modifica stock**. Una corrección de una recepción ya confirmada debe registrarse mediante un movimiento compensatorio, no alterando silenciosamente el historial.
+El modelo conserva relaciones que podrían soportar **varios ingresos y varios comprobantes** para compras futuras, pero esta API solo crea un ingreso completo y permite un comprobante por compra. La recepción parcial o posterior, el reemplazo de archivos, cambios de productos/cantidades/almacén, anulaciones, pagos y costos adicionales requieren otro flujo con validaciones propias; **adjuntar un comprobante nunca modifica stock**. Una corrección de cantidades de una recepción ya confirmada debe registrarse mediante un movimiento compensatorio, no alterando silenciosamente el historial.

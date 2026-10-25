@@ -91,6 +91,7 @@ export class CompraListadoResponseDto {
 }
 
 export class CompraDetalleResponseDto extends CompraListadoResponseDto {
+  @ApiProperty() revision: number;
   @ApiProperty({ nullable: true }) observaciones: string | null;
   @ApiProperty({ type: IngresoCompraResponseDto, nullable: true })
   ingreso: IngresoCompraResponseDto | null;
@@ -107,6 +108,7 @@ export class CompraDetalleResponseDto extends CompraListadoResponseDto {
     );
     const comprobante = compra.comprobantes?.[0];
     return Object.assign(CompraListadoResponseDto.from(compra), {
+      revision: compra.revision,
       observaciones: compra.observaciones,
       ingreso: ingreso
         ? { id: ingreso.id, fecha: ingreso.fecha, estado: ingreso.estado }
