@@ -14,7 +14,15 @@ function escenario(pagina: { id: string }[] = [], total = 0) {
     take: vi.fn(),
     getManyAndCount: vi.fn().mockResolvedValue([pagina, total]),
   };
-  for (const method of ['where', 'andWhere', 'leftJoin', 'orderBy', 'addOrderBy', 'skip', 'take'] as const) {
+  for (const method of [
+    'where',
+    'andWhere',
+    'leftJoin',
+    'orderBy',
+    'addOrderBy',
+    'skip',
+    'take',
+  ] as const) {
     builder[method].mockReturnValue(builder);
   }
   const repo = {
@@ -23,7 +31,11 @@ function escenario(pagina: { id: string }[] = [], total = 0) {
   };
   const movimientos = {
     manager: {
-      transaction: vi.fn().mockImplementation(async (_level, work) => work({ getRepository: () => repo })),
+      transaction: vi
+        .fn()
+        .mockImplementation(async (_level, work) =>
+          work({ getRepository: () => repo }),
+        ),
     },
   };
   return { builder, repo, movimientos };
@@ -31,15 +43,29 @@ function escenario(pagina: { id: string }[] = [], total = 0) {
 
 describe('ListarHistorialMovimientosHandler', () => {
   it('filtra confirmados, pagina antes de cargar detalles y conserva el orden', async () => {
-    const { builder, repo, movimientos } = escenario([{ id: 'b' }, { id: 'a' }], 5);
+    const { builder, repo, movimientos } = escenario(
+      [{ id: 'b' }, { id: 'a' }],
+      5,
+    );
     const handler = new ListarHistorialMovimientosHandler(movimientos as never);
     const resultado = await handler.execute(
-      new ListarHistorialMovimientosQuery({ page: 2, limit: 2, tipo: 'ingreso' }),
+      new ListarHistorialMovimientosQuery({
+        page: 2,
+        limit: 2,
+        tipo: 'ingreso',
+      }),
     );
 
-    expect(movimientos.manager.transaction).toHaveBeenCalledWith('REPEATABLE READ', expect.any(Function));
-    expect(builder.where).toHaveBeenCalledWith('movimiento.estado = :estado', { estado: 'confirmado' });
-    expect(builder.andWhere).toHaveBeenCalledWith('movimiento.tipo = :tipo', { tipo: 'ingreso' });
+    expect(movimientos.manager.transaction).toHaveBeenCalledWith(
+      'REPEATABLE READ',
+      expect.any(Function),
+    );
+    expect(builder.where).toHaveBeenCalledWith('movimiento.estado = :estado', {
+      estado: 'confirmado',
+    });
+    expect(builder.andWhere).toHaveBeenCalledWith('movimiento.tipo = :tipo', {
+      tipo: 'ingreso',
+    });
     expect(builder.orderBy).toHaveBeenCalledWith('movimiento.fecha', 'DESC');
     expect(builder.addOrderBy).toHaveBeenCalledWith('movimiento.id', 'DESC');
     expect(builder.skip).toHaveBeenCalledWith(2);
@@ -55,16 +81,43 @@ describe('ListarHistorialMovimientosHandler', () => {
     const { builder, movimientos } = escenario();
     await new ListarHistorialMovimientosHandler(movimientos as never).execute(
       new ListarHistorialMovimientosQuery(
-        FilterHistorialMovimientosSchema.parse({ desde: '2026-10-24', hasta: '2026-10-24' }),
+        FilterHistorialMovimientosSchema.parse({
+          desde: '2026-10-24',
+          hasta: '2026-10-24',
+        }),
       ),
     );
-    expect(builder.andWhere).toHaveBeenCalledWith('movimiento.fecha >= :desde', {
-      desde: new Date('2026-10-24T05:00:00.000Z'),
-    });
+    expect(builder.andWhere).toHaveBeenCalledWith(
+      'movimiento.fecha >= :desde',
+      {
+        desde: new Date('2026-10-24T05:00:00.000Z'),
+      },
+    );
     expect(builder.andWhere).toHaveBeenCalledWith('movimiento.fecha < :hasta', {
       hasta: new Date('2026-10-25T05:00:00.000Z'),
     });
-    expect(FilterHistorialMovimientosSchema.safeParse({ desde: '2026-10-25', hasta: '2026-10-24' }).success).toBe(false);
+    expect(
+      FilterHistorialMovimientosSchema.safeParse({
+        desde: '2026-10-25',
+        hasta: '2026-10-24',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('el límite superior exclusivo cubre el último día del año sin incluir el siguiente', async () => {
+    const { builder, movimientos } = escenario();
+    await new ListarHistorialMovimientosHandler(movimientos as never).execute(
+      new ListarHistorialMovimientosQuery(
+        FilterHistorialMovimientosSchema.parse({
+          hasta: '2026-12-31',
+          limit: 100,
+        }),
+      ),
+    );
+    expect(builder.andWhere).toHaveBeenCalledWith('movimiento.fecha < :hasta', {
+      hasta: new Date('2027-01-01T05:00:00.000Z'),
+    });
+    expect(builder.take).toHaveBeenCalledWith(100);
   });
 
   it('busca UUID, almacenes, SKU y producto con escape y sin tildes', async () => {
@@ -74,7 +127,10 @@ describe('ListarHistorialMovimientosHandler', () => {
         FilterHistorialMovimientosSchema.parse({ q: '  Árbol_%  ' }),
       ),
     );
-    const [sql, params] = builder.andWhere.mock.calls[0] as [string, { search: string }];
+    const [sql, params] = builder.andWhere.mock.calls[0] as [
+      string,
+      { search: string },
+    ];
     expect(sql).toContain('movimiento.id::text LIKE :search');
     expect(sql).toContain('origen.nombre');
     expect(sql).toContain('destino.nombre');

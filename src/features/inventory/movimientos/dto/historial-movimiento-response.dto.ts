@@ -24,11 +24,17 @@ function decimalTexto(valor: bigint): string {
 }
 
 function valorCosto(detalles: readonly DetalleMovimiento[]): string | null {
-  if (!detalles.length || detalles.some((detalle) => detalle.costoTotal === null)) {
+  if (
+    !detalles.length ||
+    detalles.some((detalle) => detalle.costoTotal === null)
+  ) {
     return null;
   }
   return decimalTexto(
-    detalles.reduce((total, detalle) => total + decimalEscalado(detalle.costoTotal!), 0n),
+    detalles.reduce(
+      (total, detalle) => total + decimalEscalado(detalle.costoTotal!),
+      0n,
+    ),
   );
 }
 
@@ -44,7 +50,8 @@ function costoPorUnidadBase(detalle: DetalleMovimiento): string | null {
 export class HistorialMovimientoListadoResponseDto {
   @ApiProperty({ format: 'uuid' }) id: string;
   @ApiProperty() fecha: Date;
-  @ApiProperty({ enum: TipoMovimientoInventario }) tipo: TipoMovimientoInventario;
+  @ApiProperty({ enum: TipoMovimientoInventario })
+  tipo: TipoMovimientoInventario;
   @ApiProperty({ enum: [EstadoMovimientoInventario.CONFIRMADO] })
   estado: EstadoMovimientoInventario.CONFIRMADO;
   @ApiProperty({ nullable: true }) almacenOrigen: string | null;
@@ -52,7 +59,9 @@ export class HistorialMovimientoListadoResponseDto {
   @ApiProperty() cantidadDetalles: number;
   @ApiProperty({ nullable: true }) valorCosto: string | null;
 
-  static from(movimiento: MovimientoInventario): HistorialMovimientoListadoResponseDto {
+  static from(
+    movimiento: MovimientoInventario,
+  ): HistorialMovimientoListadoResponseDto {
     const detalles = movimiento.detalles ?? [];
     return {
       id: movimiento.id,
@@ -100,13 +109,25 @@ export class HistorialMovimientoDetalleResponseDto extends HistorialMovimientoLi
   @ApiProperty({ type: [HistorialDetalleLineaResponseDto] })
   detalles: HistorialDetalleLineaResponseDto[];
 
-  static from(movimiento: MovimientoInventario): HistorialMovimientoDetalleResponseDto {
+  static from(
+    movimiento: MovimientoInventario,
+  ): HistorialMovimientoDetalleResponseDto {
+    const resumen = HistorialMovimientoListadoResponseDto.from(movimiento);
     return {
-      ...HistorialMovimientoListadoResponseDto.from(movimiento),
+      id: resumen.id,
+      fecha: resumen.fecha,
+      tipo: resumen.tipo,
+      estado: resumen.estado,
+      almacenOrigen: resumen.almacenOrigen,
+      almacenDestino: resumen.almacenDestino,
+      cantidadDetalles: resumen.cantidadDetalles,
+      valorCosto: resumen.valorCosto,
       usuario: movimiento.usuario.nickName,
       compraId: movimiento.compra?.id ?? null,
       motivo: movimiento.motivo,
-      detalles: movimiento.detalles.map((detalle) => HistorialDetalleLineaResponseDto.from(detalle)),
+      detalles: movimiento.detalles.map((detalle) =>
+        HistorialDetalleLineaResponseDto.from(detalle),
+      ),
     };
   }
 }
