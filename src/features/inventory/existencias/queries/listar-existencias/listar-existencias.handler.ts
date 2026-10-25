@@ -133,7 +133,11 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
           ? await variantesRepo.find({
               where: { id: In(ids) },
               relations: {
-                producto: { unidadBase: true, unidades: { unidad: true } },
+                producto: {
+                  marca: true,
+                  unidadBase: true,
+                  unidades: { unidad: true },
+                },
                 valores: { atributo: true },
               },
             })
@@ -152,6 +156,7 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
               producto: {
                 id: producto.id,
                 nombre: producto.nombre,
+                marca: { id: producto.marca.id, nombre: producto.marca.nombre },
                 activo: producto.activo,
                 unidadBase: {
                   id: producto.unidadBase.id,

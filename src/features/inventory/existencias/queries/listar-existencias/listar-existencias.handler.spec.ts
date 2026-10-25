@@ -183,6 +183,7 @@ describe('ListarExistenciasHandler', () => {
       producto: {
         id: 'p1',
         nombre: 'Camiseta',
+        marca: { id: 'm1', nombre: 'Truper' },
         activo: true,
         unidadBase: { id: 'u1', nombre: 'Unidad', simbolo: 'u' },
         unidades: [
@@ -232,7 +233,11 @@ describe('ListarExistenciasHandler', () => {
       totalValorCosto: '120.000000',
       items: [
         {
-          producto: { nombre: 'Camiseta', unidadBase: { simbolo: 'u' } },
+          producto: {
+            nombre: 'Camiseta',
+            marca: { id: 'm1', nombre: 'Truper' },
+            unidadBase: { simbolo: 'u' },
+          },
           variante: {
             sku: 'CAM-NEG-M',
             activo: false,
@@ -269,6 +274,13 @@ describe('ListarExistenciasHandler', () => {
     expect(countQuery.select).toHaveBeenCalledWith('COUNT(*)', 'total');
     expect(totalQuery.where).not.toHaveBeenCalled();
     expect(find).toHaveBeenCalledTimes(1);
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        relations: expect.objectContaining({
+          producto: expect.objectContaining({ marca: true }),
+        }),
+      }),
+    );
   });
 
   it('restringe filas y total al almacén elegido, pero no filtra el total por disponibilidad', async () => {
@@ -325,6 +337,7 @@ describe('ListarExistenciasHandler', () => {
           producto: {
             id: 'p1',
             nombre: 'Camiseta',
+            marca: { id: 'm1', nombre: 'Truper' },
             activo: true,
             unidadBase: { id: 'u1', nombre: 'Unidad', simbolo: 'u' },
             unidades: [],
@@ -383,6 +396,7 @@ describe('ListarExistenciasHandler', () => {
           producto: {
             id: 'p1',
             nombre: 'Camiseta',
+            marca: { id: 'm1', nombre: 'Truper' },
             activo: true,
             unidadBase: { id: 'u1', nombre: 'Unidad', simbolo: 'u' },
             unidades: [],

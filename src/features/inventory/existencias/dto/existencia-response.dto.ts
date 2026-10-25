@@ -10,9 +10,15 @@ export class UnidadSecundariaExistenciaDto extends UnidadExistenciaDto {
   @ApiProperty({ example: '12.00000000' }) factorABase: string;
 }
 
+export class MarcaExistenciaDto {
+  @ApiProperty() id: string;
+  @ApiProperty() nombre: string;
+}
+
 export class ProductoExistenciaDto {
   @ApiProperty() id: string;
   @ApiProperty() nombre: string;
+  @ApiProperty({ type: MarcaExistenciaDto }) marca: MarcaExistenciaDto;
   @ApiProperty() activo: boolean;
   @ApiProperty({ type: UnidadExistenciaDto }) unidadBase: UnidadExistenciaDto;
 }
