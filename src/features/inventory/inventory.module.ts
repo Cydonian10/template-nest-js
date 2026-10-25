@@ -71,6 +71,9 @@ import { MovimientosController } from './movimientos/controllers/movimientos.con
 import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
 import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
 import { CrearMovimientoHandler } from './movimientos/commands/crear-movimiento/crear-movimiento.handler.js';
+import { MovimientoInventario } from './entities/movimiento-inventario.entity.js';
+import { ListarHistorialMovimientosHandler } from './movimientos/queries/listar-historial-movimientos/listar-historial-movimientos.handler.js';
+import { ObtenerHistorialMovimientoHandler } from './movimientos/queries/obtener-historial-movimiento/obtener-historial-movimiento.handler.js';
 import { CategoriasController } from './categorias/controllers/categorias.controller.js';
 import { ListarCategoriasHandler } from './categorias/queries/listar-categorias/listar-categorias.handler.js';
 import { ObtenerCategoriaHandler } from './categorias/queries/obtener-categoria/obtener-categoria.handler.js';
@@ -101,6 +104,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
       Proveedor,
       ComprobanteCompra,
       Compra,
+      MovimientoInventario,
     ]),
   ],
   controllers: [
@@ -142,6 +146,8 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     ListarAlmacenesMovimientoHandler,
     BuscarVariantesMovimientoHandler,
     CrearMovimientoHandler,
+    ListarHistorialMovimientosHandler,
+    ObtenerHistorialMovimientoHandler,
     ListarCategoriasHandler,
     ObtenerCategoriaHandler,
     CrearCategoriaHandler,

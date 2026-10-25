@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   Query,
   VERSION_NEUTRAL,
@@ -28,6 +30,10 @@ import {
   type CreateMovimientoDto,
 } from '../dto/create-movimiento.dto.js';
 import {
+  FilterHistorialMovimientosSchema,
+  type FilterHistorialMovimientosDto,
+} from '../dto/filter-historial-movimientos.dto.js';
+import {
   FilterVariantesMovimientoSchema,
   type FilterVariantesMovimientoDto,
 } from '../dto/filter-variantes-movimiento.dto.js';
@@ -35,8 +41,15 @@ import {
   PaginatedVariantesMovimientoResponseDto,
   VarianteMovimientoResponseDto,
 } from '../dto/variante-movimiento-response.dto.js';
+import {
+  HistorialMovimientoDetalleResponseDto,
+  HistorialMovimientoListadoResponseDto,
+  PaginatedHistorialMovimientosResponseDto,
+} from '../dto/historial-movimiento-response.dto.js';
 import { BuscarVariantesMovimientoQuery } from '../queries/buscar-variantes-movimiento/buscar-variantes-movimiento.query.js';
 import { ListarAlmacenesMovimientoQuery } from '../queries/listar-almacenes-movimiento/listar-almacenes-movimiento.query.js';
+import { ListarHistorialMovimientosQuery } from '../queries/listar-historial-movimientos/listar-historial-movimientos.query.js';
+import { ObtenerHistorialMovimientoQuery } from '../queries/obtener-historial-movimiento/obtener-historial-movimiento.query.js';
 
 class AlmacenMovimientoDto {
   @ApiProperty({ format: 'uuid' }) id: string;
@@ -103,5 +116,38 @@ export class MovimientosController {
       total,
       filter,
     );
+  }
+
+  @Get()
+  @RequirePermissions(PERMISSION_CODES.MOVIMIENTOS_READ)
+  @ApiOkResponse({ type: PaginatedHistorialMovimientosResponseDto })
+  async listarHistorial(
+    @Query({ schema: FilterHistorialMovimientosSchema })
+    filter: FilterHistorialMovimientosDto,
+  ): Promise<PaginatedHistorialMovimientosResponseDto> {
+    const [movimientos, total] = await this.queries.execute<
+      ListarHistorialMovimientosQuery,
+      [MovimientoInventario[], number]
+    >(new ListarHistorialMovimientosQuery(filter));
+    return PaginatedResponseDto.from(
+      movimientos.map((movimiento) =>
+        HistorialMovimientoListadoResponseDto.from(movimiento),
+      ),
+      total,
+      filter,
+    );
+  }
+
+  @Get(':id')
+  @RequirePermissions(PERMISSION_CODES.MOVIMIENTOS_READ)
+  @ApiOkResponse({ type: HistorialMovimientoDetalleResponseDto })
+  async obtenerHistorial(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<HistorialMovimientoDetalleResponseDto> {
+    const movimiento = await this.queries.execute<
+      ObtenerHistorialMovimientoQuery,
+      MovimientoInventario
+    >(new ObtenerHistorialMovimientoQuery(id));
+    return HistorialMovimientoDetalleResponseDto.from(movimiento);
   }
 }

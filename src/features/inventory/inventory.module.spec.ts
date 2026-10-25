@@ -13,6 +13,9 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
 import { ListarMarcasHandler } from './marcas/queries/listar-marcas/listar-marcas.handler.js';
 import { ObtenerMarcaHandler } from './marcas/queries/obtener-marca/obtener-marca.handler.js';
 import { LeerImagenMarcaHandler } from './marcas/queries/leer-imagen-marca/leer-imagen-marca.handler.js';
+import { ListarHistorialMovimientosHandler } from './movimientos/queries/listar-historial-movimientos/listar-historial-movimientos.handler.js';
+import { ObtenerHistorialMovimientoHandler } from './movimientos/queries/obtener-historial-movimiento/obtener-historial-movimiento.handler.js';
+import { MovimientosController } from './movimientos/controllers/movimientos.controller.js';
 
 describe('InventoryModule: catálogos', () => {
   it('registra controladores y todas las operaciones de marcas y categorías', () => {
@@ -43,5 +46,17 @@ describe('InventoryModule: catálogos', () => {
         LeerImagenMarcaHandler,
       ]),
     );
+  });
+});
+
+describe('InventoryModule: historial', () => {
+  it('registra controlador y manejadores de lectura', () => {
+    const controllers: unknown[] = Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, InventoryModule);
+    const providers: unknown[] = Reflect.getMetadata(MODULE_METADATA.PROVIDERS, InventoryModule);
+    expect(controllers).toContain(MovimientosController);
+    expect(providers).toEqual(expect.arrayContaining([
+      ListarHistorialMovimientosHandler,
+      ObtenerHistorialMovimientoHandler,
+    ]));
   });
 });

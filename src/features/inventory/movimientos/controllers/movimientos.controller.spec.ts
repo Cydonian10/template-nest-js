@@ -3,6 +3,9 @@ import { PERMISSION_BY_BODY_TYPE_KEY } from '../../../../auth/decorators/require
 import { REQUIRED_PERMISSIONS_KEY } from '../../../../auth/decorators/require-permissions.decorator.js';
 import { PERMISSION_CODES } from '../../../../shared/authorization/permission-codes.js';
 import { FilterVariantesMovimientoSchema } from '../dto/filter-variantes-movimiento.dto.js';
+import { FilterHistorialMovimientosSchema } from '../dto/filter-historial-movimientos.dto.js';
+import { ListarHistorialMovimientosQuery } from '../queries/listar-historial-movimientos/listar-historial-movimientos.query.js';
+import { ObtenerHistorialMovimientoQuery } from '../queries/obtener-historial-movimiento/obtener-historial-movimiento.query.js';
 import { BuscarVariantesMovimientoQuery } from '../queries/buscar-variantes-movimiento/buscar-variantes-movimiento.query.js';
 import { ListarAlmacenesMovimientoQuery } from '../queries/listar-almacenes-movimiento/listar-almacenes-movimiento.query.js';
 import { MovimientosController } from './movimientos.controller.js';
@@ -11,6 +14,74 @@ const almacenId = '550e8400-e29b-41d4-a716-446655440000';
 const commands = { execute: vi.fn() } as unknown as CommandBus;
 
 describe('MovimientosController', () => {
+  it('lista resúmenes confirmados con permisos de lectura y metadatos de paginación', async () => {
+    const movimiento = {
+      id: almacenId,
+      fecha: new Date('2026-10-24T10:00:00Z'),
+      tipo: 'ingreso',
+      estado: 'confirmado',
+      almacenOrigen: null,
+      almacenDestino: { nombre: 'Principal' },
+      detalles: [{ costoTotal: '2.500000' }],
+    };
+    const execute = vi.fn().mockResolvedValue([[movimiento], 21]);
+    const controller = new MovimientosController({ execute } as unknown as QueryBus, commands);
+    const filter = FilterHistorialMovimientosSchema.parse({ page: 2, tipo: 'ingreso' });
+    await expect(controller.listarHistorial(filter)).resolves.toEqual({
+      data: [{
+        id: almacenId,
+        fecha: movimiento.fecha,
+        tipo: 'ingreso',
+        estado: 'confirmado',
+        almacenOrigen: null,
+        almacenDestino: 'Principal',
+        cantidadDetalles: 1,
+        valorCosto: '2.500000',
+      }],
+      meta: { page: 2, limit: 20, total: 21, totalPages: 2 },
+    });
+    expect(execute).toHaveBeenCalledWith(new ListarHistorialMovimientosQuery(filter));
+  });
+
+  it('consulta el detalle con el mismo permiso y conserva el ID de compra', async () => {
+    const movimiento = {
+      id: almacenId,
+      fecha: new Date('2026-10-24T10:00:00Z'),
+      tipo: 'ingreso',
+      estado: 'confirmado',
+      almacenOrigen: null,
+      almacenDestino: { nombre: 'Principal' },
+      usuario: { nickName: 'Operadora' },
+      compra: { id: 'compra-1' },
+      motivo: null,
+      detalles: [{
+        id: 'linea-1',
+        cantidad: '2.000000',
+        cantidadBase: '2.000000',
+        factorABase: '1.00000000',
+        costoTotal: '3.000000',
+        variante: { sku: 'SKU', producto: { nombre: 'Tuerca' } },
+        unidad: { nombre: 'unidad' },
+      }],
+    };
+    const execute = vi.fn().mockResolvedValue(movimiento);
+    const controller = new MovimientosController({ execute } as unknown as QueryBus, commands);
+    const resultado = await controller.obtenerHistorial(almacenId);
+    expect(execute).toHaveBeenCalledWith(new ObtenerHistorialMovimientoQuery(almacenId));
+    expect(resultado).toMatchObject({
+      usuario: 'Operadora',
+      compraId: 'compra-1',
+      valorCosto: '3.000000',
+      detalles: [{ producto: 'Tuerca', sku: 'SKU', costoAplicado: '1.500000' }],
+    });
+    for (const name of ['listarHistorial', 'obtenerHistorial'] as const) {
+      const method = Object.getOwnPropertyDescriptor(MovimientosController.prototype, name)?.value;
+      expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+        PERMISSION_CODES.MOVIMIENTOS_READ,
+      ]);
+    }
+  });
+
   it('consulta almacenes activos sin requerir ALMACENES_LEER', async () => {
     const execute = vi
       .fn()
