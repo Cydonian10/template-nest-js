@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { APP_FILTER } from '@nestjs/core';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
 import databaseConfig from './config/database.config.js';
 import { envSchema } from './config/env.schema.js';
@@ -18,11 +19,11 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
     LoggerModule.forRoot({
       pinoHttp: {
         serializers: {
-          req: (req) => ({
+          req: (req: IncomingMessage) => ({
             method: req.method,
             url: req.url?.split('?')[0],
           }),
-          res: (res) => ({ statusCode: res.statusCode }),
+          res: (res: ServerResponse) => ({ statusCode: res.statusCode }),
         },
         transport: {
           target: 'pino-pretty',
