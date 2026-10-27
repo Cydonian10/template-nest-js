@@ -112,6 +112,12 @@ export const INVENTARIO_PERMISSIONS = [
     actionCode: 'LEER',
   },
   {
+    code: PERMISSION_CODES.EXISTENCIAS_EDIT_MINIMO,
+    name: 'Editar mínimo de existencias',
+    resourceCode: 'EXISTENCIAS',
+    actionCode: 'EDITAR_MINIMO',
+  },
+  {
     code: PERMISSION_CODES.MOVIMIENTOS_READ,
     name: 'Leer movimientos',
     resourceCode: 'MOVIMIENTOS',

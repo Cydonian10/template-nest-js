@@ -57,6 +57,22 @@ describe('PERMISSION_DEFINITIONS', () => {
     );
   });
 
+  it('registra EXISTENCIAS_EDITAR_MINIMO como permiso independiente y sin rol', () => {
+    expect(PERMISSION_DEFINITIONS).toContainEqual({
+      systemCode: SYSTEM_CODES.INVENTARIO,
+      code: PERMISSION_CODES.EXISTENCIAS_EDIT_MINIMO,
+      name: 'Editar mínimo de existencias',
+      resourceCode: 'EXISTENCIAS',
+      actionCode: 'EDITAR_MINIMO',
+    });
+    expect(PERMISSION_CODES.EXISTENCIAS_EDIT_MINIMO).not.toBe(
+      PERMISSION_CODES.EXISTENCIAS_READ,
+    );
+    expect(PERMISSION_DEFINITIONS).not.toContainEqual(
+      expect.objectContaining({ roleCode: expect.anything() }),
+    );
+  });
+
   it('registra PROVEEDORES_CREAR independientemente de lectura sin asignarlo a roles', () => {
     expect(PERMISSION_DEFINITIONS).toContainEqual({
       systemCode: SYSTEM_CODES.INVENTARIO,

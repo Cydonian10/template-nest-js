@@ -286,6 +286,44 @@ describe('PermissionsGuard', () => {
     );
   });
 
+  it('editar mínimos no concede lectura ni otros permisos, y lectura no concede edición', async () => {
+    for (const required of [
+      PERMISSION_CODES.EXISTENCIAS_READ,
+      PERMISSION_CODES.ALMACENES_UPDATE,
+      PERMISSION_CODES.COMPRAS_READ,
+    ]) {
+      getAllAndOverride.mockImplementation((key: string) =>
+        key === 'requiredPermissions' ? [required] : false,
+      );
+      getRawMany.mockResolvedValue([
+        {
+          roleCode: 'OPERADOR',
+          code: PERMISSION_CODES.EXISTENCIAS_EDIT_MINIMO,
+          systemCode: SYSTEM_CODES.INVENTARIO,
+        },
+      ]);
+      await expect(
+        guard.canActivate(context({ id: 'user-1' })),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    }
+
+    getAllAndOverride.mockImplementation((key: string) =>
+      key === 'requiredPermissions'
+        ? [PERMISSION_CODES.EXISTENCIAS_EDIT_MINIMO]
+        : false,
+    );
+    getRawMany.mockResolvedValue([
+      {
+        roleCode: 'OPERADOR',
+        code: PERMISSION_CODES.EXISTENCIAS_READ,
+        systemCode: SYSTEM_CODES.INVENTARIO,
+      },
+    ]);
+    await expect(
+      guard.canActivate(context({ id: 'user-1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('deniega compras sin el permiso correspondiente en INVENTARIO', async () => {
     for (const required of [
       PERMISSION_CODES.COMPRAS_CREATE,
