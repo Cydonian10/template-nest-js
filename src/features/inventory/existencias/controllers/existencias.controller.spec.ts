@@ -5,6 +5,8 @@ import { FilterExistenciasSchema } from '../dto/filter-existencias.dto.js';
 import { GuardarMinimoSchema } from '../dto/guardar-minimo.dto.js';
 import { GuardarMinimoCommand } from '../commands/guardar-minimo/guardar-minimo.command.js';
 import { QuitarMinimoCommand } from '../commands/quitar-minimo/quitar-minimo.command.js';
+import { FilterResumenReposicionSchema } from '../dto/resumen-reposicion.dto.js';
+import { ResumenReposicionQuery } from '../queries/resumen-reposicion/resumen-reposicion.query.js';
 import { ListarAlmacenesActivosQuery } from '../queries/listar-almacenes-activos/listar-alamcenes-activos.query.js';
 import { ListarExistenciasQuery } from '../queries/listar-existencias/listar-existencias.query.js';
 import { ExistenciasController } from './existencias.controller.js';
@@ -101,5 +103,18 @@ describe('ExistenciasController', () => {
     ]) {
       expect(GuardarMinimoSchema.safeParse({ minimoBase }).success).toBe(false);
     }
+  });
+
+  it('protege el resumen con lectura y exige un almacén válido o todos', async () => {
+    const execute = vi.fn().mockResolvedValue({ bajoMinimo: 0, agotadas: 0, alertas: [] });
+    const controller = new ExistenciasController({ execute } as unknown as QueryBus, {} as CommandBus);
+    const method = Object.getOwnPropertyDescriptor(ExistenciasController.prototype, 'resumenReposicion')?.value;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([
+      PERMISSION_CODES.EXISTENCIAS_READ,
+    ]);
+    expect(FilterResumenReposicionSchema.safeParse({}).success).toBe(false);
+    expect(FilterResumenReposicionSchema.safeParse({ almacenId: 'invalido' }).success).toBe(false);
+    await controller.resumenReposicion(FilterResumenReposicionSchema.parse({ almacenId: 'todos' }));
+    expect(execute).toHaveBeenCalledWith(new ResumenReposicionQuery('todos'));
   });
 });

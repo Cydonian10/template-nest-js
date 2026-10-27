@@ -15,6 +15,9 @@ import { GuardarMinimoSchema } from '../dto/guardar-minimo.dto.js';
 import type { GuardarMinimoDto } from '../dto/guardar-minimo.dto.js';
 import { GuardarMinimoCommand } from '../commands/guardar-minimo/guardar-minimo.command.js';
 import { QuitarMinimoCommand } from '../commands/quitar-minimo/quitar-minimo.command.js';
+import { FilterResumenReposicionSchema, ResumenReposicionDto } from '../dto/resumen-reposicion.dto.js';
+import type { FilterResumenReposicionDto } from '../dto/resumen-reposicion.dto.js';
+import { ResumenReposicionQuery } from '../queries/resumen-reposicion/resumen-reposicion.query.js';
 import { ListarAlmacenesActivosQuery } from '../queries/listar-almacenes-activos/listar-alamcenes-activos.query.js';
 import { ListarExistenciasQuery } from '../queries/listar-existencias/listar-existencias.query.js';
 
@@ -53,6 +56,15 @@ export class ExistenciasController {
     @Param('almacenId', new ParseUUIDPipe()) almacenId: string,
   ): Promise<void> {
     await this.commands.execute(new QuitarMinimoCommand(varianteId, almacenId));
+  }
+
+  @Get('resumen-reposicion')
+  @RequirePermissions(PERMISSION_CODES.EXISTENCIAS_READ)
+  @ApiOkResponse({ type: ResumenReposicionDto })
+  async resumenReposicion(
+    @Query({ schema: FilterResumenReposicionSchema }) filter: FilterResumenReposicionDto,
+  ): Promise<ResumenReposicionDto> {
+    return this.queries.execute(new ResumenReposicionQuery(filter.almacenId));
   }
 
   @Get('almacenes')
