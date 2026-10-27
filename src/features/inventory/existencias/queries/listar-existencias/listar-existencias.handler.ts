@@ -5,6 +5,7 @@ import { ResourceNotFoundException } from '../../../../../shared/exceptions/reso
 import type { ListaExistenciasResponseDto } from '../../dto/existencia-response.dto.js';
 import { Almacen } from '../../../entities/almacen.entity.js';
 import { Existencia } from '../../../entities/existencia.entity.js';
+import { MinimoExistencia } from '../../../entities/minimo-existencia.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import { ListarExistenciasQuery } from './listar-existencias.query.js';
 
@@ -13,6 +14,7 @@ type SaldoFila = {
   almacenId: string;
   almacenNombre: string;
   cantidadBase: string;
+  minimoBase: string | null;
   valorCosto: string;
   costoPromedioBase: string | null;
   costoRegistradoCero: boolean;
@@ -59,6 +61,11 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
             Existencia,
             'existencia',
             'existencia.varianteId = variante.id AND existencia.almacenId = almacen.id',
+          )
+          .leftJoin(
+            MinimoExistencia,
+            'minimo',
+            'minimo.varianteId = variante.id AND minimo.almacenId = almacen.id',
           )
           .where(
             '((variante.activo = true AND producto.activo = true) OR existencia.cantidad > 0)',
@@ -111,6 +118,7 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
           .addSelect('almacen.id', 'almacenId')
           .addSelect('almacen.nombre', 'almacenNombre')
           .addSelect('COALESCE(existencia.cantidad, 0)::text', 'cantidadBase')
+          .addSelect('minimo.minimoBase::text', 'minimoBase')
           .addSelect('COALESCE(existencia.valorCosto, 0)::text', 'valorCosto')
           .addSelect(
             'CASE WHEN existencia.cantidad > 0 THEN ROUND(existencia.valorCosto / existencia.cantidad, 6)::text ELSE NULL END',
@@ -179,6 +187,7 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
               },
               almacen: { id: saldo.almacenId, nombre: saldo.almacenNombre },
               cantidadBase: saldo.cantidadBase,
+              minimoBase: saldo.minimoBase,
               valorCosto: saldo.valorCosto,
               costoPromedioBase: saldo.costoPromedioBase,
               costoRegistradoCero: saldo.costoRegistradoCero,

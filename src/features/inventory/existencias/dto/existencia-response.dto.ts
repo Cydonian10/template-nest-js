@@ -48,6 +48,7 @@ export class ExistenciaConsultaDto {
   @ApiProperty({ type: VarianteExistenciaDto }) variante: VarianteExistenciaDto;
   @ApiProperty({ type: AlmacenExistenciaDto }) almacen: AlmacenExistenciaDto;
   @ApiProperty({ example: '24.000000' }) cantidadBase: string;
+  @ApiProperty({ nullable: true, example: '5.000000' }) minimoBase: string | null;
   @ApiProperty({ example: '120.000000' }) valorCosto: string;
   @ApiProperty({ nullable: true, example: '5.000000' }) costoPromedioBase:
     string | null;

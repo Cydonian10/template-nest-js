@@ -3,6 +3,7 @@ import type { EntityManager, Repository } from 'typeorm';
 import { z } from 'zod';
 import { Almacen } from '../../../entities/almacen.entity.js';
 import { Existencia } from '../../../entities/existencia.entity.js';
+import { MinimoExistencia } from '../../../entities/minimo-existencia.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import { FilterExistenciasSchema } from '../../dto/filter-existencias.dto.js';
 import { ListarExistenciasHandler } from './listar-existencias.handler.js';
@@ -170,6 +171,7 @@ describe('ListarExistenciasHandler', () => {
       almacenId,
       almacenNombre: 'Principal',
       cantidadBase: '24.000000',
+      minimoBase: '25.000000',
       valorCosto: '120.000000',
       costoPromedioBase: '5.000000',
       costoRegistradoCero: false,
@@ -245,6 +247,7 @@ describe('ListarExistenciasHandler', () => {
             valores: [{ atributo: 'Color', valor: 'Negro' }],
           },
           cantidadBase: '24.000000',
+          minimoBase: '25.000000',
           valorCosto: '120.000000',
           costoPromedioBase: '5.000000',
           unidadesSecundarias: [{ id: 'u2', factorABase: '12.00000000' }],
@@ -252,6 +255,7 @@ describe('ListarExistenciasHandler', () => {
         {
           almacen: { nombre: 'Tienda' },
           cantidadBase: '1.000000',
+          minimoBase: '25.000000',
           costoPromedioBase: '0.000000',
           costoRegistradoCero: true,
         },
@@ -271,6 +275,15 @@ describe('ListarExistenciasHandler', () => {
     );
     expect(rowsQuery.offset).toHaveBeenCalledWith(2);
     expect(rowsQuery.limit).toHaveBeenCalledWith(2);
+    expect(rowsQuery.leftJoin).toHaveBeenCalledWith(
+      MinimoExistencia,
+      'minimo',
+      'minimo.varianteId = variante.id AND minimo.almacenId = almacen.id',
+    );
+    expect(rowsQuery.addSelect).toHaveBeenCalledWith(
+      'minimo.minimoBase::text',
+      'minimoBase',
+    );
     expect(countQuery.select).toHaveBeenCalledWith('COUNT(*)', 'total');
     expect(totalQuery.where).not.toHaveBeenCalled();
     expect(find).toHaveBeenCalledTimes(1);
@@ -322,6 +335,7 @@ describe('ListarExistenciasHandler', () => {
           almacenId,
           almacenNombre: 'Principal',
           cantidadBase: '0',
+          minimoBase: null,
           valorCosto: '0',
           costoPromedioBase: null,
           costoRegistradoCero: false,
@@ -353,6 +367,7 @@ describe('ListarExistenciasHandler', () => {
       items: [
         {
           cantidadBase: '0',
+          minimoBase: null,
           valorCosto: '0',
           costoPromedioBase: null,
           unidadesSecundarias: [],

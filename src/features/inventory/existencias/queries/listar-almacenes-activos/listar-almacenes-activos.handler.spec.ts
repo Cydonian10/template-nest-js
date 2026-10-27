@@ -22,7 +22,7 @@ describe('ListarAlmacenesActivosHandler', () => {
     expect(find).toHaveBeenCalledWith({
       select: { id: true, nombre: true },
       where: { activo: true },
-      order: { nombre: 'ASC', id: 'ASC' },
+      order: { ordenCreacion: 'ASC' },
     });
   });
 

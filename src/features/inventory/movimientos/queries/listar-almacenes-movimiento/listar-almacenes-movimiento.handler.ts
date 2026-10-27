@@ -14,7 +14,7 @@ export class ListarAlmacenesMovimientoHandler implements IQueryHandler<ListarAlm
     return this.almacenes.find({
       select: { id: true, nombre: true },
       where: { activo: true },
-      order: { nombre: 'ASC', id: 'ASC' },
+      order: { ordenCreacion: 'ASC' },
     });
   }
 }
