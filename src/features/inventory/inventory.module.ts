@@ -43,6 +43,7 @@ import { PuedeCambiarUnidadBaseHandler } from './products/queries/puede-cambiar-
 import { UpdateProductHandler } from './products/commands/update-product/update-product.handler.js';
 import { Almacen } from './entities/almacen.entity.js';
 import { Existencia } from './entities/existencia.entity.js';
+import { MinimoExistencia } from './entities/minimo-existencia.entity.js';
 import { AlmacenesController } from './almacenes/almacenes.controller.js';
 import { FindAllAlmacenesHandler } from './almacenes/find-all-almacenes.handler.js';
 import { CreateAlmacenHandler } from './almacenes/create-almacen.handler.js';
@@ -105,6 +106,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
       VarianteProducto,
       Almacen,
       Existencia,
+      MinimoExistencia,
       Proveedor,
       ComprobanteCompra,
       Compra,
