@@ -281,7 +281,7 @@ describe('ListarExistenciasHandler', () => {
       'minimo.varianteId = variante.id AND minimo.almacenId = almacen.id',
     );
     expect(rowsQuery.addSelect).toHaveBeenCalledWith(
-      'minimo.minimoBase::text',
+      'minimo."minimo_base"::text',
       'minimoBase',
     );
     expect(countQuery.select).toHaveBeenCalledWith('COUNT(*)', 'total');

@@ -118,7 +118,7 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
           .addSelect('almacen.id', 'almacenId')
           .addSelect('almacen.nombre', 'almacenNombre')
           .addSelect('COALESCE(existencia.cantidad, 0)::text', 'cantidadBase')
-          .addSelect('minimo.minimoBase::text', 'minimoBase')
+          .addSelect('minimo."minimo_base"::text', 'minimoBase')
           .addSelect('COALESCE(existencia.valorCosto, 0)::text', 'valorCosto')
           .addSelect(
             'CASE WHEN existencia.cantidad > 0 THEN ROUND(existencia.valorCosto / existencia.cantidad, 6)::text ELSE NULL END',

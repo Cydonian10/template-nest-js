@@ -37,13 +37,13 @@ describe('ResumenReposicionHandler', () => {
     expect(builder.leftJoin).toHaveBeenCalledTimes(2);
     expect(builder.where).toHaveBeenCalledWith('variante.activo = true');
     expect(builder.andWhere).toHaveBeenCalledWith(
-      '(COALESCE(saldo.cantidad, 0) = 0 OR (COALESCE(saldo.cantidad, 0) > 0 AND COALESCE(saldo.cantidad, 0) <= minimo.minimoBase))',
+      '(COALESCE(saldo.cantidad, 0) = 0 OR (COALESCE(saldo.cantidad, 0) > 0 AND COALESCE(saldo.cantidad, 0) <= minimo."minimo_base"))',
     );
     expect(builder.orderBy).toHaveBeenCalledWith(
       'CASE WHEN COALESCE(saldo.cantidad, 0) = 0 THEN 0 ELSE 1 END', 'ASC',
     );
     expect(builder.addOrderBy).toHaveBeenCalledWith(
-      'COALESCE(saldo.cantidad, 0) / NULLIF(minimo.minimoBase, 0)', 'ASC', 'NULLS FIRST',
+      'COALESCE(saldo.cantidad, 0) / NULLIF(minimo."minimo_base", 0)', 'ASC', 'NULLS FIRST',
     );
     expect(builder.limit).toHaveBeenCalledWith(10);
   });

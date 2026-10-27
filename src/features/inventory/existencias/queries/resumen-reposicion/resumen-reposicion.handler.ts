@@ -41,7 +41,8 @@ export class ResumenReposicionHandler implements IQueryHandler<ResumenReposicion
         pares.andWhere('almacen.id = :almacenId', { almacenId });
       }
       const cantidad = 'COALESCE(saldo.cantidad, 0)';
-      const bajo = `(${cantidad} > 0 AND ${cantidad} <= minimo.minimoBase)`;
+      const minimoBase = 'minimo."minimo_base"';
+      const bajo = `(${cantidad} > 0 AND ${cantidad} <= ${minimoBase})`;
       const conteos = await pares.clone()
         .select(`COUNT(*) FILTER (WHERE ${bajo})`, 'bajoMinimo')
         .addSelect(`COUNT(*) FILTER (WHERE ${cantidad} = 0)`, 'agotadas')
@@ -57,10 +58,10 @@ export class ResumenReposicionHandler implements IQueryHandler<ResumenReposicion
         .addSelect('almacen.nombre', 'almacenNombre')
         .addSelect('unidad.simbolo', 'unidadBaseSimbolo')
         .addSelect(`${cantidad}::text`, 'cantidadBase')
-        .addSelect('minimo.minimoBase::text', 'minimoBase')
+        .addSelect(`${minimoBase}::text`, 'minimoBase')
         .addSelect(`CASE WHEN ${cantidad} = 0 THEN 'agotada' ELSE 'bajo_minimo' END`, 'tipo')
         .orderBy(`CASE WHEN ${cantidad} = 0 THEN 0 ELSE 1 END`, 'ASC')
-        .addOrderBy(`${cantidad} / NULLIF(minimo.minimoBase, 0)`, 'ASC', 'NULLS FIRST')
+        .addOrderBy(`${cantidad} / NULLIF(${minimoBase}, 0)`, 'ASC', 'NULLS FIRST')
         .addOrderBy('variante.sku', 'ASC')
         .addOrderBy('almacen.id', 'ASC')
         .addOrderBy('variante.id', 'ASC')
