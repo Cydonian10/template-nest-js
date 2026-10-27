@@ -76,6 +76,8 @@ import { ValidarParMinimo } from './existencias/commands/validar-par-minimo.js';
 import { GuardarMinimoHandler } from './existencias/commands/guardar-minimo/guardar-minimo.handler.js';
 import { QuitarMinimoHandler } from './existencias/commands/quitar-minimo/quitar-minimo.handler.js';
 import { ResumenReposicionHandler } from './existencias/queries/resumen-reposicion/resumen-reposicion.handler.js';
+import { ResumenInventarioHandler } from './compras/queries/resumen-inventario/resumen-inventario.handler.js';
+import { ResumenSalidasHandler } from './movimientos/queries/resumen-salidas/resumen-salidas.handler.js';
 import { MovimientosController } from './movimientos/controllers/movimientos.controller.js';
 import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
 import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
@@ -161,6 +163,8 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     GuardarMinimoHandler,
     QuitarMinimoHandler,
     ResumenReposicionHandler,
+    ResumenInventarioHandler,
+    ResumenSalidasHandler,
     ListarAlmacenesMovimientoHandler,
     BuscarVariantesMovimientoHandler,
     CrearMovimientoHandler,
