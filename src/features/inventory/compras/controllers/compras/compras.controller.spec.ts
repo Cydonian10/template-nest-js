@@ -6,6 +6,7 @@ import { ListarComprasQuery } from '../../queries/listar-compras/listar-compras.
 import { ObtenerCompraQuery } from '../../queries/obtener-compra/obtener-compra.query.js';
 import { ComprasController } from './compras.controller.js';
 import { EditarCompraCommand } from '../../commands/editar-compra/editar-compra.command.js';
+import { ResumenInventarioQuery } from '../../queries/resumen-inventario/resumen-inventario.query.js';
 
 const compra = {
   id: 'c1',
@@ -180,5 +181,15 @@ describe('ComprasController', () => {
       controller.update('c1', 'usuario', { ...body, totalDocumento: '0' }),
     ).rejects.toThrow();
     expect(commands.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('protege el resumen global con COMPRAS_LEER y no recibe almacén', async () => {
+    const execute = vi.fn().mockResolvedValue({ total: 0, porDia: [], recientes: [] });
+    const controller = new ComprasController({ execute } as unknown as QueryBus, {} as CommandBus);
+    const method = Object.getOwnPropertyDescriptor(ComprasController.prototype, 'resumenInventario')?.value;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([PERMISSION_CODES.COMPRAS_READ]);
+    const periodo = { desde: '2026-10-24', hasta: '2026-10-25' };
+    await controller.resumenInventario(periodo);
+    expect(execute).toHaveBeenCalledWith(new ResumenInventarioQuery(periodo));
   });
 });

@@ -44,6 +44,10 @@ import { parseCompraMultipart } from '../../multipart/parse-compra-multipart.js'
 import { prepareComprobante } from '../../prepare-comprobante.js';
 import { ListarComprasQuery } from '../../queries/listar-compras/listar-compras.query.js';
 import { ObtenerCompraQuery } from '../../queries/obtener-compra/obtener-compra.query.js';
+import { PeriodoActividadSchema } from '../../../resumen-actividad.js';
+import type { PeriodoActividad } from '../../../resumen-actividad.js';
+import { ResumenInventarioDto } from '../../dto/resumen-inventario.dto.js';
+import { ResumenInventarioQuery } from '../../queries/resumen-inventario/resumen-inventario.query.js';
 
 @ApiBearerAuth()
 @ApiTags('compras')
@@ -155,6 +159,15 @@ export class ComprasController {
       total,
       filter,
     );
+  }
+
+  @Get('resumen-inventario')
+  @RequirePermissions(PERMISSION_CODES.COMPRAS_READ)
+  @ApiOkResponse({ type: ResumenInventarioDto })
+  resumenInventario(
+    @Query({ schema: PeriodoActividadSchema }) periodo: PeriodoActividad,
+  ): Promise<ResumenInventarioDto> {
+    return this.queries.execute(new ResumenInventarioQuery(periodo));
   }
 
   @Get(':id')

@@ -50,6 +50,9 @@ import { BuscarVariantesMovimientoQuery } from '../queries/buscar-variantes-movi
 import { ListarAlmacenesMovimientoQuery } from '../queries/listar-almacenes-movimiento/listar-almacenes-movimiento.query.js';
 import { ListarHistorialMovimientosQuery } from '../queries/listar-historial-movimientos/listar-historial-movimientos.query.js';
 import { ObtenerHistorialMovimientoQuery } from '../queries/obtener-historial-movimiento/obtener-historial-movimiento.query.js';
+import { FilterResumenSalidasSchema, ResumenSalidasDto } from '../dto/resumen-salidas.dto.js';
+import type { FilterResumenSalidasDto } from '../dto/resumen-salidas.dto.js';
+import { ResumenSalidasQuery } from '../queries/resumen-salidas/resumen-salidas.query.js';
 
 class AlmacenMovimientoDto {
   @ApiProperty({ format: 'uuid' }) id: string;
@@ -136,6 +139,15 @@ export class MovimientosController {
       total,
       filter,
     );
+  }
+
+  @Get('resumen-salidas')
+  @RequirePermissions(PERMISSION_CODES.MOVIMIENTOS_READ)
+  @ApiOkResponse({ type: ResumenSalidasDto })
+  resumenSalidas(
+    @Query({ schema: FilterResumenSalidasSchema }) filter: FilterResumenSalidasDto,
+  ): Promise<ResumenSalidasDto> {
+    return this.queries.execute(new ResumenSalidasQuery(filter));
   }
 
   @Get(':id')

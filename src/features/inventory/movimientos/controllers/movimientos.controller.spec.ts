@@ -8,12 +8,22 @@ import { ListarHistorialMovimientosQuery } from '../queries/listar-historial-mov
 import { ObtenerHistorialMovimientoQuery } from '../queries/obtener-historial-movimiento/obtener-historial-movimiento.query.js';
 import { BuscarVariantesMovimientoQuery } from '../queries/buscar-variantes-movimiento/buscar-variantes-movimiento.query.js';
 import { ListarAlmacenesMovimientoQuery } from '../queries/listar-almacenes-movimiento/listar-almacenes-movimiento.query.js';
+import { ResumenSalidasQuery } from '../queries/resumen-salidas/resumen-salidas.query.js';
 import { MovimientosController } from './movimientos.controller.js';
 
 const almacenId = '550e8400-e29b-41d4-a716-446655440000';
 const commands = { execute: vi.fn() } as unknown as CommandBus;
 
 describe('MovimientosController', () => {
+  it('protege el resumen de salidas con MOVIMIENTOS_LEER y filtra por almacén', async () => {
+    const execute = vi.fn().mockResolvedValue({ total: 0, porDia: [], recientes: [] });
+    const controller = new MovimientosController({ execute } as unknown as QueryBus, commands);
+    const method = Object.getOwnPropertyDescriptor(MovimientosController.prototype, 'resumenSalidas')?.value;
+    expect(Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, method)).toEqual([PERMISSION_CODES.MOVIMIENTOS_READ]);
+    const filter = { almacenId, desde: '2026-10-24', hasta: '2026-10-25' };
+    await controller.resumenSalidas(filter);
+    expect(execute).toHaveBeenCalledWith(new ResumenSalidasQuery(filter));
+  });
   it('lista resúmenes confirmados con permisos de lectura y metadatos de paginación', async () => {
     const movimiento = {
       id: almacenId,
