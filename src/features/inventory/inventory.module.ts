@@ -72,6 +72,9 @@ import { AdjuntarComprobanteHandler } from './compras/commands/adjuntar-comproba
 import { ExistenciasController } from './existencias/controllers/existencias.controller.js';
 import { ListarAlmacenesActivosHandler } from './existencias/queries/listar-almacenes-activos/listar-almacenes-activos.handler.js';
 import { ListarExistenciasHandler } from './existencias/queries/listar-existencias/listar-existencias.handler.js';
+import { ValidarParMinimo } from './existencias/commands/validar-par-minimo.js';
+import { GuardarMinimoHandler } from './existencias/commands/guardar-minimo/guardar-minimo.handler.js';
+import { QuitarMinimoHandler } from './existencias/commands/quitar-minimo/quitar-minimo.handler.js';
 import { MovimientosController } from './movimientos/controllers/movimientos.controller.js';
 import { ListarAlmacenesMovimientoHandler } from './movimientos/queries/listar-almacenes-movimiento/listar-almacenes-movimiento.handler.js';
 import { BuscarVariantesMovimientoHandler } from './movimientos/queries/buscar-variantes-movimiento/buscar-variantes-movimiento.handler.js';
@@ -153,6 +156,9 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     AdjuntarComprobanteHandler,
     ListarAlmacenesActivosHandler,
     ListarExistenciasHandler,
+    ValidarParMinimo,
+    GuardarMinimoHandler,
+    QuitarMinimoHandler,
     ListarAlmacenesMovimientoHandler,
     BuscarVariantesMovimientoHandler,
     CrearMovimientoHandler,
