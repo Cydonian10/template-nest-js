@@ -11,6 +11,7 @@ import { AccessControlModule } from './features/access-control/access-control.mo
 import { AuthModule } from './auth/auth.module.js';
 import { ImagesModule } from './features/images/images.module.js';
 import { InventoryModule } from './features/inventory/inventory.module.js';
+import { SalesModule } from './features/sales/sales.module.js';
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.js';
 
 @Module({
@@ -45,6 +46,7 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception.filter.
     AuthModule,
     ImagesModule,
     InventoryModule,
+    SalesModule,
   ],
   controllers: [],
   providers: [
