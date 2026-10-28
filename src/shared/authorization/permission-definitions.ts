@@ -3,6 +3,7 @@ import type { PermissionCode } from './permission-codes.js';
 import type { SystemCode } from './system-codes.js';
 import { ACCESS_CONTROL_PERMISSIONS } from './permission-definitions/access-control.js';
 import { INVENTARIO_PERMISSIONS } from './permission-definitions/inventario.js';
+import { VENTAS_PERMISSIONS } from './permission-definitions/ventas.js';
 
 export type PermissionDefinition = {
   code: PermissionCode;
@@ -24,5 +25,9 @@ export const PERMISSION_DEFINITIONS: readonly SystemPermissionDefinition[] = [
   ...INVENTARIO_PERMISSIONS.map((definition) => ({
     ...definition,
     systemCode: SYSTEM_CODES.INVENTARIO,
+  })),
+  ...VENTAS_PERMISSIONS.map((definition) => ({
+    ...definition,
+    systemCode: SYSTEM_CODES.VENTAS,
   })),
 ];

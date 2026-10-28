@@ -1,8 +1,26 @@
 import { PERMISSION_CODES } from './permission-codes.js';
 import { PERMISSION_DEFINITIONS } from './permission-definitions.js';
 import { SYSTEM_CODES } from './system-codes.js';
+import { SYSTEM_DEFINITIONS } from './system-definitions.js';
 
 describe('PERMISSION_DEFINITIONS', () => {
+  it('registra Ventas con su permiso de lectura sin asignarlo a roles', () => {
+    expect(SYSTEM_DEFINITIONS[SYSTEM_CODES.VENTAS]).toEqual({
+      name: 'Ventas',
+      description: 'Gestiona ventas, cajas y turnos.',
+    });
+    expect(PERMISSION_DEFINITIONS).toContainEqual({
+      systemCode: SYSTEM_CODES.VENTAS,
+      code: PERMISSION_CODES.CAJAS_TURNOS_READ,
+      name: 'Leer cajas y turnos',
+      resourceCode: 'CAJAS_TURNOS',
+      actionCode: 'LEER',
+    });
+    expect(PERMISSION_DEFINITIONS).not.toContainEqual(
+      expect.objectContaining({ roleCode: expect.anything() }),
+    );
+  });
+
   it('mantiene códigos consistentes y definiciones únicas', () => {
     const codes = PERMISSION_DEFINITIONS.map(({ code }) => code);
     const pairs = PERMISSION_DEFINITIONS.map((definition) => {
