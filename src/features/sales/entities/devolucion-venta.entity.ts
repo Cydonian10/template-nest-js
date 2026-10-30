@@ -67,7 +67,7 @@ export class DevolucionVenta {
   @Column({ type: 'text' })
   motivo: string;
 
-  @Column({ type: 'numeric', precision: 18, scale: 2 })
+  @Column({ name: 'base_imponible', type: 'numeric', precision: 18, scale: 2 })
   baseImponible: string;
 
   @Column({ type: 'numeric', precision: 18, scale: 2 })
