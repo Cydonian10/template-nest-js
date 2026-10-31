@@ -20,16 +20,23 @@ export interface CierreTurnoResultado {
 export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
   constructor(private readonly unitOfWork: UnitOfWork) {}
 
-  async execute({ cajaId, turnoId, usuarioId, data }: CerrarTurnoCommand): Promise<CierreTurnoResultado> {
+  async execute({
+    cajaId,
+    turnoId,
+    usuarioId,
+    data,
+  }: CerrarTurnoCommand): Promise<CierreTurnoResultado> {
     return this.unitOfWork.execute(async (manager) => {
       const turno = await manager.findOne(TurnoCaja, {
         where: { id: turnoId, caja: { id: cajaId } },
         lock: { mode: 'pessimistic_write' },
       });
-      if (!turno) throw new NotFoundException('El turno no existe en esta caja');
-      if (turno.fechaCierre) throw new ConflictException('El turno ya está cerrado');
+      if (!turno)
+        throw new NotFoundException('El turno no existe en esta caja');
+      if (turno.fechaCierre)
+        throw new ConflictException('El turno ya está cerrado');
 
-      const [resultado]: CierreTurnoResultado[] = await manager.query(
+      const [filas]: [CierreTurnoResultado[], number] = await manager.query(
         `WITH calculo AS (
           SELECT t.id, t.saldo_inicial
             + COALESCE((SELECT SUM(p.importe) FROM pagos_venta p JOIN ventas v ON v.id = p.venta_id WHERE v.turno_id = t.id AND p.medio = 'efectivo'), 0)
@@ -49,7 +56,7 @@ export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
           t.diferencia::text AS diferencia, t.tipo_cierre AS "tipoCierre"`,
         [turnoId, usuarioId, data.efectivoContado],
       );
-      return resultado;
+      return filas[0];
     });
   }
 }

@@ -5,20 +5,27 @@ import { CerrarTurnoCommand } from './cerrar-turno.command.js';
 import { CerrarTurnoHandler } from './cerrar-turno.handler.js';
 
 describe('CerrarTurnoHandler', () => {
-  const command = new CerrarTurnoCommand('c1', 't1', 'u1', { efectivoContado: '16.00' });
+  const command = new CerrarTurnoCommand('c1', 't1', 'u1', {
+    efectivoContado: '16.00',
+  });
 
   function setup(turno: unknown, resultado: unknown = {}) {
     const findOne = vi.fn().mockResolvedValue(turno);
-    const query = vi.fn().mockResolvedValue([resultado]);
+    const query = vi.fn().mockResolvedValue([[resultado], 1]);
     const manager = { findOne, query } as unknown as EntityManager;
     const unitOfWork = {
-      execute: (work: (manager: EntityManager) => Promise<unknown>) => work(manager),
+      execute: (work: (manager: EntityManager) => Promise<unknown>) =>
+        work(manager),
     } as unknown as UnitOfWork;
     return { handler: new CerrarTurnoHandler(unitOfWork), findOne, query };
   }
 
   it('bloquea el turno y registra el cierre con aritmética decimal en la base de datos', async () => {
-    const resultado = { efectivoEsperado: '15.00', efectivoContado: '16.00', diferencia: '1.00' };
+    const resultado = {
+      efectivoEsperado: '15.00',
+      efectivoContado: '16.00',
+      diferencia: '1.00',
+    };
     const { handler, findOne, query } = setup({ fechaCierre: null }, resultado);
     await expect(handler.execute(command)).resolves.toEqual(resultado);
     expect(findOne).toHaveBeenCalledWith(expect.anything(), {
@@ -31,13 +38,17 @@ describe('CerrarTurnoHandler', () => {
 
   it('rechaza un turno inexistente o de otra caja', async () => {
     const { handler, query } = setup(null);
-    await expect(handler.execute(command)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(handler.execute(command)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     expect(query).not.toHaveBeenCalled();
   });
 
   it('rechaza un turno ya cerrado', async () => {
     const { handler, query } = setup({ fechaCierre: new Date() });
-    await expect(handler.execute(command)).rejects.toBeInstanceOf(ConflictException);
+    await expect(handler.execute(command)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(query).not.toHaveBeenCalled();
   });
 });
