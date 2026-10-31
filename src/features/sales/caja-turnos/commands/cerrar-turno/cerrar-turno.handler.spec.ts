@@ -33,8 +33,43 @@ describe('CerrarTurnoHandler', () => {
       where: { id: 't1', caja: { id: 'c1' } },
       lock: { mode: 'pessimistic_write' },
     });
-    expect(query.mock.calls[0][1]).toEqual(['t1', 'u1', '16.00']);
+    expect(query.mock.calls[0][1]).toEqual([
+      't1',
+      'u1',
+      '16.00',
+      '15.00',
+      null,
+    ]);
     expect(query.mock.calls[0][0]).toContain('$3::numeric - calculo.esperado');
+    expect(query.mock.calls[0][0]).toContain('calculo.esperado = $4::numeric');
+    expect(query.mock.calls[0][0]).toContain('observacion_cierre = $5');
+  });
+
+  it('rechaza un total cambiado con un código estable', async () => {
+    const { handler, query } = setup({ fechaCierre: null });
+    query.mockResolvedValue([[], 0]);
+    await expect(handler.execute(command)).rejects.toMatchObject({
+      status: 409,
+      response: { code: 'EFECTIVO_ESPERADO_CAMBIO' },
+    });
+  });
+
+  it('envía la observación para guardarla en el cierre', async () => {
+    const { handler, query } = setup({ fechaCierre: null });
+    await handler.execute(
+      new CerrarTurnoCommand('c1', 't1', 'u1', {
+        efectivoContado: '16.00',
+        efectivoEsperadoConfirmado: '15',
+        observacionCierre: 'Sobrante',
+      }),
+    );
+    expect(query.mock.calls[0][1]).toEqual([
+      't1',
+      'u1',
+      '16.00',
+      '15',
+      'Sobrante',
+    ]);
   });
 
   it('rechaza un turno inexistente o de otra caja', async () => {

@@ -49,15 +49,29 @@ export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
         UPDATE turnos_caja t SET
           fecha_cierre = clock_timestamp(), usuario_cierre_id = $2,
           efectivo_esperado = calculo.esperado, efectivo_contado = $3::numeric,
-          diferencia = $3::numeric - calculo.esperado, tipo_cierre = 'turno'
-        FROM calculo WHERE t.id = calculo.id
+          diferencia = $3::numeric - calculo.esperado, tipo_cierre = 'turno',
+          observacion_cierre = $5
+        FROM calculo WHERE t.id = calculo.id AND calculo.esperado = $4::numeric
         RETURNING t.id, t.caja_id AS "cajaId", t.usuario_cierre_id AS "usuarioCierreId",
           t.fecha_cierre AS "fechaCierre", t.saldo_inicial::text AS "saldoInicial",
           t.efectivo_esperado::text AS "efectivoEsperado", t.efectivo_contado::text AS "efectivoContado",
           t.diferencia::text AS diferencia, t.tipo_cierre AS "tipoCierre",
           t.observacion_cierre AS "observacionCierre"`,
-        [turnoId, usuarioId, data.efectivoContado],
+        [
+          turnoId,
+          usuarioId,
+          data.efectivoContado,
+          data.efectivoEsperadoConfirmado,
+          data.observacionCierre ?? null,
+        ],
       );
+      if (filas.length === 0) {
+        throw new ConflictException({
+          code: 'EFECTIVO_ESPERADO_CAMBIO',
+          message:
+            'El efectivo esperado cambió; consulte el resumen nuevamente',
+        });
+      }
       return filas[0];
     });
   }

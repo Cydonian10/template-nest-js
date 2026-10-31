@@ -113,9 +113,47 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(
         resumenHandler.execute(new ResumenTurnoQuery(cajaId, randomUUID())),
       ).rejects.toMatchObject({ status: 404 });
+      // Las futuras escrituras deben bloquear y comprobar el turno antes de modificarlo.
+      const escritor = db.createQueryRunner();
+      await escritor.connect();
+      await escritor.startTransaction();
+      try {
+        await escritor.query(
+          'SELECT id FROM turnos_caja WHERE id = $1 AND fecha_cierre IS NULL FOR UPDATE',
+          [turno.id],
+        );
+        await escritor.query(
+          `INSERT INTO movimientos_caja (tipo, importe, motivo, turno_id, usuario_id) VALUES ('ingreso', 10.00, 'concurrente', $1, $2)`,
+          [turno.id, usuarioId],
+        );
+        const cierreDesactualizado = cerrar.execute(
+          new CerrarTurnoCommand(cajaId, turno.id, usuarioId, {
+            efectivoContado: '121.00',
+            efectivoEsperadoConfirmado: '120.25',
+            observacionCierre: 'No guardar',
+          }),
+        );
+        await escritor.commitTransaction();
+        await expect(cierreDesactualizado).rejects.toMatchObject({
+          status: 409,
+          response: { code: 'EFECTIVO_ESPERADO_CAMBIO' },
+        });
+        const [sinCierre] = await db.query(
+          'SELECT fecha_cierre, observacion_cierre FROM turnos_caja WHERE id = $1',
+          [turno.id],
+        );
+        expect(sinCierre).toEqual({
+          fecha_cierre: null,
+          observacion_cierre: null,
+        });
+      } finally {
+        if (escritor.isTransactionActive) await escritor.rollbackTransaction();
+        await escritor.release();
+      }
       const command = new CerrarTurnoCommand(cajaId, turno.id, usuarioId, {
         efectivoContado: '121.00',
-        efectivoEsperadoConfirmado: '120.25',
+        efectivoEsperadoConfirmado: '130.25',
+        observacionCierre: 'Faltante',
       });
       const resultados = await Promise.allSettled([
         cerrar.execute(command),
@@ -128,9 +166,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(errores[0]).toMatchObject({ reason: { status: 409 } });
       expect(exitos[0]).toMatchObject({
         value: {
-          efectivoEsperado: '120.25',
+          efectivoEsperado: '130.25',
           efectivoContado: '121.00',
-          diferencia: '0.75',
+          diferencia: '-9.25',
+          observacionCierre: 'Faltante',
         },
       });
       await expect(
@@ -141,7 +180,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       );
       expect(cajas.find((caja) => caja.id === cajaId)?.turnos).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ id: turno.id, efectivoContado: '121.00' }),
+          expect.objectContaining({
+            id: turno.id,
+            efectivoContado: '121.00',
+            observacionCierre: 'Faltante',
+          }),
         ]),
       );
       const siguiente = await abrir.execute(
