@@ -12,6 +12,8 @@ import { CurrentUser } from '../../../../auth/decorators/current-user.decorator.
 import { AbrirTurnoCommand } from '../commands/abrir-turno/abrir-turno.command.js';
 import { AbrirTurnoSchema } from '../dto/abrir-turno/abrir-turno.dto.js';
 import type { AbrirTurnoDto } from '../dto/abrir-turno/abrir-turno.dto.js';
+import { CerrarTurnoSchema } from '../dto/cerrar-turno/cerrar-turno.dto.js';
+import type { CerrarTurnoDto } from '../dto/cerrar-turno/cerrar-turno.dto.js';
 import type { TurnoCaja } from '../../entities/turno-caja.entity.js';
 
 @ApiBearerAuth()
@@ -36,6 +38,20 @@ export class CajaTurnoController {
       fechaOperativa: turno.fechaOperativa,
       fechaApertura: turno.fechaApertura,
       saldoInicial: turno.saldoInicial,
+    };
+  }
+
+  @Post(':turnoId/cierre')
+  @ApiCreatedResponse({ description: 'Cerrando turno id' })
+  cerrarCaja(
+    @Param('cajaId', ParseUUIDPipe) cajaId: string,
+    @Param('turnoId', ParseUUIDPipe) turnoId: string,
+    @Body({ schema: CerrarTurnoSchema }) data: CerrarTurnoDto,
+  ) {
+    return {
+      data,
+      cajaId,
+      turnoId,
     };
   }
 }
