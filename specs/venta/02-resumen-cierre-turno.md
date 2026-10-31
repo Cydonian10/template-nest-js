@@ -1,6 +1,6 @@
 # SPEC 02 — Resumen y confirmación del cierre de turno
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Dependencias:** SPEC 01 (`specs/01-cierre-turno-caja.md`)
 > **Fecha:** 2026-10-31
 > **Objetivo:** Exponer el desglose actualizado del turno y registrar su cierre con observación y comprobación del efectivo esperado.
@@ -37,14 +37,14 @@
 
 ## Criterios de aceptación
 
-- [ ] El resumen contiene todos los componentes reales y su total coincide con la fórmula del cierre.
-- [ ] El resumen identifica turnos ajenos, inexistentes y cerrados sin mostrar valores inventados.
-- [ ] Se rechazan importes inválidos, observaciones de más de 500 caracteres y cierres sin importe esperado confirmado.
-- [ ] Un total cambiado devuelve 409 con `EFECTIVO_ESPERADO_CAMBIO` y no modifica el turno.
-- [ ] Una operación concurrente no puede provocar que se cierre con un total distinto al confirmado.
-- [ ] Se admiten faltantes y sobrantes; la diferencia queda registrada con signo.
-- [ ] La observación persiste y aparece en la respuesta y el listado; los turnos anteriores devuelven `null`.
-- [ ] Pasan las pruebas relevantes y la compilación de la API.
+- [x] El resumen contiene todos los componentes reales y su total coincide con la fórmula del cierre.
+- [x] El resumen identifica turnos ajenos, inexistentes y cerrados sin mostrar valores inventados.
+- [x] Se rechazan importes inválidos, observaciones de más de 500 caracteres y cierres sin importe esperado confirmado.
+- [x] Un total cambiado devuelve 409 con `EFECTIVO_ESPERADO_CAMBIO` y no modifica el turno.
+- [x] Una operación concurrente no puede provocar que se cierre con un total distinto al confirmado.
+- [x] Se admiten faltantes y sobrantes; la diferencia queda registrada con signo.
+- [x] La observación persiste y aparece en la respuesta y el listado; los turnos anteriores devuelven `null`.
+- [x] Pasan las pruebas relevantes y la compilación de la API.
 
 ## Decisiones tomadas y descartadas
 
