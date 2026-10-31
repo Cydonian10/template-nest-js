@@ -1,6 +1,6 @@
 # SPEC 02 — Resumen y confirmación del cierre de turno
 
-> **Estado:** Borrador
+> **Estado:** Aprobado
 > **Dependencias:** SPEC 01 (`specs/01-cierre-turno-caja.md`)
 > **Fecha:** 2026-10-31
 > **Objetivo:** Exponer el desglose actualizado del turno y registrar su cierre con observación y comprobación del efectivo esperado.
