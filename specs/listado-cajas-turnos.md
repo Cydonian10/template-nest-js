@@ -25,7 +25,8 @@ En un turno abierto, el usuario y la fecha de cierre serán `null`.
 ## Reglas del efectivo
 
 - El primer turno de una caja en una fecha operativa permite ingresar manualmente el saldo inicial.
-- Los turnos posteriores de la misma caja y fecha operativa toman como saldo inicial el efectivo esperado del turno anterior. No se hereda el saldo de otra fecha operativa.
+- Los turnos posteriores de la misma caja y fecha operativa toman como saldo inicial el efectivo contado al cierre del turno anterior. No se hereda el saldo de otra fecha operativa.
+- Una caja con cierre de tipo día no admite nuevos turnos en esa fecha operativa.
 - Para un turno cerrado, se muestra el efectivo esperado guardado al cierre.
 - Para un turno abierto, se calcula en tiempo real:
 
