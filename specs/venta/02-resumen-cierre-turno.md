@@ -32,7 +32,7 @@
 1. Añadir entidad y migración de observación nullable; ampliar lectura del listado y pruebas de turnos antiguos y cerrados.
 2. Incorporar consulta, DTO y controlador del resumen; probar cada componente y su coherencia con el listado existente.
 3. Ampliar validación, respuesta y comando de cierre con los campos nuevos; rechazar solicitudes antiguas sin importe confirmado.
-4. Dentro de la transacción, comparar el total confirmado con el cálculo definitivo y guardar observación y cierre solo si coinciden. Coordinar los bloqueos con todas las escrituras que puedan afectar el cálculo para impedir una operación concurrente entre comprobación y cierre; probar la carrera con conexiones concurrentes.
+4. Dentro de la transacción, comparar el total confirmado con el cálculo definitipo y guardar observación y cierre solo si coinciden. Coordinar los bloqueos con todas las escrituras que puedan afectar el cálculo para impedir una operación concurrente entre comprobación y cierre; probar la carrera con conexiones concurrentes.
 5. Actualizar Swagger y pruebas de controlador, handler e integración; ejecutar pruebas relevantes y compilación de `api-tienda`.
 
 ## Criterios de aceptación

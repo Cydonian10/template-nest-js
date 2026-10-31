@@ -11,7 +11,11 @@ describe('CajaTurnoController', () => {
       { execute } as unknown as CommandBus,
       {} as QueryBus,
     );
-    const data = { efectivoContado: '160.00' };
+    const data = {
+      efectivoContado: '160.00',
+      efectivoEsperadoConfirmado: '150.00',
+      observacionCierre: 'Sobrante',
+    };
 
     await expect(
       controller.cerrarCaja('c1', 't1', 'u1', data),

@@ -7,6 +7,7 @@ import { CerrarTurnoHandler } from './cerrar-turno.handler.js';
 describe('CerrarTurnoHandler', () => {
   const command = new CerrarTurnoCommand('c1', 't1', 'u1', {
     efectivoContado: '16.00',
+    efectivoEsperadoConfirmado: '15.00',
   });
 
   function setup(turno: unknown, resultado: unknown = {}) {

@@ -115,6 +115,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).rejects.toMatchObject({ status: 404 });
       const command = new CerrarTurnoCommand(cajaId, turno.id, usuarioId, {
         efectivoContado: '121.00',
+        efectivoEsperadoConfirmado: '120.25',
       });
       const resultados = await Promise.allSettled([
         cerrar.execute(command),

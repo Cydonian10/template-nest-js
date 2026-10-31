@@ -14,6 +14,7 @@ export interface CierreTurnoResultado {
   efectivoContado: string;
   diferencia: string;
   tipoCierre: string;
+  observacionCierre: string | null;
 }
 
 @CommandHandler(CerrarTurnoCommand)
@@ -53,7 +54,8 @@ export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
         RETURNING t.id, t.caja_id AS "cajaId", t.usuario_cierre_id AS "usuarioCierreId",
           t.fecha_cierre AS "fechaCierre", t.saldo_inicial::text AS "saldoInicial",
           t.efectivo_esperado::text AS "efectivoEsperado", t.efectivo_contado::text AS "efectivoContado",
-          t.diferencia::text AS diferencia, t.tipo_cierre AS "tipoCierre"`,
+          t.diferencia::text AS diferencia, t.tipo_cierre AS "tipoCierre",
+          t.observacion_cierre AS "observacionCierre"`,
         [turnoId, usuarioId, data.efectivoContado],
       );
       return filas[0];

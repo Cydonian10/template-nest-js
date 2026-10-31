@@ -10,4 +10,6 @@ export class CierreTurnoResponseDto {
   @ApiProperty({ example: '160.00' }) efectivoContado: string;
   @ApiProperty({ example: '10.00' }) diferencia: string;
   @ApiProperty({ enum: ['turno'] }) tipoCierre: string;
+  @ApiProperty({ type: String, nullable: true, maxLength: 500 })
+  observacionCierre: string | null;
 }
