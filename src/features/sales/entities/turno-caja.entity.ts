@@ -87,6 +87,14 @@ export class TurnoCaja {
   diferencia: string | null;
 
   @Column({
+    name: 'observacion_cierre',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
+  observacionCierre: string | null;
+
+  @Column({
     name: 'tipo_cierre',
     type: 'enum',
     enum: TipoCierreCaja,

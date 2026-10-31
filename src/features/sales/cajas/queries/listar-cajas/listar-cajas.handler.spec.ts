@@ -19,6 +19,7 @@ describe('ListarCajasHandler', () => {
         saldoInicial: '10.00',
         efectivoEsperado: '15.00',
         efectivoContado: null,
+        observacionCierre: null,
       },
       {
         ...caja,
@@ -33,6 +34,22 @@ describe('ListarCajasHandler', () => {
         saldoInicial: '10.00',
         efectivoEsperado: '15.00',
         efectivoContado: '16.00',
+        observacionCierre: 'Sobrante en caja',
+      },
+      {
+        ...caja,
+        turnoId: 't3',
+        usuarioAperturaId: 'u1',
+        usuarioAperturaNick: 'Ana',
+        usuarioCierreId: 'u1',
+        usuarioCierreNick: 'Ana',
+        fechaOperativa: '2026-10-30',
+        fechaApertura: fecha,
+        fechaCierre: fecha,
+        saldoInicial: '10.00',
+        efectivoEsperado: '15.00',
+        efectivoContado: '15.00',
+        observacionCierre: null,
       },
       { id: 'c2', codigo: 'C2', nombre: 'Caja 2', activo: true, turnoId: null },
     ]);
@@ -43,6 +60,9 @@ describe('ListarCajasHandler', () => {
     expect(query.mock.calls[0][1]).toEqual(['2026-10-30', true]);
     expect(query.mock.calls[0][0]).toContain(
       't.efectivo_contado::text AS "efectivoContado"',
+    );
+    expect(query.mock.calls[0][0]).toContain(
+      't.observacion_cierre AS "observacionCierre"',
     );
     expect(resultado).toEqual([
       {
@@ -58,6 +78,7 @@ describe('ListarCajasHandler', () => {
             saldoInicial: '10.00',
             efectivoEsperado: '15.00',
             efectivoContado: null,
+            observacionCierre: null,
           },
           {
             id: 't2',
@@ -69,6 +90,19 @@ describe('ListarCajasHandler', () => {
             saldoInicial: '10.00',
             efectivoEsperado: '15.00',
             efectivoContado: '16.00',
+            observacionCierre: 'Sobrante en caja',
+          },
+          {
+            id: 't3',
+            usuarioApertura: { id: 'u1', nickName: 'Ana' },
+            usuarioCierre: { id: 'u1', nickName: 'Ana' },
+            fechaOperativa: '2026-10-30',
+            fechaApertura: fecha,
+            fechaCierre: fecha,
+            saldoInicial: '10.00',
+            efectivoEsperado: '15.00',
+            efectivoContado: '15.00',
+            observacionCierre: null,
           },
         ],
       },

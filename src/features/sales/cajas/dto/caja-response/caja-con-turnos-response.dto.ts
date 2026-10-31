@@ -29,6 +29,9 @@ export class TurnoCajaResponseDto {
 
   @ApiProperty({ type: String, example: '160.00', nullable: true })
   efectivoContado: string | null;
+
+  @ApiProperty({ type: String, nullable: true, maxLength: 500 })
+  observacionCierre: string | null;
 }
 
 export class CajaConTurnosResponseDto {
