@@ -32,6 +32,36 @@ El efectivo esperado se calcula como saldo inicial más pagos de venta en efecti
 
 El resumen de respuesta contiene los identificadores de caja y turno, la fecha y el usuario de cierre, el saldo inicial, el efectivo esperado, el efectivo contado, la diferencia y el tipo de cierre. Los importes se representan como cadenas decimales.
 
+## Flujo de cierre
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant API
+    participant BD as Base de datos
+
+    Usuario->>API: POST cierre con efectivoContado
+    API->>API: Validar autenticación y datos
+    API->>BD: Iniciar transacción y bloquear turno
+    alt Turno inexistente o de otra caja
+        BD-->>API: Turno no encontrado
+        API->>BD: Revertir transacción
+        API-->>Usuario: 404 No encontrado
+    else Turno ya cerrado
+        BD-->>API: Turno cerrado
+        API->>BD: Revertir transacción
+        API-->>Usuario: 409 Conflicto
+    else Turno abierto
+        BD-->>API: Datos del turno y movimientos
+        API->>API: Calcular efectivo esperado y diferencia
+        API->>BD: Guardar cierre, importes y usuario
+        API->>BD: Confirmar transacción
+        API-->>Usuario: Resumen del cierre
+    end
+```
+
+El bloqueo evita que dos solicitudes cierren simultáneamente el mismo turno: la segunda encontrará el turno cerrado y recibirá `409`.
+
 ## Plan de implementación
 
 1. Agregar el esquema de entrada y sus pruebas en `src/features/sales/caja-turnos/dto/`, siguiendo la validación decimal de apertura y rechazando propiedades adicionales.
@@ -65,11 +95,11 @@ El resumen de respuesta contiene los identificadores de caja y turno, la fecha y
 
 ## Riesgos identificados
 
-| Riesgo | Mitigación |
-| --- | --- |
-| El cálculo del cierre diverge del listado de cajas. | Verificar ambos contra la misma fórmula y los mismos filtros de operaciones. |
+| Riesgo                                                                           | Mitigación                                                                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| El cálculo del cierre diverge del listado de cajas.                              | Verificar ambos contra la misma fórmula y los mismos filtros de operaciones.                                             |
 | Una operación monetaria concurrente altera el saldo mientras se cierra el turno. | Revisar la coordinación transaccional de las operaciones existentes y cubrir el comportamiento aplicable en las pruebas. |
-| El uso de números de punto flotante produce diferencias de centavos. | Utilizar aritmética decimal exacta y comprobar los resultados en las pruebas. |
+| El uso de números de punto flotante produce diferencias de centavos.             | Utilizar aritmética decimal exacta y comprobar los resultados en las pruebas.                                            |
 
 ## Qué no incluye esta especificación
 
