@@ -73,15 +73,15 @@ El bloqueo evita que dos solicitudes cierren simultáneamente el mismo turno: la
 
 - [x] Un usuario autenticado puede cerrar un turno abierto perteneciente a la caja indicada mediante el endpoint especificado.
 - [x] Se acepta `efectivoContado` igual a cero o positivo, con hasta dos decimales y dentro de la precisión de la columna; se rechazan importes negativos, inválidos, fuera de rango o con más decimales y propiedades adicionales.
-- [ ] El efectivo esperado usa la fórmula y los filtros del listado de cajas para el turno cerrado.
-- [ ] La diferencia se calcula como efectivo contado menos esperado, incluyendo correctamente sobrantes, faltantes y cero.
-- [ ] El cierre guarda juntos la fecha, el usuario autenticado, los importes, la diferencia y el tipo `turno`; si ocurre un error, no queda un cierre parcial.
-- [ ] La respuesta contiene el resumen descrito en el modelo de datos.
-- [ ] Si el turno no existe o no pertenece a la caja indicada, se responde `404` sin modificar datos.
-- [ ] Si el turno ya está cerrado, se responde `409` sin modificar el cierre existente.
-- [ ] Ante dos cierres simultáneos del mismo turno, solo uno se registra y el otro recibe `409`.
+- [x] El efectivo esperado usa la fórmula y los filtros del listado de cajas para el turno cerrado.
+- [x] La diferencia se calcula como efectivo contado menos esperado, incluyendo correctamente sobrantes, faltantes y cero.
+- [x] El cierre guarda juntos la fecha, el usuario autenticado, los importes, la diferencia y el tipo `turno`; si ocurre un error, no queda un cierre parcial.
+- [x] La respuesta contiene el resumen descrito en el modelo de datos.
+- [x] Si el turno no existe o no pertenece a la caja indicada, se responde `404` sin modificar datos.
+- [x] Si el turno ya está cerrado, se responde `409` sin modificar el cierre existente.
+- [x] Ante dos cierres simultáneos del mismo turno, solo uno se registra y el otro recibe `409`.
 - [ ] El listado de cajas devuelve el efectivo contado del turno cerrado y un turno posterior del mismo día puede heredarlo como saldo inicial.
-- [ ] El endpoint aparece documentado en Swagger y las pruebas relevantes y la compilación pasan.
+- [x] El endpoint aparece documentado en Swagger y las pruebas relevantes y la compilación pasan.
 
 ## Decisiones tomadas y descartadas
 
