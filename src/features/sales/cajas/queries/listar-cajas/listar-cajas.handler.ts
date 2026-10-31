@@ -21,6 +21,7 @@ interface CajaRow {
   fechaCierre: Date | null;
   saldoInicial: string | null;
   efectivoEsperado: string | null;
+  efectivoContado: string | null;
 }
 
 @QueryHandler(ListarCajasQuery)
@@ -44,7 +45,7 @@ export class ListarCajasHandler implements IQueryHandler<ListarCajasQuery> {
           - COALESCE((SELECT SUM(vu.importe) FROM vueltos_venta vu JOIN ventas v ON v.id = vu.venta_id WHERE v.turno_id = t.id AND vu.medio = 'efectivo'), 0)
           - COALESCE((SELECT SUM(r.importe) FROM reintegros_venta r JOIN devoluciones_venta d ON d.id = r.devolucion_id WHERE d.turno_id = t.id AND r.medio = 'efectivo'), 0)
           + COALESCE((SELECT SUM(CASE WHEN m.tipo = 'ingreso' THEN m.importe ELSE -m.importe END) FROM movimientos_caja m WHERE m.turno_id = t.id), 0)
-        END)::text AS "efectivoEsperado"
+        END)::text AS "efectivoEsperado", t.efectivo_contado::text AS "efectivoContado"
        FROM cajas c
        LEFT JOIN turnos_caja t ON t.caja_id = c.id AND ($1::date IS NULL OR t.fecha_operativa = $1::date)
        LEFT JOIN users ua ON ua.id = t.usuario_apertura_id
@@ -82,6 +83,7 @@ export class ListarCajasHandler implements IQueryHandler<ListarCajasQuery> {
           fechaCierre: row.fechaCierre,
           saldoInicial: row.saldoInicial!,
           efectivoEsperado: row.efectivoEsperado!,
+          efectivoContado: row.efectivoContado,
         };
         caja.turnos.push(turno);
       }

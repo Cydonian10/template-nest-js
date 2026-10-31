@@ -27,7 +27,8 @@ export class TurnoCajaResponseDto {
 
   @ApiProperty({ example: '150.00' }) efectivoEsperado: string;
 
-  @ApiProperty({ example: '160.00' }) efectivoContado: string;
+  @ApiProperty({ type: String, example: '160.00', nullable: true })
+  efectivoContado: string | null;
 }
 
 export class CajaConTurnosResponseDto {
