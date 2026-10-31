@@ -36,6 +36,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           : status === HttpStatus.INTERNAL_SERVER_ERROR
             ? 'Error interno del servidor'
             : 'Error de solicitud',
+      ...(typeof details.code === 'string' ? { code: details.code } : {}),
       path: request.url,
       timestamp: new Date().toISOString(),
     };
