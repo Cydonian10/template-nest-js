@@ -71,8 +71,8 @@ El bloqueo evita que dos solicitudes cierren simultáneamente el mismo turno: la
 
 ## Criterios de aceptación
 
-- [ ] Un usuario autenticado puede cerrar un turno abierto perteneciente a la caja indicada mediante el endpoint especificado.
-- [ ] Se acepta `efectivoContado` igual a cero o positivo, con hasta dos decimales y dentro de la precisión de la columna; se rechazan importes negativos, inválidos, fuera de rango o con más decimales y propiedades adicionales.
+- [x] Un usuario autenticado puede cerrar un turno abierto perteneciente a la caja indicada mediante el endpoint especificado.
+- [x] Se acepta `efectivoContado` igual a cero o positivo, con hasta dos decimales y dentro de la precisión de la columna; se rechazan importes negativos, inválidos, fuera de rango o con más decimales y propiedades adicionales.
 - [ ] El efectivo esperado usa la fórmula y los filtros del listado de cajas para el turno cerrado.
 - [ ] La diferencia se calcula como efectivo contado menos esperado, incluyendo correctamente sobrantes, faltantes y cero.
 - [ ] El cierre guarda juntos la fecha, el usuario autenticado, los importes, la diferencia y el tipo `turno`; si ocurre un error, no queda un cierre parcial.

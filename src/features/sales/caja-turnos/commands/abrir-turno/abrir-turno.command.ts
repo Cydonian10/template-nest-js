@@ -1,4 +1,4 @@
-import type { AbrirTurnoDto } from '../../dto/abrir-turno.dto.js';
+import type { AbrirTurnoDto } from '../../dto/abrir-turno/abrir-turno.dto.js';
 
 export class AbrirTurnoCommand {
   constructor(

@@ -10,8 +10,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../../auth/decorators/current-user.decorator.js';
 import { AbrirTurnoCommand } from '../commands/abrir-turno/abrir-turno.command.js';
-import { AbrirTurnoSchema } from '../dto/abrir-turno.dto.js';
-import type { AbrirTurnoDto } from '../dto/abrir-turno.dto.js';
+import { AbrirTurnoSchema } from '../dto/abrir-turno/abrir-turno.dto.js';
+import type { AbrirTurnoDto } from '../dto/abrir-turno/abrir-turno.dto.js';
 import type { TurnoCaja } from '../../entities/turno-caja.entity.js';
 
 @ApiBearerAuth()
