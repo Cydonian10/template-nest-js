@@ -36,4 +36,17 @@ describe('CajaTurnoController', () => {
     await expect(controller.resumen('c1', 't1')).resolves.toEqual(resultado);
     expect(execute).toHaveBeenCalledWith(new ResumenTurnoQuery('c1', 't1'));
   });
+
+  it('documenta los campos obligatorios del cierre en Swagger', () => {
+    const metadata = Reflect.getMetadata(
+      'swagger/apiParameters',
+      CajaTurnoController.prototype.cerrarCaja,
+    );
+    const body = metadata.find((item: { in: string }) => item.in === 'body');
+    expect(body.schema.required).toEqual([
+      'efectivoContado',
+      'efectivoEsperadoConfirmado',
+    ]);
+    expect(body.schema.properties.observacionCierre.maxLength).toBe(500);
+  });
 });

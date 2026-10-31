@@ -191,6 +191,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         new AbrirTurnoCommand(cajaId, usuarioId, {}),
       );
       expect(siguiente.saldoInicial).toBe('121.00');
+      const sobrante = await cerrar.execute(
+        new CerrarTurnoCommand(cajaId, siguiente.id, usuarioId, {
+          efectivoContado: '123.00',
+          efectivoEsperadoConfirmado: '121',
+        }),
+      );
+      expect(sobrante).toMatchObject({
+        diferencia: '2.00',
+        observacionCierre: null,
+      });
     });
   },
 );

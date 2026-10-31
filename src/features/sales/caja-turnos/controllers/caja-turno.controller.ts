@@ -75,7 +75,10 @@ export class CajaTurnoController {
     type: CierreTurnoResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Turno no encontrado en la caja' })
-  @ApiConflictResponse({ description: 'El turno ya está cerrado' })
+  @ApiConflictResponse({
+    description:
+      'El turno ya está cerrado o cambió el efectivo esperado (código EFECTIVO_ESPERADO_CAMBIO)',
+  })
   cerrarCaja(
     @Param('cajaId', ParseUUIDPipe) cajaId: string,
     @Param('turnoId', ParseUUIDPipe) turnoId: string,
