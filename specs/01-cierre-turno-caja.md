@@ -1,6 +1,6 @@
 # SPEC 01 — Cierre de turno de caja
 
-> **Estado:** Borrador  
+> **Estado:** Aprobado  
 > **Dependencias:** Ninguna  
 > **Fecha:** 2026-10-31  
 > **Objetivo:** Permitir que un usuario autenticado cierre un turno de caja registrando el efectivo contado y calculando la diferencia.
