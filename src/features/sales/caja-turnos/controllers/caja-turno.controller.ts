@@ -1,18 +1,20 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../../../../auth/decorators/current-user.decorator.js';
@@ -25,12 +27,28 @@ import type { AbrirTurnoDto } from '../dto/abrir-turno/abrir-turno.dto.js';
 import { CerrarTurnoSchema } from '../dto/cerrar-turno/cerrar-turno.dto.js';
 import type { CerrarTurnoDto } from '../dto/cerrar-turno/cerrar-turno.dto.js';
 import type { TurnoCaja } from '../../entities/turno-caja.entity.js';
+import { ResumenTurnoQuery } from '../queries/resumen-turno/resumen-turno.query.js';
+import { ResumenTurnoResponseDto } from '../dto/resumen-turno/resumen-turno-response.dto.js';
 
 @ApiBearerAuth()
 @ApiTags('turnos de caja')
 @Controller({ path: 'cajas/:cajaId/turnos', version: VERSION_NEUTRAL })
 export class CajaTurnoController {
-  constructor(private readonly commands: CommandBus) {}
+  constructor(
+    private readonly commands: CommandBus,
+    private readonly queries: QueryBus,
+  ) {}
+
+  @Get(':turnoId/resumen')
+  @ApiOkResponse({ type: ResumenTurnoResponseDto })
+  @ApiNotFoundResponse({ description: 'Turno no encontrado en la caja' })
+  @ApiConflictResponse({ description: 'El turno ya está cerrado' })
+  resumen(
+    @Param('cajaId', ParseUUIDPipe) cajaId: string,
+    @Param('turnoId', ParseUUIDPipe) turnoId: string,
+  ): Promise<ResumenTurnoResponseDto> {
+    return this.queries.execute(new ResumenTurnoQuery(cajaId, turnoId));
+  }
 
   @Post()
   @ApiCreatedResponse({ description: 'Turno de caja abierto' })

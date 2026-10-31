@@ -10,6 +10,8 @@ import { CerrarTurnoHandler } from '../src/features/sales/caja-turnos/commands/c
 import { CerrarTurnoCommand } from '../src/features/sales/caja-turnos/commands/cerrar-turno/cerrar-turno.command.js';
 import { ListarCajasHandler } from '../src/features/sales/cajas/queries/listar-cajas/listar-cajas.handler.js';
 import { ListarCajasQuery } from '../src/features/sales/cajas/queries/listar-cajas/listar-cajas.query.js';
+import { ResumenTurnoHandler } from '../src/features/sales/caja-turnos/queries/resumen-turno/resumen-turno.handler.js';
+import { ResumenTurnoQuery } from '../src/features/sales/caja-turnos/queries/resumen-turno/resumen-turno.query.js';
 
 const entityModules = import.meta.glob('../src/**/*.entity.ts', {
   eager: true,
@@ -83,6 +85,34 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         `INSERT INTO movimientos_caja (tipo, importe, motivo, turno_id, usuario_id) VALUES ('ingreso', 25.50, 'prueba', $1, $2), ('egreso', 5.25, 'prueba', $1, $2)`,
         [turno.id, usuarioId],
       );
+      const resumenHandler = new ResumenTurnoHandler(db);
+      const resumen = await resumenHandler.execute(
+        new ResumenTurnoQuery(cajaId, turno.id),
+      );
+      expect(resumen).toEqual({
+        id: turno.id,
+        cajaId,
+        saldoInicial: '100.00',
+        cobrosEfectivo: '0.00',
+        vueltosEfectivo: '0.00',
+        ingresosManuales: '25.50',
+        egresosManuales: '5.25',
+        reintegrosEfectivo: '0.00',
+        efectivoEsperado: '120.25',
+      });
+      const cajasAbiertas = await new ListarCajasHandler(db).execute(
+        new ListarCajasQuery({ estado: 'todas' }),
+      );
+      const turnoListado = cajasAbiertas
+        .find((caja) => caja.id === cajaId)
+        ?.turnos.find((item) => item.id === turno.id);
+      expect(turnoListado?.efectivoEsperado).toBe(resumen.efectivoEsperado);
+      await expect(
+        resumenHandler.execute(new ResumenTurnoQuery(randomUUID(), turno.id)),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        resumenHandler.execute(new ResumenTurnoQuery(cajaId, randomUUID())),
+      ).rejects.toMatchObject({ status: 404 });
       const command = new CerrarTurnoCommand(cajaId, turno.id, usuarioId, {
         efectivoContado: '121.00',
       });
@@ -102,6 +132,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           diferencia: '0.75',
         },
       });
+      await expect(
+        resumenHandler.execute(new ResumenTurnoQuery(cajaId, turno.id)),
+      ).rejects.toMatchObject({ status: 409 });
       const cajas = await new ListarCajasHandler(db).execute(
         new ListarCajasQuery({ estado: 'todas' }),
       );

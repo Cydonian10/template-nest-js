@@ -6,6 +6,7 @@ import { ListarCajasHandler } from './cajas/queries/listar-cajas/listar-cajas.ha
 import { CajaTurnoController } from './caja-turnos/controllers/caja-turno.controller.js';
 import { AbrirTurnoHandler } from './caja-turnos/commands/abrir-turno/abrir-turno.handler.js';
 import { CerrarTurnoHandler } from './caja-turnos/commands/cerrar-turno/cerrar-turno.handler.js';
+import { ResumenTurnoHandler } from './caja-turnos/queries/resumen-turno/resumen-turno.handler.js';
 
 @Module({
   controllers: [CajasController, CajaTurnoController],
@@ -15,6 +16,7 @@ import { CerrarTurnoHandler } from './caja-turnos/commands/cerrar-turno/cerrar-t
     ListarCajasHandler,
     AbrirTurnoHandler,
     CerrarTurnoHandler,
+    ResumenTurnoHandler,
   ],
 })
 export class SalesModule {}
