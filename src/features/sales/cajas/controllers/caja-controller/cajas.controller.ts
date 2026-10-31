@@ -1,4 +1,4 @@
-import { Body, Controller, Post, VERSION_NEUTRAL } from '@nestjs/common';
+import { Body, Controller, Get, Post, VERSION_NEUTRAL } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import type { Caja } from '../../../entities/caja.entity.js';
@@ -21,5 +21,10 @@ export class CajasController {
     return this.commands.execute<CrearCajaCommand, Caja>(
       new CrearCajaCommand(data),
     );
+  }
+
+  @Get()
+  async findAll() {
+    return 'listando cajas con filtros de activo , inactivos';
   }
 }
