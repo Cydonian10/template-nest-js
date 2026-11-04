@@ -7,9 +7,10 @@ import { CajaTurnoController } from './caja-turnos/controllers/caja-turno.contro
 import { AbrirTurnoHandler } from './caja-turnos/commands/abrir-turno/abrir-turno.handler.js';
 import { CerrarTurnoHandler } from './caja-turnos/commands/cerrar-turno/cerrar-turno.handler.js';
 import { ResumenTurnoHandler } from './caja-turnos/queries/resumen-turno/resumen-turno.handler.js';
+import { VentasController } from './ventas/controllers/ventas.controller.js';
 
 @Module({
-  controllers: [CajasController, CajaTurnoController],
+  controllers: [CajasController, CajaTurnoController, VentasController],
   providers: [
     UnitOfWork,
     CrearCajaHandler,
