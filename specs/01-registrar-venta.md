@@ -106,3 +106,7 @@ La solicitud exige el encabezado `Idempotency-Key` y un cuerpo con esta estructu
 - Consultas, modificaciones, anulaciones, devoluciones ni comprobantes de venta.
 - Crédito, descuentos, promociones o medios de pago adicionales.
 - Confirmación del precio visualizado por el cliente.
+
+## Regla
+
+- No ejecutar el test
