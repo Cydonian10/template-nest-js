@@ -109,4 +109,4 @@ La solicitud exige el encabezado `Idempotency-Key` y un cuerpo con esta estructu
 
 ## Regla
 
-- No ejecutar el test
+- Si ejecutar el test

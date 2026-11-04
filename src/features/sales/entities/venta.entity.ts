@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -30,6 +31,10 @@ export enum EstadoVenta {
 }
 
 @Entity('ventas')
+@Index('UQ_ventas_usuario_idempotencia', ['usuario', 'idempotenciaClave'], {
+  unique: true,
+  where: '"idempotencia_clave" IS NOT NULL',
+})
 @Check(
   'CHK_ventas_importes',
   '"subtotal" >= 0 AND "descuento_promocional" >= 0 AND "descuento_manual" >= 0 AND "base_imponible" >= 0 AND "igv" >= 0 AND "total" >= 0',
@@ -58,6 +63,17 @@ export class Venta {
   @ManyToOne(() => User, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'usuario_id' })
   usuario: Relation<User>;
+
+  @Column({ name: 'idempotencia_clave', type: 'text', nullable: true })
+  idempotenciaClave: string | null;
+
+  @Column({
+    name: 'idempotencia_hash',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  idempotenciaHash: string | null;
 
   @OneToOne(() => MovimientoInventario, {
     nullable: true,
