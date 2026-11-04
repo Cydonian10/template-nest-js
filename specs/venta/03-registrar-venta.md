@@ -1,6 +1,6 @@
 # SPEC 01 — Registrar una venta
 
-> **Estado:** Aprobado  
+> **Estado:** Implementado  
 > **Dependencias:** SPEC venta/01-cierre-turno-caja, SPEC venta/02-resumen-cierre-turno  
 > **Fecha:** 2026-10-31  
 > **Objetivo:** Registrar mediante un único endpoint una venta pagada con sus detalles y salida de inventario.
