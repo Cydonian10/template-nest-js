@@ -9,9 +9,11 @@ import { CerrarTurnoHandler } from './caja-turnos/commands/cerrar-turno/cerrar-t
 import { ResumenTurnoHandler } from './caja-turnos/queries/resumen-turno/resumen-turno.handler.js';
 import { VentasController } from './ventas/controllers/ventas.controller.js';
 import { CrearVentaHandler } from './ventas/commands/crear-venta/crear-venta.handler.js';
+import { CatalogoController } from './catalogo/controllers/catalogo.controller.js';
+import { ListarCatalogoHandler } from './catalogo/queries/listar-catalogo/listar-catalogo.handler.js';
 
 @Module({
-  controllers: [CajasController, CajaTurnoController, VentasController],
+  controllers: [CajasController, CajaTurnoController, VentasController, CatalogoController],
   providers: [
     UnitOfWork,
     CrearCajaHandler,
@@ -20,6 +22,7 @@ import { CrearVentaHandler } from './ventas/commands/crear-venta/crear-venta.han
     CerrarTurnoHandler,
     ResumenTurnoHandler,
     CrearVentaHandler,
+    ListarCatalogoHandler,
   ],
 })
 export class SalesModule {}

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { QueryFailedError } from 'typeorm';
@@ -45,88 +45,120 @@ export class CrearVarianteProductoHandler implements ICommandHandler<CrearVarian
     const archivosGuardados: string[] = [];
 
     try {
-      return await this.unitOfWork.execute(async (manager) => {
-        const producto = await manager.findOneBy(Producto, { id: productoId });
-        if (!producto)
-          throw new ResourceNotFoundException('Producto', productoId);
+      for (let intento = 1; ; intento++) {
+        let reintentarSku = false;
+        try {
+          return await this.unitOfWork.execute(async (manager) => {
+            const producto = await manager.findOneBy(Producto, {
+              id: productoId,
+            });
+            if (!producto)
+              throw new ResourceNotFoundException('Producto', productoId);
 
-        const asignaciones = await manager.find(AtributoProducto, {
-          where: { productoId },
-          select: { atributoId: true },
-        });
-        const permitidos = new Set(
-          asignaciones.map(({ atributoId }) => atributoId),
-        );
-        const recibidos = new Set(
-          data.valores.map(({ atributoId }) => atributoId),
-        );
-        if (
-          recibidos.size !== data.valores.length ||
-          recibidos.size !== permitidos.size ||
-          [...recibidos].some((id) => !permitidos.has(id))
-        ) {
-          throw new BadRequestException(
-            'Los valores deben coincidir con los atributos del producto, sin repetirlos',
-          );
-        }
+            const asignaciones = await manager.find(AtributoProducto, {
+              where: { productoId },
+              select: { atributoId: true },
+            });
+            const permitidos = new Set(
+              asignaciones.map(({ atributoId }) => atributoId),
+            );
+            const recibidos = new Set(
+              data.valores.map(({ atributoId }) => atributoId),
+            );
+            if (
+              recibidos.size !== data.valores.length ||
+              recibidos.size !== permitidos.size ||
+              [...recibidos].some((id) => !permitidos.has(id))
+            ) {
+              throw new BadRequestException(
+                'Los valores deben coincidir con los atributos del producto, sin repetirlos',
+              );
+            }
 
-        const baseSku = [
-          prefix(producto.nombre),
-          ...data.valores.map(({ valor }) => prefix(valor)),
-        ]
-          .join('-')
-          .slice(0, 67)
-          .replace(/-+$/, '');
-        const sku =
-          data.sku ??
-          `${baseSku}-${randomUUID().replace(/-/g, '').toUpperCase()}`;
-        const variante = manager.create(VarianteProducto, {
-          producto,
-          sku,
-          precio: data.precio,
-          codigoBarras: data.codigoBarras ?? null,
-          activo: true,
-        });
-        await manager.save(VarianteProducto, variante);
-        variante.productoId = productoId;
+            const baseSku = [
+              prefix(producto.nombre),
+              ...data.valores.map(({ valor }) => prefix(valor)),
+            ]
+              .join('-')
+              .slice(0, 67)
+              .replace(/-+$/, '');
+            const sku =
+              data.sku ??
+              `${baseSku}-${randomBytes(4).toString('hex').toUpperCase()}`;
+            const variante = manager.create(VarianteProducto, {
+              producto,
+              sku,
+              precio: data.precio,
+              codigoBarras: data.codigoBarras ?? null,
+              activo: true,
+            });
+            try {
+              await manager.save(VarianteProducto, variante);
+            } catch (error) {
+              if (data.sku === undefined && error instanceof QueryFailedError) {
+                const { code, constraint } = error.driverError as {
+                  code?: string;
+                  constraint?: string;
+                };
+                const unicaSku = manager.connection
+                  .getMetadata(VarianteProducto)
+                  .uniques.find(
+                    (unica) =>
+                      unica.columns.length === 1 &&
+                      unica.columns[0].propertyName === 'sku',
+                  );
+                reintentarSku =
+                  code === '23505' &&
+                  !!unicaSku &&
+                  constraint === unicaSku.name;
+              }
+              throw error;
+            }
+            variante.productoId = productoId;
 
-        variante.valores = [];
-        for (const { atributoId, valor } of data.valores) {
-          const asignacion = manager.create(ValorVariante, {
-            variante,
-            atributoId,
-            valor,
+            variante.valores = [];
+            for (const { atributoId, valor } of data.valores) {
+              const asignacion = manager.create(ValorVariante, {
+                variante,
+                atributoId,
+                valor,
+              });
+              await manager.save(ValorVariante, asignacion);
+              variante.valores.push(asignacion);
+            }
+
+            variante.imagenes = [];
+            for (const [orden, archivo] of preparadas.entries()) {
+              const almacenada = await this.storage.save(
+                archivo.buffer,
+                archivo.extension,
+              );
+              archivosGuardados.push(almacenada.key);
+              const imagen = manager.create(Imagen, {
+                claveAlmacenamiento: almacenada.key,
+                proveedor: almacenada.provider,
+                tipoMime: archivo.mimetype,
+                tamanoBytes: archivo.size,
+                nombreOriginal: archivo.originalname.slice(0, 255),
+              });
+              await manager.save(Imagen, imagen);
+              const asociacion = manager.create(VarianteImagen, {
+                variante,
+                imagen,
+                orden,
+                esPrincipal: orden === 0,
+              });
+              await manager.save(VarianteImagen, asociacion);
+              variante.imagenes.push(asociacion);
+            }
+            return variante;
           });
-          await manager.save(ValorVariante, asignacion);
-          variante.valores.push(asignacion);
+        } catch (error) {
+          // PostgreSQL invalida la transacción tras un duplicado: cada intento usa una nueva.
+          // La colisión se detecta antes de guardar atributos o archivos.
+          if (!reintentarSku || intento >= 5) throw error;
         }
-
-        variante.imagenes = [];
-        for (const [orden, archivo] of preparadas.entries()) {
-          const almacenada = await this.storage.save(
-            archivo.buffer,
-            archivo.extension,
-          );
-          archivosGuardados.push(almacenada.key);
-          const imagen = manager.create(Imagen, {
-            claveAlmacenamiento: almacenada.key,
-            proveedor: almacenada.provider,
-            tipoMime: archivo.mimetype,
-            tamanoBytes: archivo.size,
-            nombreOriginal: archivo.originalname.slice(0, 255),
-          });
-          await manager.save(Imagen, imagen);
-          const asociacion = manager.create(VarianteImagen, {
-            variante,
-            imagen,
-            orden,
-            esPrincipal: orden === 0,
-          });
-          await manager.save(VarianteImagen, asociacion);
-          variante.imagenes.push(asociacion);
-        }
-        return variante;
-      });
+      }
     } catch (error) {
       const limpiezas = await Promise.allSettled(
         archivosGuardados.map((key) => this.storage.delete(key)),

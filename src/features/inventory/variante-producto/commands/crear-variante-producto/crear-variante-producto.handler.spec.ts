@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -15,6 +16,10 @@ import { ValorVariante } from '../../../entities/valor-variante.entity.js';
 import { VarianteProducto } from '../../../entities/variante-producto.entity.js';
 import { CrearVarianteProducto } from './crear-variante-producto.command.js';
 import { CrearVarianteProductoHandler } from './crear-variante-producto.handler.js';
+
+vi.mock('node:crypto', () => ({
+  randomBytes: vi.fn(() => Buffer.from('AB12CD34', 'hex')),
+}));
 
 describe('CrearVarianteProductoHandler', () => {
   const values = [{ atributoId: 'a1', valor: 'Negro' }];
@@ -36,6 +41,17 @@ describe('CrearVarianteProductoHandler', () => {
     asignaciones: object[] = [{ atributoId: 'a1' }],
   ) => {
     const manager = {
+      connection: {
+        getMetadata: vi.fn().mockReturnValue({
+          uniques: [
+            { name: 'sku_unico', columns: [{ propertyName: 'sku' }] },
+            {
+              name: 'codigo_barras_unico',
+              columns: [{ propertyName: 'codigoBarras' }],
+            },
+          ],
+        }),
+      },
       findOneBy: vi.fn().mockResolvedValue(producto),
       find: vi.fn().mockResolvedValue(asignaciones),
       create: vi
@@ -64,6 +80,7 @@ describe('CrearVarianteProductoHandler', () => {
       delete: deleteImage,
     } as unknown as ImageStorage;
     return {
+      unitOfWork,
       manager,
       saveImage,
       deleteImage,
@@ -74,7 +91,7 @@ describe('CrearVarianteProductoHandler', () => {
   it('crea la variante con valores y SKU generado sin imágenes', async () => {
     const { handler, manager, saveImage } = setup();
     const variante = await handler.execute(command());
-    expect(variante.sku).toMatch(/^CAM-NEG-[A-F0-9]{32}$/);
+    expect(variante.sku).toMatch(/^CAM-NEG-[A-F0-9]{8}$/);
     expect(variante.precio).toBe('19.90');
     expect(variante.productoId).toBe('p1');
     expect(variante.valores).toEqual([
@@ -90,6 +107,92 @@ describe('CrearVarianteProductoHandler', () => {
       ValorVariante,
     ]);
     expect(saveImage).not.toHaveBeenCalled();
+  });
+
+  it('conserva el SKU enviado manualmente', async () => {
+    // Un SKU proporcionado por el cliente no pasa por el generador.
+    const { handler } = setup();
+    const solicitud = new CrearVarianteProducto('p1', {
+      precio: '19.90',
+      valores: values,
+      sku: 'CAM-NEG-MANUAL',
+    });
+    const variante = await handler.execute(solicitud);
+    expect(variante.sku).toBe('CAM-NEG-MANUAL');
+  });
+
+  it('reintenta una colisión del SKU automático en una transacción nueva', async () => {
+    // La primera inserción colisiona antes de guardar imágenes o atributos.
+    const { handler, manager, unitOfWork, saveImage } = setup();
+    manager.save.mockRejectedValueOnce(
+      new QueryFailedError(
+        'INSERT',
+        [],
+        Object.assign(new Error(), {
+          code: '23505',
+          constraint: 'sku_unico',
+        }),
+      ),
+    );
+    vi.mocked(randomBytes)
+      .mockImplementationOnce(() => Buffer.from('11111111', 'hex'))
+      .mockImplementationOnce(() => Buffer.from('22222222', 'hex'));
+    const variante = await handler.execute(command([imagen]));
+    const variantesCreadas = manager.create.mock.calls
+      .filter(([entidad]) => entidad === VarianteProducto)
+      .map(([, datos]) => datos as { sku: string });
+    expect(unitOfWork.execute).toHaveBeenCalledTimes(2);
+    expect(variante.sku).toMatch(/^CAM-NEG-[A-F0-9]{8}$/);
+    expect(variantesCreadas[0].sku).not.toBe(variantesCreadas[1].sku);
+    expect(saveImage).toHaveBeenCalledTimes(1);
+  });
+
+  it('limita a cinco intentos las colisiones del SKU automático', async () => {
+    // Una fuente de colisiones persistente no debe causar un bucle infinito.
+    const { handler, manager, unitOfWork, saveImage } = setup();
+    manager.save.mockRejectedValue(
+      new QueryFailedError(
+        'INSERT',
+        [],
+        Object.assign(new Error(), {
+          code: '23505',
+          constraint: 'sku_unico',
+        }),
+      ),
+    );
+    const resultado = handler.execute(command([imagen]));
+    await expect(resultado).rejects.toBeInstanceOf(ConflictException);
+    expect(unitOfWork.execute).toHaveBeenCalledTimes(5);
+    expect(saveImage).not.toHaveBeenCalled();
+  });
+
+  it('no reintenta un SKU manual ni un código de barras duplicado', async () => {
+    for (const caso of [
+      { constraint: 'sku_unico', sku: 'MANUAL' },
+      { constraint: 'codigo_barras_unico', sku: undefined },
+    ]) {
+      // Solo un conflicto del SKU autogenerado justifica volver a crear la variante.
+      const { handler, manager, unitOfWork } = setup();
+      manager.save.mockRejectedValue(
+        new QueryFailedError(
+          'INSERT',
+          [],
+          Object.assign(new Error(), {
+            code: '23505',
+            constraint: caso.constraint,
+          }),
+        ),
+      );
+      const solicitud = new CrearVarianteProducto('p1', {
+        precio: '19.90',
+        valores: values,
+        sku: caso.sku,
+        codigoBarras: '123456',
+      });
+      const resultado = handler.execute(solicitud);
+      await expect(resultado).rejects.toBeInstanceOf(ConflictException);
+      expect(unitOfWork.execute).toHaveBeenCalledTimes(1);
+    }
   });
 
   it('guarda la imagen y la vincula como principal', async () => {
@@ -135,7 +238,11 @@ describe('CrearVarianteProductoHandler', () => {
     const { handler, manager, deleteImage } = setup();
     manager.save.mockImplementation((entity: unknown, data: object) => {
       if (entity === VarianteImagen)
-        throw new QueryFailedError('INSERT', [], { code: '23505' });
+        throw new QueryFailedError(
+          'INSERT',
+          [],
+          Object.assign(new Error(), { code: '23505' }),
+        );
       return Promise.resolve(data);
     });
     await expect(handler.execute(command([imagen]))).rejects.toBeInstanceOf(
