@@ -74,9 +74,14 @@ export class AbrirTurnoHandler implements ICommandHandler<AbrirTurnoCommand> {
           'El turno anterior no tiene efectivo contado',
         );
       }
+      const responsable = await manager.findOne(User, {
+        where: { id: data.responsableId, active: true, persona: { active: true } },
+      });
+      if (!responsable) throw new BadRequestException('El responsable no está disponible');
       return manager.save(TurnoCaja, {
         caja,
         usuarioApertura: { id: usuarioId } as User,
+        responsable,
         fechaOperativa,
         fechaApertura,
         saldoInicial: anterior ? anterior.efectivoContado! : data.saldoInicial!,

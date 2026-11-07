@@ -49,6 +49,13 @@ export class TurnoCaja {
   @JoinColumn({ name: 'usuario_apertura_id' })
   usuarioApertura: Relation<User>;
 
+  @ManyToOne(() => User, { nullable: false, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'responsable_id', foreignKeyConstraintName: 'FK_turnos_caja_responsable' })
+  responsable: Relation<User>;
+
+  @RelationId((turno: TurnoCaja) => turno.responsable)
+  responsableId: string;
+
   @ManyToOne(() => User, { nullable: true, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'usuario_cierre_id' })
   usuarioCierre: Relation<User> | null;

@@ -12,6 +12,9 @@ export class TurnoCajaResponseDto {
   @ApiProperty({ type: UsuarioTurnoResponseDto })
   usuarioApertura: UsuarioTurnoResponseDto;
 
+  @ApiProperty({ type: UsuarioTurnoResponseDto })
+  responsable: UsuarioTurnoResponseDto;
+
   @ApiProperty({ type: UsuarioTurnoResponseDto, nullable: true })
   usuarioCierre: UsuarioTurnoResponseDto | null;
 

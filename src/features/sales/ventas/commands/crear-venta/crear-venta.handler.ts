@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -133,6 +134,8 @@ export class CrearVentaHandler implements ICommandHandler<CrearVentaCommand> {
       if (!turno) throw new NotFoundException('El turno no existe');
       if (turno.fechaCierre)
         throw new ConflictException('El turno está cerrado');
+      if (turno.responsableId !== usuario.id)
+        throw new ForbiddenException('Solo el responsable del turno puede registrar ventas');
       const almacen = await manager.findOneBy(Almacen, { id: input.almacenId });
       if (!almacen) throw new NotFoundException('El almacén no existe');
       if (!almacen.activo)

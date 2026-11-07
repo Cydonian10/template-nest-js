@@ -14,6 +14,8 @@ interface CajaRow {
   turnoId: string | null;
   usuarioAperturaId: string | null;
   usuarioAperturaNick: string | null;
+  responsableId: string | null;
+  responsableNick: string | null;
   usuarioCierreId: string | null;
   usuarioCierreNick: string | null;
   fechaOperativa: string | null;
@@ -38,6 +40,7 @@ export class ListarCajasHandler implements IQueryHandler<ListarCajasQuery> {
     const rows: CajaRow[] = await this.dataSource.query(
       `SELECT c.id, c.codigo, c.nombre, c.activo,
         t.id AS "turnoId", ua.id AS "usuarioAperturaId", ua.nick_name AS "usuarioAperturaNick",
+        ur.id AS "responsableId", ur.nick_name AS "responsableNick",
         uc.id AS "usuarioCierreId", uc.nick_name AS "usuarioCierreNick",
         t.fecha_operativa::text AS "fechaOperativa", t.fecha_apertura AS "fechaApertura",
         t.fecha_cierre AS "fechaCierre", t.saldo_inicial::text AS "saldoInicial",
@@ -51,7 +54,8 @@ export class ListarCajasHandler implements IQueryHandler<ListarCajasQuery> {
         t.observacion_cierre AS "observacionCierre", t.tipo_cierre AS "tipoCierre"
        FROM cajas c
        LEFT JOIN turnos_caja t ON t.caja_id = c.id AND ($1::date IS NULL OR t.fecha_operativa = $1::date)
-       LEFT JOIN users ua ON ua.id = t.usuario_apertura_id
+        LEFT JOIN users ua ON ua.id = t.usuario_apertura_id
+        LEFT JOIN users ur ON ur.id = t.responsable_id
        LEFT JOIN users uc ON uc.id = t.usuario_cierre_id
        WHERE ($2::boolean IS NULL OR c.activo = $2::boolean)
        ORDER BY c.codigo, c.id, t.fecha_apertura, t.id`,
@@ -78,6 +82,7 @@ export class ListarCajasHandler implements IQueryHandler<ListarCajasQuery> {
             id: row.usuarioAperturaId!,
             nickName: row.usuarioAperturaNick!,
           },
+          responsable: { id: row.responsableId!, nickName: row.responsableNick! },
           usuarioCierre: row.usuarioCierreId
             ? { id: row.usuarioCierreId, nickName: row.usuarioCierreNick! }
             : null,

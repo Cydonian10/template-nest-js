@@ -22,6 +22,10 @@ import { FiltrarCajasSchema } from '../../dto/filtrar-cajas/filtrar-cajas.dto.js
 import type { FiltrarCajasDto } from '../../dto/filtrar-cajas/filtrar-cajas.dto.js';
 import { CajaConTurnosResponseDto } from '../../dto/caja-response/caja-con-turnos-response.dto.js';
 import { ListarCajasQuery } from '../../queries/listar-cajas/listar-cajas.query.js';
+import { ListarResponsablesQuery } from '../../queries/listar-responsables/listar-responsables.query.js';
+import { UsuarioTurnoResponseDto } from '../../dto/caja-response/caja-con-turnos-response.dto.js';
+import { RequirePermissionsInSystem } from '../../../../../auth/decorators/require-permissions.decorator.js';
+import { PERMISSION_CODES } from '../../../../../shared/authorization/permission-codes.js';
 
 @ApiBearerAuth()
 @ApiTags('cajas')
@@ -49,5 +53,12 @@ export class CajasController {
     @Query({ schema: FiltrarCajasSchema }) filtros: FiltrarCajasDto,
   ): Promise<CajaConTurnosResponseDto[]> {
     return this.queries.execute(new ListarCajasQuery(filtros));
+  }
+
+  @Get('responsables')
+  @RequirePermissionsInSystem('VENTAS', PERMISSION_CODES.CAJAS_TURNOS_READ)
+  @ApiOkResponse({ type: [UsuarioTurnoResponseDto] })
+  responsables(): Promise<UsuarioTurnoResponseDto[]> {
+    return this.queries.execute(new ListarResponsablesQuery());
   }
 }

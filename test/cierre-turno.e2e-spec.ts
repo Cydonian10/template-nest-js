@@ -12,6 +12,7 @@ import { ListarCajasHandler } from '../src/features/sales/cajas/queries/listar-c
 import { ListarCajasQuery } from '../src/features/sales/cajas/queries/listar-cajas/listar-cajas.query.js';
 import { ResumenTurnoHandler } from '../src/features/sales/caja-turnos/queries/resumen-turno/resumen-turno.handler.js';
 import { ResumenTurnoQuery } from '../src/features/sales/caja-turnos/queries/resumen-turno/resumen-turno.query.js';
+import { TurnoCaja } from '../src/features/sales/entities/turno-caja.entity.js';
 
 const entityModules = import.meta.glob('../src/**/*.entity.ts', {
   eager: true,
@@ -79,8 +80,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const abrir = new AbrirTurnoHandler(uow);
       const cerrar = new CerrarTurnoHandler(uow);
       const turno = await abrir.execute(
-        new AbrirTurnoCommand(cajaId, usuarioId, { saldoInicial: '100.00' }),
+        new AbrirTurnoCommand(cajaId, usuarioId, { responsableId: usuarioId, saldoInicial: '100.00' }),
       );
+      const turnoGuardado = await db.getRepository(TurnoCaja).findOneByOrFail({ id: turno.id });
+      expect(turnoGuardado.responsableId).toBe(usuarioId);
       await db.query(
         `INSERT INTO movimientos_caja (tipo, importe, motivo, turno_id, usuario_id) VALUES ('ingreso', 25.50, 'prueba', $1, $2), ('egreso', 5.25, 'prueba', $1, $2)`,
         [turno.id, usuarioId],
@@ -106,6 +109,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const turnoListado = cajasAbiertas
         .find((caja) => caja.id === cajaId)
         ?.turnos.find((item) => item.id === turno.id);
+      expect(turnoListado?.responsable.id).toBe(usuarioId);
       expect(turnoListado?.efectivoEsperado).toBe(resumen.efectivoEsperado);
       await expect(
         resumenHandler.execute(new ResumenTurnoQuery(randomUUID(), turno.id)),
@@ -188,7 +192,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ]),
       );
       const siguiente = await abrir.execute(
-        new AbrirTurnoCommand(cajaId, usuarioId, {}),
+        new AbrirTurnoCommand(cajaId, usuarioId, { responsableId: usuarioId }),
       );
       expect(siguiente.saldoInicial).toBe('121.00');
       const sobrante = await cerrar.execute(
@@ -212,7 +216,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ?.turnos.find((item) => item.id === siguiente.id);
       expect(cierreListado?.tipoCierre).toBe('dia');
       await expect(
-        abrir.execute(new AbrirTurnoCommand(cajaId, usuarioId, {})),
+        abrir.execute(new AbrirTurnoCommand(cajaId, usuarioId, { responsableId: usuarioId })),
       ).rejects.toMatchObject({ status: 409 });
     });
   },

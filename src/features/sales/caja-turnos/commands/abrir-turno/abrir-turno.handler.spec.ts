@@ -24,15 +24,24 @@ function setup(
       },
     ]);
   const save = vi.fn().mockImplementation(async (_entity, value) => value);
+  findOne.mockResolvedValue({ id: 'u2', active: true });
   const manager = { findOne, query, save } as unknown as EntityManager;
   const unitOfWork = {
     execute: (work: (manager: EntityManager) => Promise<unknown>) =>
       work(manager),
   } as unknown as UnitOfWork;
-  return { handler: new AbrirTurnoHandler(unitOfWork), save };
+  return { handler: new AbrirTurnoHandler(unitOfWork), save, findOne };
 }
 
 describe('AbrirTurnoHandler', () => {
+  it('rechaza un responsable inexistente o inactivo', async () => {
+    const { handler, save, findOne } = setup({ id: 'c1', activo: true }, null, null, null);
+    findOne.mockResolvedValue(null);
+    await expect(handler.execute(new AbrirTurnoCommand('c1', 'u1', {
+      responsableId: 'u2', saldoInicial: '10',
+    }))).rejects.toThrow('El responsable no está disponible');
+    expect(save).not.toHaveBeenCalled();
+  });
   it('crea el primer turno con saldo ingresado', async () => {
     const { handler, save } = setup(
       { id: 'c1', activo: true },
@@ -41,13 +50,14 @@ describe('AbrirTurnoHandler', () => {
       null,
     );
     await handler.execute(
-      new AbrirTurnoCommand('c1', 'u1', { saldoInicial: '100.00' }),
+      new AbrirTurnoCommand('c1', 'u1', { responsableId: 'u2', saldoInicial: '100.00' }),
     );
     expect(save).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         fechaOperativa: '2026-10-30',
         usuarioApertura: { id: 'u1' },
+        responsable: { id: 'u2', active: true },
         saldoInicial: '100.00',
       }),
     );
@@ -58,7 +68,7 @@ describe('AbrirTurnoHandler', () => {
       efectivoContado: '95.00',
       efectivoEsperado: '100.00',
     });
-    await handler.execute(new AbrirTurnoCommand('c1', 'u1', {}));
+    await handler.execute(new AbrirTurnoCommand('c1', 'u1', { responsableId: 'u2' }));
     expect(save).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ saldoInicial: '95.00' }),
@@ -84,7 +94,7 @@ describe('AbrirTurnoHandler', () => {
     async (caja, abierto, cierreDia, anterior, data) => {
       const { handler, save } = setup(caja, abierto, cierreDia, anterior);
       await expect(
-        handler.execute(new AbrirTurnoCommand('c1', 'u1', data)),
+        handler.execute(new AbrirTurnoCommand('c1', 'u1', { ...data, responsableId: 'u2' })),
       ).rejects.toThrow();
       expect(save).not.toHaveBeenCalled();
     },

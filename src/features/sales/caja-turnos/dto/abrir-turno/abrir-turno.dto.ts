@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const AbrirTurnoSchema = z.strictObject({
+  responsableId: z.uuid(),
   saldoInicial: z
     .string()
     .regex(/^\d{1,16}(\.\d{1,2})?$/)

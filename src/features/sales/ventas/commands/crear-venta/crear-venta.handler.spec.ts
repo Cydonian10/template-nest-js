@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
 import type { UnitOfWork } from '../../../../../shared/database/unit-of-work.js';
 import { User } from '../../../../access-control/entities/user.entity.js';
@@ -33,7 +33,7 @@ function preparar() {
   };
   const variante = { id: varianteId, activo: true, precio: '3.00', producto };
   const usuario = { id: 'usuario', active: true };
-  const turno = { id: turnoId, fechaCierre: null as Date | null };
+  const turno = { id: turnoId, fechaCierre: null as Date | null, responsableId: usuario.id };
   const almacen = { id: almacenId, activo: true };
   const data = {
     turnoId,
@@ -107,6 +107,12 @@ function preparar() {
 }
 
 describe('CrearVentaHandler', () => {
+  it('rechaza ventas de un usuario distinto al responsable', async () => {
+    const { handler, manager, command, turno } = preparar();
+    turno.responsableId = 'otro-usuario';
+    await expect(handler.execute(command)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(manager.save).not.toHaveBeenCalled();
+  });
   it('bloquea turno y stock, guarda la salida valorada, venta, pago y vuelto', async () => {
     const { handler, manager, command, guardados } = preparar();
     const resultado = await handler.execute(command);

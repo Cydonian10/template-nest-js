@@ -12,6 +12,7 @@ describe('ListarCajasHandler', () => {
         turnoId: 't1',
         usuarioAperturaId: 'u1',
         usuarioAperturaNick: 'Ana',
+        responsableId: 'u2', responsableNick: 'Luis',
         usuarioCierreId: null,
         fechaOperativa: '2026-10-30',
         fechaApertura: fecha,
@@ -27,6 +28,7 @@ describe('ListarCajasHandler', () => {
         turnoId: 't2',
         usuarioAperturaId: 'u1',
         usuarioAperturaNick: 'Ana',
+        responsableId: 'u2', responsableNick: 'Luis',
         usuarioCierreId: 'u1',
         usuarioCierreNick: 'Ana',
         fechaOperativa: '2026-10-30',
@@ -43,6 +45,7 @@ describe('ListarCajasHandler', () => {
         turnoId: 't3',
         usuarioAperturaId: 'u1',
         usuarioAperturaNick: 'Ana',
+        responsableId: 'u2', responsableNick: 'Luis',
         usuarioCierreId: 'u1',
         usuarioCierreNick: 'Ana',
         fechaOperativa: '2026-10-30',
@@ -74,6 +77,7 @@ describe('ListarCajasHandler', () => {
           {
             id: 't1',
             usuarioApertura: { id: 'u1', nickName: 'Ana' },
+            responsable: { id: 'u2', nickName: 'Luis' },
             usuarioCierre: null,
             fechaOperativa: '2026-10-30',
             fechaApertura: fecha,
@@ -87,6 +91,7 @@ describe('ListarCajasHandler', () => {
           {
             id: 't2',
             usuarioApertura: { id: 'u1', nickName: 'Ana' },
+            responsable: { id: 'u2', nickName: 'Luis' },
             usuarioCierre: { id: 'u1', nickName: 'Ana' },
             fechaOperativa: '2026-10-30',
             fechaApertura: fecha,
@@ -100,6 +105,7 @@ describe('ListarCajasHandler', () => {
           {
             id: 't3',
             usuarioApertura: { id: 'u1', nickName: 'Ana' },
+            responsable: { id: 'u2', nickName: 'Luis' },
             usuarioCierre: { id: 'u1', nickName: 'Ana' },
             fechaOperativa: '2026-10-30',
             fechaApertura: fecha,
