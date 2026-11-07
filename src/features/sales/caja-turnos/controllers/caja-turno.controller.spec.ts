@@ -48,5 +48,7 @@ describe('CajaTurnoController', () => {
       'efectivoEsperadoConfirmado',
     ]);
     expect(body.schema.properties.observacionCierre.maxLength).toBe(500);
+    expect(body.schema.properties.tipoCierre.enum).toEqual(['turno', 'dia']);
+    expect(body.schema.properties.tipoCierre.default).toBe('turno');
   });
 });

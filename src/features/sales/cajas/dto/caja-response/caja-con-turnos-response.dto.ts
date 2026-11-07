@@ -32,6 +32,9 @@ export class TurnoCajaResponseDto {
 
   @ApiProperty({ type: String, nullable: true, maxLength: 500 })
   observacionCierre: string | null;
+
+  @ApiProperty({ enum: ['turno', 'dia'], nullable: true })
+  tipoCierre: 'turno' | 'dia' | null;
 }
 
 export class CajaConTurnosResponseDto {

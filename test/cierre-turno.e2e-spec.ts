@@ -195,12 +195,25 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         new CerrarTurnoCommand(cajaId, siguiente.id, usuarioId, {
           efectivoContado: '123.00',
           efectivoEsperadoConfirmado: '121',
+          tipoCierre: 'dia',
         }),
       );
       expect(sobrante).toMatchObject({
         diferencia: '2.00',
         observacionCierre: null,
+        tipoCierre: 'dia',
       });
+      // El cierre de día es visible en el listado y bloquea nuevas aperturas.
+      const cajasConDiaCerrado = await new ListarCajasHandler(db).execute(
+        new ListarCajasQuery({ estado: 'todas' }),
+      );
+      const cierreListado = cajasConDiaCerrado
+        .find((caja) => caja.id === cajaId)
+        ?.turnos.find((item) => item.id === siguiente.id);
+      expect(cierreListado?.tipoCierre).toBe('dia');
+      await expect(
+        abrir.execute(new AbrirTurnoCommand(cajaId, usuarioId, {})),
+      ).rejects.toMatchObject({ status: 409 });
     });
   },
 );

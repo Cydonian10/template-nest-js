@@ -39,6 +39,7 @@ describe('CerrarTurnoHandler', () => {
       '16.00',
       '15.00',
       null,
+      'turno',
     ]);
     expect(query.mock.calls[0][0]).toContain('$3::numeric - calculo.esperado');
     expect(query.mock.calls[0][0]).toContain('calculo.esperado = $4::numeric');
@@ -69,7 +70,19 @@ describe('CerrarTurnoHandler', () => {
       '16.00',
       '15',
       'Sobrante',
+      'turno',
     ]);
+  });
+
+  it('registra el cierre de día solicitado', async () => {
+    // El cierre final utiliza el mismo cálculo y protección del turno.
+    const { handler, query } = setup({ fechaCierre: null });
+    await handler.execute(new CerrarTurnoCommand('c1', 't1', 'u1', {
+      efectivoContado: '16.00', efectivoEsperadoConfirmado: '15.00', tipoCierre: 'dia',
+    }));
+    const parametros = query.mock.calls[0][1];
+    expect(parametros[5]).toBe('dia');
+    expect(query.mock.calls[0][0]).toContain('tipo_cierre = $6::tipo_cierre_caja');
   });
 
   it('rechaza un turno inexistente o de otra caja', async () => {

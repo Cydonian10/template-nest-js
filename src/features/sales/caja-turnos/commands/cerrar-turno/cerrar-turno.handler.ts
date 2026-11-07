@@ -49,7 +49,7 @@ export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
         UPDATE turnos_caja t SET
           fecha_cierre = clock_timestamp(), usuario_cierre_id = $2,
           efectivo_esperado = calculo.esperado, efectivo_contado = $3::numeric,
-          diferencia = $3::numeric - calculo.esperado, tipo_cierre = 'turno',
+          diferencia = $3::numeric - calculo.esperado, tipo_cierre = $6::tipo_cierre_caja,
           observacion_cierre = $5
         FROM calculo WHERE t.id = calculo.id AND calculo.esperado = $4::numeric
         RETURNING t.id, t.caja_id AS "cajaId", t.usuario_cierre_id AS "usuarioCierreId",
@@ -63,6 +63,7 @@ export class CerrarTurnoHandler implements ICommandHandler<CerrarTurnoCommand> {
           data.efectivoContado,
           data.efectivoEsperadoConfirmado,
           data.observacionCierre ?? null,
+          data.tipoCierre ?? 'turno',
         ],
       );
       if (filas.length === 0) {

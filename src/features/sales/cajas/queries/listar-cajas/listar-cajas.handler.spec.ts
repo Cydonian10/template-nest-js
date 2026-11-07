@@ -20,6 +20,7 @@ describe('ListarCajasHandler', () => {
         efectivoEsperado: '15.00',
         efectivoContado: null,
         observacionCierre: null,
+        tipoCierre: null,
       },
       {
         ...caja,
@@ -35,6 +36,7 @@ describe('ListarCajasHandler', () => {
         efectivoEsperado: '15.00',
         efectivoContado: '16.00',
         observacionCierre: 'Sobrante en caja',
+        tipoCierre: 'turno',
       },
       {
         ...caja,
@@ -50,6 +52,7 @@ describe('ListarCajasHandler', () => {
         efectivoEsperado: '15.00',
         efectivoContado: '15.00',
         observacionCierre: null,
+        tipoCierre: 'dia',
       },
       { id: 'c2', codigo: 'C2', nombre: 'Caja 2', activo: true, turnoId: null },
     ]);
@@ -79,6 +82,7 @@ describe('ListarCajasHandler', () => {
             efectivoEsperado: '15.00',
             efectivoContado: null,
             observacionCierre: null,
+            tipoCierre: null,
           },
           {
             id: 't2',
@@ -91,6 +95,7 @@ describe('ListarCajasHandler', () => {
             efectivoEsperado: '15.00',
             efectivoContado: '16.00',
             observacionCierre: 'Sobrante en caja',
+            tipoCierre: 'turno',
           },
           {
             id: 't3',
@@ -103,6 +108,7 @@ describe('ListarCajasHandler', () => {
             efectivoEsperado: '15.00',
             efectivoContado: '15.00',
             observacionCierre: null,
+            tipoCierre: 'dia',
           },
         ],
       },

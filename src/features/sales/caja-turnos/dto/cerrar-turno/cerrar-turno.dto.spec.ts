@@ -15,6 +15,8 @@ describe('CerrarTurnoSchema', () => {
     },
     { ...valido, observacionCierre: 'a'.repeat(500) },
     { ...valido, observacionCierre: '' },
+    { ...valido, tipoCierre: 'turno' },
+    { ...valido, tipoCierre: 'dia' },
   ])('acepta %j', (data) => {
     expect(CerrarTurnoSchema.safeParse(data).success).toBe(true);
   });
@@ -37,6 +39,8 @@ describe('CerrarTurnoSchema', () => {
     { ...valido, observacionCierre: 'a'.repeat(501) },
     { ...valido, observacionCierre: null },
     { ...valido, usuarioCierre: 'id' },
+    { ...valido, tipoCierre: 'semanal' },
+    { ...valido, tipoCierre: null },
   ])('rechaza %j', (data) => {
     expect(CerrarTurnoSchema.safeParse(data).success).toBe(false);
   });

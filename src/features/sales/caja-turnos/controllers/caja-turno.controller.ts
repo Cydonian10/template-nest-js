@@ -71,7 +71,7 @@ export class CajaTurnoController {
 
   @Post(':turnoId/cierre')
   @ApiCreatedResponse({
-    description: 'Turno de caja cerrado',
+    description: 'Turno o día de caja cerrado',
     type: CierreTurnoResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Turno no encontrado en la caja' })
