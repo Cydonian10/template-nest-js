@@ -9,4 +9,10 @@ export const VENTAS_PERMISSIONS = [
     resourceCode: 'CAJAS_TURNOS',
     actionCode: 'LEER',
   },
+  {
+    code: PERMISSION_CODES.MOVIMIENTOS_CAJA_CREATE,
+    name: 'Registrar movimientos de caja',
+    resourceCode: 'MOVIMIENTOS_CAJA',
+    actionCode: 'CREAR',
+  },
 ] as const satisfies readonly PermissionDefinition[];

@@ -50,6 +50,12 @@ export class MovimientoCaja {
   @Column({ type: 'text' })
   motivo: string;
 
+  @Column({ name: 'idempotencia_clave', type: 'varchar', length: 128, nullable: true })
+  idempotenciaClave: string | null;
+
+  @Column({ name: 'idempotencia_hash', type: 'varchar', length: 64, nullable: true })
+  idempotenciaHash: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   fecha: Date;
 }

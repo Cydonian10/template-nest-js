@@ -14,6 +14,9 @@ import { CatalogoController } from './catalogo/controllers/catalogo.controller.j
 import { ListarCatalogoHandler } from './catalogo/queries/listar-catalogo/listar-catalogo.handler.js';
 import { TicketController } from './ventas/controllers/ticket.controller.js';
 import { ObtenerTicketHandler } from './ventas/queries/obtener-ticket/obtener-ticket.handler.js';
+import { MovimientosCajaController } from './movimientos-caja/controllers/movimientos-caja.controller.js';
+import { CrearMovimientoCajaHandler } from './movimientos-caja/commands/crear-movimiento/crear-movimiento.handler.js';
+import { ListarMovimientosCajaHandler } from './movimientos-caja/queries/listar-movimientos/listar-movimientos.handler.js';
 
 @Module({
   controllers: [
@@ -22,6 +25,7 @@ import { ObtenerTicketHandler } from './ventas/queries/obtener-ticket/obtener-ti
     VentasController,
     CatalogoController,
     TicketController,
+    MovimientosCajaController,
   ],
   providers: [
     UnitOfWork,
@@ -34,6 +38,8 @@ import { ObtenerTicketHandler } from './ventas/queries/obtener-ticket/obtener-ti
     CrearVentaHandler,
     ListarCatalogoHandler,
     ObtenerTicketHandler,
+    CrearMovimientoCajaHandler,
+    ListarMovimientosCajaHandler,
   ],
 })
 export class SalesModule {}
