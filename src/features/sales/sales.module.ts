@@ -12,9 +12,17 @@ import { VentasController } from './ventas/controllers/ventas.controller.js';
 import { CrearVentaHandler } from './ventas/commands/crear-venta/crear-venta.handler.js';
 import { CatalogoController } from './catalogo/controllers/catalogo.controller.js';
 import { ListarCatalogoHandler } from './catalogo/queries/listar-catalogo/listar-catalogo.handler.js';
+import { TicketController } from './ventas/controllers/ticket.controller.js';
+import { ObtenerTicketHandler } from './ventas/queries/obtener-ticket/obtener-ticket.handler.js';
 
 @Module({
-  controllers: [CajasController, CajaTurnoController, VentasController, CatalogoController],
+  controllers: [
+    CajasController,
+    CajaTurnoController,
+    VentasController,
+    CatalogoController,
+    TicketController,
+  ],
   providers: [
     UnitOfWork,
     CrearCajaHandler,
@@ -25,6 +33,7 @@ import { ListarCatalogoHandler } from './catalogo/queries/listar-catalogo/listar
     ResumenTurnoHandler,
     CrearVentaHandler,
     ListarCatalogoHandler,
+    ObtenerTicketHandler,
   ],
 })
 export class SalesModule {}
