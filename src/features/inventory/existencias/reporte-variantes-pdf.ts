@@ -2,6 +2,10 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces.js';
 import type { ExistenciaConsultaDto } from './dto/existencia-response.dto.js';
 import type { FilterExistenciasDto } from './dto/filter-existencias.dto.js';
 
+const formatoCantidad = new Intl.NumberFormat('es-PE', {
+  maximumFractionDigits: 2,
+});
+
 export function definicionReporteVariantes(
   items: ExistenciaConsultaDto[],
   filter: FilterExistenciasDto,
@@ -88,7 +92,7 @@ export function definicionReporteVariantes(
                   alignment: 'right' as const,
                 },
                 {
-                  text: `${item.cantidadBase} ${item.producto.unidadBase.simbolo}`,
+                  text: `${formatoCantidad.format(Number(item.cantidadBase))} ${item.producto.unidadBase.simbolo}`,
                   alignment: 'right' as const,
                 },
                 {
