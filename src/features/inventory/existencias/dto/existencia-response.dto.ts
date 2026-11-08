@@ -34,6 +34,7 @@ export class VarianteExistenciaDto {
   @ApiProperty() sku: string;
   @ApiProperty() activo: boolean;
   @ApiProperty({ example: '39.90' }) precioVenta: string;
+  @ApiProperty({ nullable: true, example: '5.000000' }) precioUltimaCompraBase?: string | null;
   @ApiProperty({ type: [ValorVarianteExistenciaDto] })
   valores: ValorVarianteExistenciaDto[];
 }

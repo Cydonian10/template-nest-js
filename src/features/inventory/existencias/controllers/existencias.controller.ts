@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Put, Query, VERSION_NEUTRAL } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Put, Query, StreamableFile, VERSION_NEUTRAL } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
@@ -20,6 +20,8 @@ import type { FilterResumenReposicionDto } from '../dto/resumen-reposicion.dto.j
 import { ResumenReposicionQuery } from '../queries/resumen-reposicion/resumen-reposicion.query.js';
 import { ListarAlmacenesActivosQuery } from '../queries/listar-almacenes-activos/listar-alamcenes-activos.query.js';
 import { ListarExistenciasQuery } from '../queries/listar-existencias/listar-existencias.query.js';
+import { generarPdf } from '../../../../shared/pdf/generar-pdf.js';
+import { definicionReporteVariantes } from '../reporte-variantes-pdf.js';
 
 export class AlmacenExistenciasDto {
   @ApiProperty() id: string;
@@ -72,6 +74,30 @@ export class ExistenciasController {
   @ApiOkResponse({ type: [AlmacenExistenciasDto] })
   async listarAlmacenes(): Promise<AlmacenExistenciasDto[]> {
     return this.queries.execute(new ListarAlmacenesActivosQuery());
+  }
+
+  @Get('reporte-variantes.pdf')
+  @RequirePermissions(PERMISSION_CODES.EXISTENCIAS_READ)
+  async reporteVariantesPdf(
+    @Query({ schema: FilterExistenciasSchema }) filter: FilterExistenciasDto,
+  ): Promise<StreamableFile> {
+    const items: ListaExistenciasResponseDto['items'] = [];
+    let page = 1;
+    let total = 0;
+    do {
+      const resultado: ListaExistenciasResponseDto = await this.queries.execute(
+        new ListarExistenciasQuery({ ...filter, page, limit: 100 }),
+      );
+      items.push(...resultado.items);
+      total = resultado.totalItems;
+      if (!resultado.items.length) break;
+      page++;
+    } while (items.length < total);
+    const pdf = await generarPdf(definicionReporteVariantes(items, filter));
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: 'inline; filename="reporte-variantes.pdf"',
+    });
   }
 
   @Get()

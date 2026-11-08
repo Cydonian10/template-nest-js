@@ -18,6 +18,7 @@ type SaldoFila = {
   valorCosto: string;
   costoPromedioBase: string | null;
   costoRegistradoCero: boolean;
+  precioUltimaCompraBase: string | null;
 };
 
 @QueryHandler(ListarExistenciasQuery)
@@ -121,6 +122,15 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
           .addSelect('minimo."minimo_base"::text', 'minimoBase')
           .addSelect('COALESCE(existencia.valorCosto, 0)::text', 'valorCosto')
           .addSelect(
+            `(SELECT ROUND(dc.precio_unitario / dc.factor_a_base, 6)::text
+            FROM detalles_compra dc
+            JOIN compras c ON c.id = dc.compra_id
+            WHERE dc.variante_id = variante.id
+            ORDER BY c.fecha DESC, c.fecha_registro DESC, c.id DESC, dc.id DESC
+            LIMIT 1)`,
+            'precioUltimaCompraBase',
+          )
+          .addSelect(
             'CASE WHEN existencia.cantidad > 0 THEN ROUND(existencia.valorCosto / existencia.cantidad, 6)::text ELSE NULL END',
             'costoPromedioBase',
           )
@@ -177,6 +187,7 @@ export class ListarExistenciasHandler implements IQueryHandler<ListarExistencias
                 sku: variante.sku,
                 activo: variante.activo,
                 precioVenta: variante.precio,
+                precioUltimaCompraBase: saldo.precioUltimaCompraBase ?? null,
                 valores: variante.valores
                   .map(({ atributo, valor }) => ({
                     atributoId: atributo.id,
