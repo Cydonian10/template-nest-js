@@ -55,6 +55,45 @@ JWT_EXPIRES_IN_SECONDS=3600
 
 La API queda disponible en `http://localhost:3000`. La documentación Swagger está en `http://localhost:3000/docs`.
 
+## Producción con Dokploy
+
+`compose.production.yml` está separado del Compose de desarrollo. En Dokploy crea un servicio **Compose**, selecciona **Docker Compose** (no Stack), conecta este repositorio y configura la ruta `./compose.production.yml`. En **Environment** define, con valores propios:
+
+```dotenv
+DB_USERNAME=ferreteria
+DB_PASSWORD=CAMBIAR_POR_UNA_CLAVE_ALEATORIA
+DB_DATABASE=ferreteria
+JWT_SECRET=CAMBIAR_POR_UN_SECRETO_ALEATORIO_DE_AL_MENOS_32_CARACTERES
+JWT_EXPIRES_IN_SECONDS=3600
+```
+
+No uses estos valores de ejemplo en producción ni guardes secretos en el repositorio. Puedes generar cada secreto con `openssl rand -hex 32`. El Compose configura `DB_HOST=postgres`, `DB_PORT=5432` y `PORT=3000`; PostgreSQL no se publica en el host. Cambiar las credenciales de PostgreSQL en Dokploy después de inicializar su volumen **no** modifica automáticamente las credenciales almacenadas en la base.
+
+En **Domains**, asigna un dominio al servicio `api`, selecciona el puerto interno `3000` y habilita HTTPS. Apunta el DNS al servidor. Usa **Isolated Deployments** para que Dokploy conecte Traefik a la red del despliegue, o configura la red de Dokploy según su instalación. No se necesita publicar un puerto del host. La comprobación de la API verifica únicamente que el puerto TCP acepte conexiones, no el estado de la base ni de cada funcionalidad.
+
+### Migraciones de producción
+
+Las migraciones son un paso explícito y no se ejecutan al arrancar la API. Antes del primer despliegue y de cada actualización que incluya migraciones, respalda la base y detén o pon en mantenimiento la API. Desde el directorio del despliegue en el servidor, con el Compose, el código de la versión que se desplegará y el `.env` generado por Dokploy disponibles, ejecuta:
+
+```bash
+docker compose -f compose.production.yml up -d postgres
+docker compose -f compose.production.yml build api
+docker compose -f compose.production.yml run --rm --no-deps api ./node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
+```
+
+Espera a que PostgreSQL esté sano antes del último comando. Si la migración falla, no despliegues la nueva API: revisa el error y el respaldo. Después de una migración exitosa, despliega esa misma versión desde Dokploy. Este procedimiento requiere acceso Docker al servidor y debe ejecutarse una sola vez por despliegue, no simultáneamente desde varias instancias. Revisa la compatibilidad de las migraciones con los datos existentes antes de aplicarlas.
+
+En una instalación nueva, tras aplicar las migraciones, ejecuta los scripts administrativos directamente en la imagen, sin recompilar. Para crear el superadministrador, prepara fuera del repositorio un archivo protegido con las siete variables `SUPER_ADMIN_*` descritas abajo y pásalo solo al contenedor temporal:
+
+```bash
+docker compose -f compose.production.yml run --rm --no-deps --env-from-file /ruta/segura/super-admin.env api node scripts/create-super-admin.mjs
+docker compose -f compose.production.yml run --rm --no-deps api node scripts/seed-permissions.mjs
+```
+
+Restringe los permisos del archivo de credenciales y elimínalo de forma segura cuando ya no lo necesites. El seed de permisos se puede repetir; el comando de superadministrador falla si el correo ya existe.
+
+Los volúmenes `postgres_data` y `uploads` conservan la base, imágenes y comprobantes entre despliegues; no son copias de seguridad. Programa respaldos externos y comprueba su restauración, incluyendo ambos volúmenes. No elimines los volúmenes al actualizar. El almacenamiento local de archivos no está pensado para réplicas en distintos servidores.
+
 Para iniciar sesión, envía `POST /api/auth/login` con `{ "email": "admin@example.com", "password": "tu-contraseña" }`. Devuelve `accessToken`, `tokenType` y `expiresIn` (segundos). El token se envía en `Authorization: Bearer <accessToken>`. `GET /api/auth/profile` devuelve el usuario, su persona, roles vigentes y permisos activos (sin contraseña). Las rutas nuevas requieren JWT por defecto; marca las rutas abiertas con `@Public()` y usa `@CurrentUser()` para obtener el usuario autenticado (o `@CurrentUser('id')` para su identificador). Para exigir permisos usa `@RequirePermissions('CODIGO')`; varios códigos exigen que se tengan todos. `GET /api/users` y `POST /api/users` requieren JWT y los permisos `USUARIOS_LEER` y `USUARIOS_CREAR`, respectivamente (401 sin token, 403 sin permiso). Configura `JWT_SECRET` con un valor aleatorio propio antes de levantar la aplicación; el valor de `.env.example` es solo ilustrativo. El login comprueba que la cuenta esté activa, pero no exige que el correo esté verificado.
 
 ### Crear un super-admin

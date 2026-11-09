@@ -17,6 +17,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
+COPY scripts/create-super-admin.mjs scripts/seed-permissions.mjs ./scripts/
+
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 
 USER node
 EXPOSE 3000
