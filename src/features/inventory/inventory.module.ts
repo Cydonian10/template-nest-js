@@ -98,6 +98,7 @@ import { LeerImagenMarcaHandler } from './marcas/queries/leer-imagen-marca/leer-
 import { CrearMarcaHandler } from './marcas/commands/crear-marca/crear-marca.handler.js';
 import { EditarMarcaHandler } from './marcas/commands/editar-marca/editar-marca.handler.js';
 import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marca/cambiar-estado-marca.handler.js';
+import { CatalogoPublicoController } from './catalogo-publico/catalogo-publico.controller.js';
 
 @Module({
   imports: [
@@ -121,6 +122,7 @@ import { CambiarEstadoMarcaHandler } from './marcas/commands/cambiar-estado-marc
     ]),
   ],
   controllers: [
+    CatalogoPublicoController,
     ProductsController,
     UnidadController,
     AtributosController,

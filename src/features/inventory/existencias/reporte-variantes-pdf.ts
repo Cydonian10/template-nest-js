@@ -6,10 +6,20 @@ const formatoCantidad = new Intl.NumberFormat('es-PE', {
   maximumFractionDigits: 2,
 });
 
+const formatoPrecio = new Intl.NumberFormat('es-PE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export function definicionReporteVariantes(
   items: ExistenciaConsultaDto[],
   filter: FilterExistenciasDto,
 ): TDocumentDefinitions {
+  const itemsOrdenados = [...items].sort((a, b) => {
+    const aConStock = Number(a.cantidadBase) > 0;
+    const bConStock = Number(b.cantidadBase) > 0;
+    return Number(bConStock) - Number(aConStock);
+  });
   const encabezados = [
     'Producto / variante',
     'SKU',
@@ -58,7 +68,7 @@ export function definicionReporteVariantes(
       {
         table: {
           headerRows: 1,
-          widths: ['*', 72, 72, 72, 65, 55, 65],
+          widths: [180, '*', 100, 90, 75, 55, 75],
           body: [
             encabezados.map((text) => ({
               text,
@@ -67,7 +77,7 @@ export function definicionReporteVariantes(
               fillColor: '#34565a',
               margin: [2, 5, 2, 5],
             })),
-            ...items.map((item, indice) =>
+            ...itemsOrdenados.map((item, indice) =>
               [
                 {
                   text: [
@@ -83,12 +93,12 @@ export function definicionReporteVariantes(
                 {
                   text:
                     item.variante.precioUltimaCompraBase != null
-                      ? `S/ ${item.variante.precioUltimaCompraBase}`
+                      ? `S/ ${formatoPrecio.format(Number(item.variante.precioUltimaCompraBase))}`
                       : '—',
                   alignment: 'right' as const,
                 },
                 {
-                  text: `S/ ${item.variante.precioVenta}`,
+                  text: `S/ ${formatoPrecio.format(Number(item.variante.precioVenta))}`,
                   alignment: 'right' as const,
                 },
                 {
