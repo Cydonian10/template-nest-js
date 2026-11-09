@@ -34,7 +34,7 @@ services:
       - '127.0.0.1:3000:3000'
 
     networks:
-      - backend_network
+      - ferreteria_network
 
     volumes:
       - uploads:/app/uploads
@@ -60,5 +60,5 @@ volumes:
   uploads:
 
 networks:
-  backend_network:
+  ferreteria_network:
     external: true
