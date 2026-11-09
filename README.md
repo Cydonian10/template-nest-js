@@ -73,15 +73,9 @@ En **Domains**, asigna un dominio al servicio `api`, selecciona el puerto intern
 
 ### Migraciones de producción
 
-Las migraciones son un paso explícito y no se ejecutan al arrancar la API. Antes del primer despliegue y de cada actualización que incluya migraciones, respalda la base y detén o pon en mantenimiento la API. Desde el directorio del despliegue en el servidor, con el Compose, el código de la versión que se desplegará y el `.env` generado por Dokploy disponibles, ejecuta:
+Al iniciar el contenedor, TypeORM aplica las migraciones pendientes usando los archivos compilados. La API arranca únicamente si las migraciones terminan correctamente; Compose espera a que PostgreSQL esté sano antes de iniciar el contenedor. Si una migración falla, consulta los logs en Dokploy y corrige el problema antes de continuar.
 
-```bash
-docker compose -f compose.production.yml up -d postgres
-docker compose -f compose.production.yml build api
-docker compose -f compose.production.yml run --rm --no-deps api ./node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
-```
-
-Espera a que PostgreSQL esté sano antes del último comando. Si la migración falla, no despliegues la nueva API: revisa el error y el respaldo. Después de una migración exitosa, despliega esa misma versión desde Dokploy. Este procedimiento requiere acceso Docker al servidor y debe ejecutarse una sola vez por despliegue, no simultáneamente desde varias instancias. Revisa la compatibilidad de las migraciones con los datos existentes antes de aplicarlas.
+Antes de desplegar cambios de esquema, respalda la base y revisa que las migraciones sean compatibles con los datos existentes. Mantén una sola instancia de la API y evita despliegues simultáneos: ejecutar migraciones concurrentemente desde varios contenedores no está coordinado. Si necesitas varias réplicas o despliegues sin interrupción, separa las migraciones en una tarea controlada previa al despliegue.
 
 En una instalación nueva, tras aplicar las migraciones, ejecuta los scripts administrativos directamente en la imagen, sin recompilar. Para crear el superadministrador, prepara fuera del repositorio un archivo protegido con las siete variables `SUPER_ADMIN_*` descritas abajo y pásalo solo al contenedor temporal:
 
