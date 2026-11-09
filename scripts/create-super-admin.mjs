@@ -31,10 +31,25 @@ async function main() {
 
   await AppDataSource.initialize();
   try {
-    await AppDataSource.transaction(async (manager) => {
+    const created = await AppDataSource.transaction(async (manager) => {
       const emailNormalized = userData.email.toUpperCase();
-      if (await manager.findOneBy(User, { emailNormalized })) {
-        throw new Error('Ya existe un usuario con ese correo.');
+      const existingUser = await manager.findOneBy(User, { emailNormalized });
+      if (existingUser) {
+        if (!process.argv.includes('--if-exists')) {
+          throw new Error('Ya existe un usuario con ese correo.');
+        }
+        const activeRole = await manager.getRepository(UserRole)
+          .createQueryBuilder('userRole')
+          .innerJoin('userRole.role', 'role')
+          .where('userRole.user_id = :userId', { userId: existingUser.id })
+          .andWhere('role.code = :code', { code: ROLE_CODES.SUPER_ADMIN })
+          .andWhere('userRole.valid_from <= CURRENT_DATE')
+          .andWhere('(userRole.valid_until IS NULL OR userRole.valid_until >= CURRENT_DATE)')
+          .getOne();
+        if (!existingUser.active || !activeRole) {
+          throw new Error('El usuario existente no es un superadministrador activo con rol vigente.');
+        }
+        return false;
       }
       const roleRepository = manager.getRepository(Role);
       let system = await manager.findOneBy(System, {
@@ -88,9 +103,10 @@ async function main() {
           validUntil: null,
         }),
       );
+      return true;
     });
 
-    console.log('Usuario super-admin creado.');
+    console.log(created ? 'Usuario super-admin creado.' : 'El super-admin ya existe; no se modificó.');
   } finally {
     await AppDataSource.destroy();
   }

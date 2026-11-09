@@ -24,4 +24,4 @@ RUN mkdir -p /app/uploads && chown node:node /app/uploads
 USER node
 EXPOSE 3000
 
-CMD ["sh", "-c", "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js && exec node dist/main.js"]
+CMD ["sh", "-c", "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js && node scripts/seed-permissions.mjs && node scripts/create-super-admin.mjs --if-exists && exec node dist/main.js"]

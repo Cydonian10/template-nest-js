@@ -65,6 +65,13 @@ DB_PASSWORD=CAMBIAR_POR_UNA_CLAVE_ALEATORIA
 DB_DATABASE=ferreteria
 JWT_SECRET=CAMBIAR_POR_UN_SECRETO_ALEATORIO_DE_AL_MENOS_32_CARACTERES
 JWT_EXPIRES_IN_SECONDS=3600
+SUPER_ADMIN_EMAIL=admin@example.com
+SUPER_ADMIN_NICK_NAME=Admin
+SUPER_ADMIN_PASSWORD=CAMBIAR_POR_UNA_CLAVE_SEGURA
+SUPER_ADMIN_FIRST_NAME=Nombre
+SUPER_ADMIN_LAST_NAME=Apellido
+SUPER_ADMIN_IDENTITY_DOCUMENT=1234567890
+SUPER_ADMIN_DATE_OF_BIRTH=1990-01-31
 ```
 
 No uses estos valores de ejemplo en producción ni guardes secretos en el repositorio. Puedes generar cada secreto con `openssl rand -hex 32`. El Compose configura `DB_HOST=postgres`, `DB_PORT=5432` y `PORT=3000`; PostgreSQL no se publica en el host. Cambiar las credenciales de PostgreSQL en Dokploy después de inicializar su volumen **no** modifica automáticamente las credenciales almacenadas en la base.
@@ -73,18 +80,11 @@ En **Domains**, asigna un dominio al servicio `api`, selecciona el puerto intern
 
 ### Migraciones de producción
 
-Al iniciar el contenedor, TypeORM aplica las migraciones pendientes usando los archivos compilados. La API arranca únicamente si las migraciones terminan correctamente; Compose espera a que PostgreSQL esté sano antes de iniciar el contenedor. Si una migración falla, consulta los logs en Dokploy y corrige el problema antes de continuar.
+Al iniciar el contenedor, TypeORM aplica las migraciones pendientes usando los archivos compilados, registra los permisos y crea el superadministrador si no existe. La API arranca únicamente si los tres pasos terminan correctamente; Compose espera a que PostgreSQL esté sano antes de iniciar el contenedor. Si un paso falla, consulta los logs en Dokploy y corrige el problema antes de continuar.
 
 Antes de desplegar cambios de esquema, respalda la base y revisa que las migraciones sean compatibles con los datos existentes. Mantén una sola instancia de la API y evita despliegues simultáneos: ejecutar migraciones concurrentemente desde varios contenedores no está coordinado. Si necesitas varias réplicas o despliegues sin interrupción, separa las migraciones en una tarea controlada previa al despliegue.
 
-En una instalación nueva, tras aplicar las migraciones, ejecuta los scripts administrativos directamente en la imagen, sin recompilar. Para crear el superadministrador, prepara fuera del repositorio un archivo protegido con las siete variables `SUPER_ADMIN_*` descritas abajo y pásalo solo al contenedor temporal:
-
-```bash
-docker compose -f compose.production.yml run --rm --no-deps --env-from-file /ruta/segura/super-admin.env api node scripts/create-super-admin.mjs
-docker compose -f compose.production.yml run --rm --no-deps api node scripts/seed-permissions.mjs
-```
-
-Restringe los permisos del archivo de credenciales y elimínalo de forma segura cuando ya no lo necesites. El seed de permisos se puede repetir; el comando de superadministrador falla si el correo ya existe.
+El usuario existente no se modifica: debe estar activo y tener el rol SUPER_ADMIN vigente, de lo contrario el arranque falla. Cambiar las variables no actualiza su contraseña ni sus datos; cambiar el correo puede crear otro superadministrador si no existe. Si se elimina la cuenta configurada, se volverá a crear al reiniciar. Protege el acceso a las variables de Dokploy: las credenciales permanecen disponibles en el entorno del contenedor.
 
 Los volúmenes `postgres_data` y `uploads` conservan la base, imágenes y comprobantes entre despliegues; no son copias de seguridad. Programa respaldos externos y comprueba su restauración, incluyendo ambos volúmenes. No elimines los volúmenes al actualizar. El almacenamiento local de archivos no está pensado para réplicas en distintos servidores.
 
