@@ -3,61 +3,53 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+
     restart: unless-stopped
+
     environment:
       NODE_ENV: production
       PORT: 3000
-      DB_HOST: postgres
+
+      # PostgreSQL existente
+      DB_HOST: postgres16
       DB_PORT: 5432
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME es obligatorio}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD es obligatorio}
       DB_DATABASE: ${DB_DATABASE:?DB_DATABASE es obligatorio}
+
+      # JWT
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
       JWT_EXPIRES_IN_SECONDS: ${JWT_EXPIRES_IN_SECONDS:-3600}
-      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:?SUPER_ADMIN_EMAIL es obligatorio}
-      SUPER_ADMIN_NICK_NAME: ${SUPER_ADMIN_NICK_NAME:?SUPER_ADMIN_NICK_NAME es obligatorio}
-      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?SUPER_ADMIN_PASSWORD es obligatorio}
-      SUPER_ADMIN_FIRST_NAME: ${SUPER_ADMIN_FIRST_NAME:?SUPER_ADMIN_FIRST_NAME es obligatorio}
-      SUPER_ADMIN_LAST_NAME: ${SUPER_ADMIN_LAST_NAME:?SUPER_ADMIN_LAST_NAME es obligatorio}
-      SUPER_ADMIN_IDENTITY_DOCUMENT: ${SUPER_ADMIN_IDENTITY_DOCUMENT:?SUPER_ADMIN_IDENTITY_DOCUMENT es obligatorio}
-      SUPER_ADMIN_DATE_OF_BIRTH: ${SUPER_ADMIN_DATE_OF_BIRTH:?SUPER_ADMIN_DATE_OF_BIRTH es obligatorio}
-    depends_on:
-      postgres:
-        condition: service_healthy
+
+      # Super administrador
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:?Obligatorio}
+      SUPER_ADMIN_NICK_NAME: ${SUPER_ADMIN_NICK_NAME:?Obligatorio}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?Obligatorio}
+      SUPER_ADMIN_FIRST_NAME: ${SUPER_ADMIN_FIRST_NAME:?Obligatorio}
+      SUPER_ADMIN_LAST_NAME: ${SUPER_ADMIN_LAST_NAME:?Obligatorio}
+      SUPER_ADMIN_IDENTITY_DOCUMENT: ${SUPER_ADMIN_IDENTITY_DOCUMENT:?Obligatorio}
+      SUPER_ADMIN_DATE_OF_BIRTH: ${SUPER_ADMIN_DATE_OF_BIRTH:?Obligatorio}
+
+    ports:
+      - '127.0.0.1:3000:3000'
+
+    networks:
+      - backend_network
+
     volumes:
       - uploads:/app/uploads
+
     healthcheck:
       test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "const s=require('net').connect(3000,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));s.setTimeout(3000,()=>process.exit(1))",
-        ]
+        - CMD
+        - node
+        - -e
+        - "const s=require('net').connect(3000,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));s.setTimeout(3000,()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 30s
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: '3'
 
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME es obligatorio}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD es obligatorio}
-      POSTGRES_DB: ${DB_DATABASE:?DB_DATABASE es obligatorio}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
-      interval: 10s
-      timeout: 5s
-      retries: 5
     logging:
       driver: json-file
       options:
@@ -65,5 +57,8 @@ services:
         max-file: '3'
 
 volumes:
-  postgres_data:
   uploads:
+
+networks:
+  backend_network:
+    external: true
